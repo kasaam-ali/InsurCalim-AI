@@ -1,0 +1,44 @@
+# Local development stack for InsurCalim AI.
+# Run from the project root:  docker compose -f infra/docker-compose.yml up
+#
+# Services:
+#   db  - PostgreSQL. schema.sql is auto-applied the first time the volume is created.
+#   app - the Python application image (built from infra/Dockerfile).
+# Chroma runs embedded inside the app (local files), so it needs no service here.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-insurclaim}
+      POSTGRES_USER: ${POSTGRES_USER:-insurclaim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-locally}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Files in this folder run once, on first database initialization.
+      - ../insurclaim/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-insurclaim}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      # Inside the compose network the database host is the service name "db".
+      POSTGRES_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    # Keep the container alive so you can exec into it and run commands.
+    command: ["tail", "-f", "/dev/null"]
+
+volumes:
+  db_data:

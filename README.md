@@ -1,4 +1,4 @@
-# ClaimChain AI
+# InsurCalim AI
 
 Multi-agent AI platform for investigating **auto insurance claims** — takes a claim
 (documents + damage photos) and produces a **ranked, explainable investigator report**
