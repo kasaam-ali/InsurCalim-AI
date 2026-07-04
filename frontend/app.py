@@ -299,6 +299,40 @@ def page_report(scored: list[dict]) -> None:
 
     _comparison(s)
 
+    # Explainable score breakdown ("reason codes"): what added up to the score.
+    st.markdown("##### Why this score (reason codes)")
+    weights = {"low": 10, "medium": 25, "high": 40}
+    contribs = [(sig.get("code", "signal"), weights.get(sig.get("severity"), 10)) for sig in s["signals"]]
+    if s["prob"] is not None:
+        contribs.append(("ml_fraud_probability", int(s["prob"] * 40)))
+    if contribs:
+        maxc = max(c for _, c in contribs)
+        html = "".join(bar_row(code, pts, maxc, color, " pts") for code, pts in contribs)
+        st.markdown(html, unsafe_allow_html=True)
+        st.caption(f"Signals sum to the risk score (capped at 100). This claim: {s['risk']:.0f}.")
+    else:
+        st.caption("No contributing signals.")
+
+    # Audit-defensible export for the investigator.
+    lines = [
+        f"InsurCalim AI - investigation summary",
+        f"Claim #{s['id']}  |  risk score: {s['risk']:.0f} ({label})  |  action: {action}",
+        f"ML fraud probability: {(s['prob'] or 0) * 100:.0f}%",
+        "",
+        "Reason codes:",
+        *[f"  - {code}: +{pts} pts" for code, pts in contribs],
+        "",
+        "Flags:",
+        *[f"  - [{x.get('severity')}] {x.get('message')} ({x.get('evidence')})" for x in s["signals"]],
+        "",
+        f"Description: {s['description']}",
+    ]
+    st.download_button(
+        "⬇ Export investigation summary",
+        "\n".join(lines),
+        file_name=f"claim_{s['id']}_summary.txt",
+    )
+
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
         st.caption("Uses the LLM; on the free tier this may take a moment or fall back.")
         if st.button("Run full AI investigation", type="primary"):
@@ -366,10 +400,112 @@ def page_model() -> None:
         st.error(f"Could not load the tabular model: {exc}")
 
 
+def detect_rings(scored: list[dict]) -> tuple[list[list[int]], dict]:
+    """Link fraud claims to their similar known-fraud matches (RAG) and return
+    connected components of size >= 3 as fraud rings, plus the adjacency map.
+    """
+    from collections import defaultdict
+
+    ids = {s["id"] for s in scored}
+    adj: dict[int, set] = defaultdict(set)
+    for s in scored:
+        if not s["is_fraud"]:
+            continue
+        for m in s["matches"]:
+            md = m.get("metadata", {})
+            other = md.get("claim_id")
+            if md.get("is_fraud") and m["similarity"] >= 0.40 and other in ids:
+                adj[s["id"]].add(other)
+                adj[other].add(s["id"])
+    seen: set[int] = set()
+    rings: list[list[int]] = []
+    for node in list(adj):
+        if node in seen:
+            continue
+        stack, comp = [node], set()
+        while stack:
+            n = stack.pop()
+            if n in seen:
+                continue
+            seen.add(n)
+            comp.add(n)
+            stack.extend(adj[n] - seen)
+        if len(comp) >= 3:
+            rings.append(sorted(comp))
+    rings.sort(key=len, reverse=True)
+    return rings, {k: sorted(v) for k, v in adj.items()}
+
+
+def ring_svg(members: list[int], adj: dict, size: int = 360) -> str:
+    cx = cy = size / 2
+    r = size / 2 - 26
+    n = len(members)
+    pos = {
+        m: (
+            cx + r * math.cos(2 * math.pi * i / n - math.pi / 2),
+            cy + r * math.sin(2 * math.pi * i / n - math.pi / 2),
+        )
+        for i, m in enumerate(members)
+    }
+    edges, drawn = "", set()
+    for a in members:
+        for b in adj.get(a, ()):
+            if b in pos and (b, a) not in drawn:
+                drawn.add((a, b))
+                x1, y1 = pos[a]
+                x2, y2 = pos[b]
+                edges += (
+                    f'<line x1="{x1:.0f}" y1="{y1:.0f}" x2="{x2:.0f}" y2="{y2:.0f}" '
+                    f'stroke="#d03b3b" stroke-opacity="0.3" stroke-width="1.4"/>'
+                )
+    nodes = ""
+    for m, (x, y) in pos.items():
+        nodes += (
+            f'<circle cx="{x:.0f}" cy="{y:.0f}" r="15" fill="#d03b3b"/>'
+            f'<text x="{x:.0f}" y="{y+3:.0f}" text-anchor="middle" font-size="9" '
+            f'fill="#fff" font-weight="700">{m}</text>'
+        )
+    return f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}">{edges}{nodes}</svg>'
+
+
+def page_rings(scored: list[dict]) -> None:
+    st.markdown("### 🕸️ Fraud rings")
+    st.caption(
+        "Claims linked by narrative similarity to known fraud (RAG). Connected "
+        "groups reveal organized fraud rings that isolated review would miss."
+    )
+    rings, adj = detect_rings(scored)
+    if not rings:
+        st.info("No fraud rings detected.")
+        return
+    by_id = {s["id"]: s for s in scored}
+    a, b = st.columns(2)
+    a.markdown(kpi("Rings detected", len(rings)), unsafe_allow_html=True)
+    b.markdown(kpi("Claims in rings", sum(len(r) for r in rings)), unsafe_allow_html=True)
+    st.write("")
+    for i, ring in enumerate(rings, 1):
+        from collections import Counter
+
+        types = Counter(by_id[m]["fraud_type"] for m in ring if m in by_id)
+        pattern = types.most_common(1)[0][0] if types else "?"
+        st.markdown(f"#### Ring {i} — {len(ring)} linked claims · pattern: `{pattern}`")
+        left, right = st.columns([1, 1])
+        with left:
+            st.markdown(ring_svg(ring, adj), unsafe_allow_html=True)
+        with right:
+            st.markdown("**Members**")
+            st.markdown(
+                " ".join(badge(f"#{m}", CRITICAL) for m in ring[:24]), unsafe_allow_html=True
+            )
+            st.caption("Shared modus operandi detected across these claims.")
+        st.divider()
+
+
 PAGES = {
     "📊 Overview": page_overview,
     "📋 Claims queue": page_queue,
     "🔍 Investigation report": page_report,
+    "🕸️ Fraud rings": page_rings,
     "✍️ Analyze new claim": page_analyze,
     "📈 Model performance": page_model,
 }
