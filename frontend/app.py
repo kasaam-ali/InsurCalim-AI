@@ -186,6 +186,16 @@ def page_overview(scored: list[dict]) -> None:
     for col, card in zip(cols, cards):
         col.markdown(card, unsafe_allow_html=True)
 
+    # Business impact — the mission: catch fraud, and pay honest people faster.
+    money = sum(float(s["amount"] or 0) for s in scored if s["risk"] >= RISK_HIGH)
+    fast = sum(1 for s in scored if s["risk"] < RISK_MEDIUM)
+    rings = len(detect_rings(scored)[0])
+    st.write("")
+    d, e, f = st.columns(3)
+    d.markdown(kpi("Money at risk", f"${money:,.0f}", "flagged in high-risk claims"), unsafe_allow_html=True)
+    e.markdown(kpi("Fast-trackable", fast, "low-risk — pay honest claimants in days"), unsafe_allow_html=True)
+    f.markdown(kpi("Fraud rings", rings, "organized fraud detected"), unsafe_allow_html=True)
+
     st.write("")
     left, right = st.columns(2)
     with left:
@@ -345,6 +355,25 @@ def page_report(scored: list[dict]) -> None:
         st.write(cov["rationale"])
         if cov.get("clause"):
             st.caption(f"Cited clause: {cov['clause'][:200]}")
+
+    st.markdown("##### 💬 Ask about this claim")
+    q = st.text_input("Question", key=f"ask_{claim_id}",
+                      placeholder="e.g. Why is this suspicious? What should I verify first?")
+    if q.strip():
+        from insurclaim.llm import call_llm
+
+        codes = [x.get("code") for x in s["signals"]]
+        with st.spinner("Thinking..."):
+            try:
+                ans = call_llm(
+                    prompt=f"Claim description:\n{s['description']}\n\n"
+                    f"Detected signals: {codes}\nRisk score: {s['risk']:.0f}/100\n\nQuestion: {q}",
+                    system="You are a claims-investigation assistant. Answer briefly, "
+                    "using only the claim information provided.",
+                )
+            except Exception as exc:
+                ans = f"(assistant unavailable: {exc})"
+        st.info(ans)
 
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
         st.caption("Uses the LLM; on the free tier this may take a moment or fall back.")
