@@ -115,7 +115,34 @@ def train(epochs: int = 3, source: str = "narrative", max_length: int = 256) -> 
             "f1": float(f1_score(labels, predictions, zero_division=0)),
         }
 
-    trainer = Trainer(
+    import torch
+
+    # The dataset is imbalanced (~75% legit). Without help the model collapses to
+    # always predicting "legit" (high accuracy, zero fraud recall). Weight the
+    # loss by inverse class frequency so the fraud class carries its fair share.
+    train_labels = list(split["train"]["label"])
+    n_legit = train_labels.count(0)
+    n_fraud = train_labels.count(1)
+    total = n_legit + n_fraud
+    class_weights = torch.tensor(
+        [total / (2 * n_legit), total / (2 * n_fraud)], dtype=torch.float
+    )
+
+    class WeightedTrainer(Trainer):
+        """Trainer that applies class weights to counter label imbalance."""
+
+        def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+            labels = inputs.pop("labels")
+            outputs = model(**inputs)
+            loss_fct = torch.nn.CrossEntropyLoss(
+                weight=class_weights.to(outputs.logits.device)
+            )
+            loss = loss_fct(
+                outputs.logits.view(-1, model.config.num_labels), labels.view(-1)
+            )
+            return (loss, outputs) if return_outputs else loss
+
+    trainer = WeightedTrainer(
         model=model,
         args=args,
         train_dataset=split["train"],
