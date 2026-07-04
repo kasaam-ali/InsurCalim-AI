@@ -56,9 +56,29 @@ def load(path: str | Path = DEFAULT_PATH) -> list[int]:
             }
         )
         for party in data.get("parties", []):
-            repo.insert_party(claim_id, party)
+            # Normalize to the columns our schema expects (fill any missing).
+            repo.insert_party(
+                claim_id,
+                {
+                    "full_name": party.get("full_name"),
+                    "role": party.get("role"),
+                    "national_id": party.get("national_id"),
+                    "phone": party.get("phone"),
+                    "email": party.get("email"),
+                },
+            )
         for vehicle in data.get("vehicles", []):
-            repo.insert_vehicle(claim_id, vehicle)
+            # Accept either "plate" or "license_plate"; ignore extra keys (e.g. color).
+            repo.insert_vehicle(
+                claim_id,
+                {
+                    "vin": vehicle.get("vin"),
+                    "make": vehicle.get("make"),
+                    "model": vehicle.get("model"),
+                    "year": vehicle.get("year"),
+                    "plate": vehicle.get("plate") or vehicle.get("license_plate"),
+                },
+            )
         ids.append(claim_id)
     return ids
 
