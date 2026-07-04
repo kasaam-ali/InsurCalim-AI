@@ -13,7 +13,12 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+from dotenv import load_dotenv
 from psycopg.rows import dict_row
+
+# Load database credentials from .env so this layer works even when imported on
+# its own (without going through llm.py). Safe to call once at import time.
+load_dotenv()
 
 # Path to the schema file that lives next to this module.
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
@@ -155,6 +160,13 @@ def list_labeled_claims() -> list[dict[str, Any]]:
         cur.execute(
             "SELECT id, description, is_fraud, fraud_type FROM claims WHERE is_fraud IS NOT NULL"
         )
+        return cur.fetchall()
+
+
+def list_real_claims() -> list[dict[str, Any]]:
+    """Return every row of the real-world dataset (loaded by data.load_real)."""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM real_claims")
         return cur.fetchall()
 
 

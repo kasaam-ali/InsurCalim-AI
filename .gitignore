@@ -13,6 +13,10 @@ env/
 
 # Data / model artifacts
 data/generated/
+# third-party datasets downloaded at runtime (not committed)
+data/real/
+# local vector store files
+data/chroma/
 *.sqlite
 *.db
 models/

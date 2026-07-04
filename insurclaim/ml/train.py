@@ -34,8 +34,43 @@ def _load_dataset():
     return Dataset.from_dict({"text": texts, "label": labels})
 
 
-def train(epochs: int = 3) -> Path:
-    """Fine-tune DistilBERT on the labeled claims and save the model."""
+# Columns from the real dataset that carry fraud signal, encoded into text so the
+# same DistilBERT fine-tuning pipeline can learn from tabular data.
+REAL_FEATURES = [
+    "incident_type", "collision_type", "incident_severity", "authorities_contacted",
+    "number_of_vehicles_involved", "property_damage", "bodily_injuries", "witnesses",
+    "police_report_available", "total_claim_amount", "injury_claim", "property_claim",
+    "vehicle_claim", "insured_sex", "insured_education_level", "insured_occupation",
+    "insured_relationship", "incident_hour_of_the_day", "months_as_customer", "age",
+    "policy_annual_premium", "auto_make", "auto_year",
+]
+
+
+def _row_to_text(row: dict) -> str:
+    """Turn one real claim row into a compact 'field: value; ...' string."""
+    parts = [f"{name}: {row.get(name)}" for name in REAL_FEATURES if row.get(name)]
+    return "; ".join(parts)
+
+
+def _load_real_dataset():
+    """Build a (text, label) dataset from the real_claims table."""
+    from datasets import Dataset
+
+    rows = repo.list_real_claims()
+    if not rows:
+        raise RuntimeError("No real claims found. Run 'python -m insurclaim.data.load_real' first.")
+
+    texts = [_row_to_text(r) for r in rows]
+    labels = [1 if r["is_fraud"] else 0 for r in rows]  # 1 = fraud, 0 = legit
+    return Dataset.from_dict({"text": texts, "label": labels})
+
+
+def train(epochs: int = 3, source: str = "narrative", max_length: int = 256) -> Path:
+    """Fine-tune DistilBERT on labeled claims and save the model.
+
+    source="narrative" trains on synthetic claim descriptions; source="real"
+    trains on the real-world dataset (features encoded as text).
+    """
     import numpy as np
     from transformers import (
         AutoModelForSequenceClassification,
@@ -44,15 +79,17 @@ def train(epochs: int = 3) -> Path:
         TrainingArguments,
     )
 
-    dataset = _load_dataset()
+    dataset = _load_real_dataset() if source == "real" else _load_dataset()
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
 
     def tokenize(batch):
-        return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=256)
+        return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=max_length)
 
     dataset = dataset.map(tokenize, batched=True)
-    # Hold out 20% for a quick validation split.
-    split = dataset.train_test_split(test_size=0.2, seed=42)
+    # Cast the label to a ClassLabel so the split can keep the fraud/legit ratio.
+    dataset = dataset.class_encode_column("label")
+    # Hold out 20% for validation, keeping the fraud/legit ratio in both parts.
+    split = dataset.train_test_split(test_size=0.2, seed=42, stratify_by_column="label")
 
     model = AutoModelForSequenceClassification.from_pretrained(BASE_MODEL, num_labels=2)
 
@@ -67,10 +104,16 @@ def train(epochs: int = 3) -> Path:
     )
 
     def compute_metrics(eval_pred):
+        from sklearn.metrics import precision_score, recall_score, f1_score
+
         logits, labels = eval_pred
         predictions = np.argmax(logits, axis=-1)
-        accuracy = float((predictions == labels).mean())
-        return {"accuracy": accuracy}
+        return {
+            "accuracy": float((predictions == labels).mean()),
+            "precision": float(precision_score(labels, predictions, zero_division=0)),
+            "recall": float(recall_score(labels, predictions, zero_division=0)),
+            "f1": float(f1_score(labels, predictions, zero_division=0)),
+        }
 
     trainer = Trainer(
         model=model,
@@ -88,5 +131,20 @@ def train(epochs: int = 3) -> Path:
 
 
 if __name__ == "__main__":
-    saved_to = train()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Fine-tune the fraud classifier.")
+    parser.add_argument(
+        "--source", choices=["narrative", "real"], default="narrative",
+        help="which dataset to train on",
+    )
+    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument(
+        "--max-length", type=int, default=None,
+        help="token length (defaults: 256 narrative, 128 real)",
+    )
+    args = parser.parse_args()
+
+    max_length = args.max_length or (128 if args.source == "real" else 256)
+    saved_to = train(epochs=args.epochs, source=args.source, max_length=max_length)
     print(f"Fraud classifier trained and saved to {saved_to}")
