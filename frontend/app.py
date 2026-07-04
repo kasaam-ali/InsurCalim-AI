@@ -44,12 +44,16 @@ h1,h2,h3,h4 {letter-spacing:-.015em; color:#0b1220;}
 section[data-testid="stSidebar"] {background:linear-gradient(180deg,#0e1628,#131d33); border-right:1px solid rgba(255,255,255,.06);}
 section[data-testid="stSidebar"] * {color:#cbd5e1;}
 section[data-testid="stSidebar"] h2 {color:#fff; font-weight:800;}
-section[data-testid="stSidebar"] div[role="radiogroup"] label {display:flex; align-items:center; padding:.55rem .8rem;
-  border-radius:10px; margin:2px 0; cursor:pointer;}
-section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {background:rgba(255,255,255,.07); transform:translateX(2px);}
-section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {background:rgba(58,135,229,.22); box-shadow:inset 3px 0 0 #3987e5;}
-section[data-testid="stSidebar"] div[role="radiogroup"] label p {font-weight:600; font-size:.92rem; color:#e5e7eb !important;}
-section[data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child {opacity:0; width:0; overflow:hidden; margin:0;}
+section[data-testid="stSidebar"] div[role="radiogroup"] {gap:3px;}
+section[data-testid="stSidebar"] div[role="radiogroup"] label {display:flex !important; align-items:center; gap:.55rem;
+  padding:.62rem .85rem; border-radius:10px; margin:3px 0; cursor:pointer;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);}
+section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {background:rgba(255,255,255,.14); transform:translateX(2px);}
+section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+  background:linear-gradient(135deg,rgba(58,135,229,.40),rgba(74,58,167,.34)); border-color:rgba(58,135,229,.6);}
+section[data-testid="stSidebar"] div[role="radiogroup"] label p {font-weight:600; font-size:.9rem; color:#eef2f8 !important; margin:0;}
+section[data-testid="stSidebar"] div[role="radiogroup"] label div[data-baseweb="radio"] > div:first-child {
+  border-color:rgba(255,255,255,.4);}
 
 /* Buttons */
 .stButton>button, .stDownloadButton>button, .stFormSubmitButton>button {border-radius:10px; font-weight:600;
