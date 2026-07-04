@@ -353,11 +353,7 @@ def page_report(scored: list[dict]) -> None:
 
             with st.spinner("Running intake → timeline → fraud → report..."):
                 final = run_claim({"claim": repo.get_claim(claim_id)})
-            report = final.get("report", {})
-            if report.get("timeline_summary"):
-                st.markdown("**Timeline summary**")
-                st.write(report["timeline_summary"])
-            st.json(report)
+            render_detailed_and_pdf(final, f"claim #{claim_id}", s["description"])
 
 
 def page_model() -> None:
@@ -508,6 +504,65 @@ def _render_quick_report(report: dict) -> None:
         st.write(report["timeline_summary"])
 
 
+def render_detailed_and_pdf(state: dict, claim_ref: str, description: str = "") -> None:
+    """Show a detailed view (events, points to verify, coverage) + a PDF download."""
+    from insurclaim import coverage as cov_mod
+    from insurclaim import report_builder
+
+    cov = None
+    try:
+        if description:
+            cov = cov_mod.check_coverage(description)
+            if cov.get("decision") == "needs_review" and not cov.get("citations"):
+                cov = None  # no policies uploaded - skip the coverage block
+    except Exception:
+        cov = None
+
+    detailed = report_builder.build_detailed(state, coverage=cov)
+    with st.expander("📄 Detailed view — events, points to verify, coverage", expanded=True):
+        if detailed["summary"]:
+            st.markdown("**Investigator summary**")
+            st.write(detailed["summary"])
+        if cov:
+            cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
+            st.markdown("**Policy coverage**")
+            st.markdown(badge(cov["decision"].upper().replace("_", " "),
+                              cmap.get(cov["decision"], MUTED)), unsafe_allow_html=True)
+            st.caption(cov.get("rationale", ""))
+        if detailed["verify"]:
+            st.markdown("**⚠ Points requiring verification (what we're suspicious about)**")
+            for i, v in enumerate(detailed["verify"], 1):
+                st.markdown(
+                    f"{i}. **{v['point']}**  \n"
+                    + (f"   _Why:_ {v['why']}  \n" if v.get("why") else "")
+                    + f"   _→ Verify:_ {v['action']}"
+                )
+        if detailed["events"]:
+            st.markdown("**Event timeline**")
+            for ev in detailed["events"]:
+                facts = ", ".join(ev.get("facts", []) or [])
+                st.markdown(
+                    f"- **{ev.get('order','-')}.** {ev.get('summary','')}"
+                    + (f"  _[{facts}]_" if facts else "")
+                )
+        if detailed["similar_fraud"]:
+            st.markdown("**Similar known-fraud matches**")
+            for m in detailed["similar_fraud"]:
+                st.markdown(
+                    f"- {int((m.get('similarity') or 0)*100)}% match to claim "
+                    f"#{m.get('claim_id')} ({m.get('fraud_type')})"
+                )
+
+    pdf = report_builder.to_pdf(detailed, claim_ref=claim_ref)
+    st.download_button(
+        "⬇ Download full PDF report",
+        pdf,
+        file_name=f"{claim_ref.replace(' ', '_').replace('#', '')}_report.pdf",
+        mime="application/pdf",
+        type="primary",
+    )
+
+
 def page_submit() -> None:
     st.markdown("### ✍️ Submit a claim (documents & photos)")
     st.caption(
@@ -552,6 +607,7 @@ def page_submit() -> None:
         with st.spinner("Running intake → timeline → fraud → report..."):
             final = run_claim({"raw_documents": text})
         _render_quick_report(final.get("report", {}))
+        render_detailed_and_pdf(final, "uploaded claim", text)
 
 
 def page_policy() -> None:

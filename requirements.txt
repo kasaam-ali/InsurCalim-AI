@@ -28,8 +28,9 @@ chromadb               # local vector database (uses its own lightweight embeddi
 Pillow                 # read image EXIF/metadata
 imagehash              # perceptual hash for duplicate-photo detection
 
-# --- Document intake ---
+# --- Document intake & reporting ---
 pypdf                  # extract text from uploaded PDF claim documents
+fpdf2                  # render the downloadable PDF investigation report
 
 # --- Frontend dashboard (Phase 11) ---
 streamlit              # investigator dashboard UI (frontend/app.py)
