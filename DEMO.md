@@ -20,11 +20,11 @@ timeline, flagged inconsistencies, source citations, and a recommended action
 | Technology | Where it runs | Proven by step |
 | --- | --- | --- |
 | Claude API (multi-provider) | `insurclaim/llm.py` | 4 |
-| PostgreSQL | `insurclaim/db/` | 1, 2 |
+| PostgreSQL | `insurclaim/db/` | 1, 2, 5 |
 | Vector DB + RAG (Chroma) | `insurclaim/vectordb/` | 4 (inside the pipeline) |
 | LangGraph orchestration | `insurclaim/graph.py` | 4 |
-| Fine-tuning (DistilBERT) | `insurclaim/ml/` | 5 |
-| AWS deployment plan | `infra/deploy.md` | 6 |
+| Fine-tuning + classic ML | `insurclaim/ml/` | 6 |
+| AWS deployment plan | `infra/deploy.md` | 8 |
 
 ---
 
@@ -50,15 +50,16 @@ docker compose -f infra/docker-compose.yml ps
 docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "\dt"
 ```
 
-**Expect:** the `infra-db-1` container is `Up (healthy)`, and five tables are
-listed: `policies`, `claims`, `parties`, `vehicles`, `photo_hashes`.
+**Expect:** the `infra-db-1` container is `Up (healthy)`, and the tables are
+listed: `policies`, `claims`, `parties`, `vehicles`, `photo_hashes`, and
+`real_claims`.
 
 **Proves:** a real relational store, with a schema designed for velocity checks
 (repeat claimant / repeat VIN) and duplicate-photo detection.
 
 ---
 
-## Step 2 — Real claim data with ground-truth labels
+## Step 2 — Synthetic claim data with ground-truth labels
 
 ```powershell
 docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT id, is_fraud, fraud_type, claimed_amount FROM claims ORDER BY id;"
@@ -67,8 +68,7 @@ docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT id, is_fraud,
 **Expect:** claims with `is_fraud` labels and a `fraud_type` (e.g.
 `staged_collision`) for the fraudulent ones.
 
-**Proves:** labeled data exists — used both as the training set for the ML
-classifier and as ground truth for evaluation.
+**Proves:** labeled narrative data exists for the LLM agents and for evaluation.
 
 ---
 
@@ -89,7 +89,7 @@ deliberately injects known fraud patterns, each with a ground-truth label.
 
 ---
 
-## Step 4 — The full investigation pipeline (the headline)
+## Step 4 — The full investigation pipeline (headline #1)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.main --claim 1
@@ -107,40 +107,67 @@ to the claim record in PostgreSQL.
 
 ---
 
-## Step 5 — Fine-tune the fraud classifier (optional, heavier)
+## Step 5 — Load a real-world dataset (1000 real claims)
 
 ```powershell
-.venv\Scripts\python.exe -m insurclaim.ml.train
+.venv\Scripts\python.exe -m insurclaim.data.load_real
+docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT is_fraud, COUNT(*) FROM real_claims GROUP BY is_fraud;"
 ```
 
-**Expect:** DistilBERT trains on the labeled claims and is saved to
-`models/fraud_classifier/`. After this, Step 4 reports a numeric
-`fraud_probability` instead of `null`.
+**Expect:** `Loaded 1000 real claims ...`, then a count showing ~753 legit and
+~247 fraud.
 
-**Proves:** a real fine-tuning deliverable — a small transformer specialised on
-the project's own labeled fraud data.
-
-> Requires enough labeled claims to be useful; generate more with Step 3 first.
+**Proves:** the project is not limited to synthetic data — it loads a real,
+public, labeled auto-insurance fraud dataset into PostgreSQL for training and
+evaluation.
 
 ---
 
-## Step 6 — Measure accuracy (evaluation)
+## Step 6 — Measured performance on real data (headline #2)
 
 ```powershell
-.venv\Scripts\python.exe -m insurclaim.eval.harness
+.venv\Scripts\python.exe -m insurclaim.ml.train_tabular
 ```
 
-**Expect:** a confusion matrix plus precision, recall, and a classification
-report over all labeled claims.
+**Expect:** a confusion matrix and a classification report on a held-out 20%
+split, roughly:
 
-**Proves:** the project's success metric — accuracy measured against ground
-truth, not just anecdotes.
+```
+Precision: 0.64
+Recall:    0.84
+              precision    recall  f1-score   support
+       legit       0.94      0.85      0.89       151
+       fraud       0.64      0.84      0.73        49
+    accuracy                           0.84       200
+```
 
-> Most meaningful with 20+ claims and the ML model trained.
+**Proves:** a real, defensible performance number — the class-balanced Random
+Forest catches ~84% of real fraud. It also tells a genuine ML story: on this
+tabular data a text transformer collapsed to predicting "legit" for everything
+(zero fraud recall), so the right tool — gradient-style ensembles for tabular
+features — was used instead. High recall is preferred here because flagged
+claims go to a human investigator, never an automatic denial.
 
 ---
 
-## Step 7 — Clean, professional history
+## Step 7 — Fine-tune DistilBERT on narratives (optional)
+
+```powershell
+.venv\Scripts\python.exe -m insurclaim.ml.train --source narrative
+```
+
+**Expect:** DistilBERT fine-tunes on the synthetic narrative claims and is saved
+to `models/fraud_classifier/`. After this, Step 4 reports a numeric
+`fraud_probability` for narrative claims instead of `null`.
+
+**Proves:** the fine-tuning deliverable — a transformer specialised on free-text
+claim narratives, complementing the tabular model from Step 6.
+
+> Needs enough labeled narrative claims to be useful; generate more with Step 3.
+
+---
+
+## Step 8 — Clean, professional history
 
 ```powershell
 git log --oneline
@@ -163,9 +190,11 @@ agents.
 
 ## Honest current status
 
-- The end-to-end pipeline works and produces explainable reports.
-- Fraud-detection strength scales with populated layers: generate more claims,
-  index prior claims for retrieval (`python -m insurclaim.vectordb.ingest`), and
-  train the classifier (Step 5). With those active, fraudulent claims score
-  much higher.
-- No real personal data is used anywhere — the dataset is synthetic by design.
+- The end-to-end pipeline works and produces explainable reports (Step 4).
+- The fraud classifier reaches ~0.84 recall on real held-out data (Step 6).
+- Fraud-detection strength in the LLM pipeline scales with populated layers:
+  generate more claims, index prior claims for retrieval
+  (`python -m insurclaim.vectordb.ingest`), and train the narrative model
+  (Step 7).
+- No real personal data is used in the synthetic parts; the real dataset is a
+  public, anonymized research dataset used only for training and evaluation.
