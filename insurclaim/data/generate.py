@@ -14,12 +14,11 @@ Run as a script:  python -m insurclaim.data.generate --n 50
 from __future__ import annotations
 
 import argparse
-import json
 import random
 from datetime import date, timedelta
 
 from insurclaim.db import repo
-from insurclaim.llm import call_llm
+from insurclaim.llm import call_llm_json
 
 # Fraud patterns we inject, matching the story in PLAN.md.
 FRAUD_TYPES = [
@@ -72,11 +71,10 @@ def _fake_policy(policy_number: str) -> dict:
 def generate_one(is_fraud: bool) -> int:
     """Ask the model for one claim, store it, and return the new claim id."""
     fraud_type = random.choice(FRAUD_TYPES) if is_fraud else None
-    raw = call_llm(
+    data = call_llm_json(
         prompt="Generate one claim now.",
         system=_system_prompt(fraud_type),
     )
-    data = json.loads(raw)
 
     repo.insert_policy(_fake_policy(data["policy_number"]))
     claim_id = repo.insert_claim(
