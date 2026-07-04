@@ -70,6 +70,16 @@ CREATE TABLE IF NOT EXISTS photo_hashes (
     captured_at  TIMESTAMPTZ                      -- capture time from EXIF metadata (NULL if missing)
 );
 
+-- Policy documents uploaded by an insurer (their own policies / rules), used by
+-- the coverage engine to check whether an incoming claim is covered.
+CREATE TABLE IF NOT EXISTS policy_documents (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    company      TEXT,                            -- which insurer owns this document
+    doc_name     TEXT,                            -- a human-readable name
+    content      TEXT NOT NULL,                   -- the policy text (indexed for RAG)
+    uploaded_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Indexes that make the cross-claim "velocity" lookups fast.
 CREATE INDEX IF NOT EXISTS idx_parties_national_id  ON parties (national_id);
 CREATE INDEX IF NOT EXISTS idx_vehicles_vin         ON vehicles (vin);

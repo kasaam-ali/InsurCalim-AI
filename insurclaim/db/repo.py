@@ -177,6 +177,50 @@ def get_real_claim(claim_id: int) -> dict[str, Any] | None:
         return cur.fetchone()
 
 
+# --- Policy documents (an insurer uploads their own policies/rules) -------
+
+def _ensure_policy_documents_table() -> None:
+    """Create the policy_documents table on demand (safe to call repeatedly)."""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS policy_documents (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                company TEXT,
+                doc_name TEXT,
+                content TEXT NOT NULL,
+                uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
+        )
+        conn.commit()
+
+
+def insert_policy_document(company: str, doc_name: str, content: str) -> int:
+    """Store an uploaded policy document and return its id."""
+    _ensure_policy_documents_table()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO policy_documents (company, doc_name, content) "
+            "VALUES (%s, %s, %s) RETURNING id",
+            (company, doc_name, content),
+        )
+        doc_id = cur.fetchone()["id"]
+        conn.commit()
+        return doc_id
+
+
+def list_policy_documents() -> list[dict[str, Any]]:
+    """List uploaded policy documents (with a short preview of each)."""
+    _ensure_policy_documents_table()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, company, doc_name, LEFT(content, 160) AS preview, uploaded_at "
+            "FROM policy_documents ORDER BY id"
+        )
+        return cur.fetchall()
+
+
 # --- Velocity / duplicate checks (used by deterministic fraud rules) -----
 
 def count_claims_by_national_id(national_id: str, exclude_claim_id: int | None = None) -> int:
