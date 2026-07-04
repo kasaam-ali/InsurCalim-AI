@@ -171,12 +171,8 @@ def call_llm(prompt: str, system: str | None = None, reasoning: bool = False) ->
     raise LLMError("All LLM providers failed:\n" + "\n".join(errors))
 
 
-def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> str:
-    """Send an image + prompt to a vision model (via OpenRouter) and return text.
-
-    Used to describe vehicle damage from a photo. Raises if OpenRouter is not
-    configured or the vision model is unavailable; callers should handle that.
-    """
+def _openrouter_vision(prompt: str, image_bytes: bytes, mime: str) -> str:
+    """Read an image via an OpenRouter vision model."""
     import base64
 
     from openai import OpenAI
@@ -200,6 +196,37 @@ def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> st
         max_tokens=OPENROUTER_MAX_TOKENS,
     )
     return response.choices[0].message.content or ""
+
+
+def _gemini_vision(prompt: str, image_bytes: bytes, mime: str) -> str:
+    """Read an image via the Gemini API (vision-capable)."""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=[types.Part.from_bytes(data=image_bytes, mime_type=mime), prompt],
+    )
+    return response.text or ""
+
+
+def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> str:
+    """Describe an image (e.g. vehicle damage) with a vision model.
+
+    Tries OpenRouter first, then Gemini as a fallback. Raises LLMError only if
+    both fail; callers should handle that (degrade gracefully).
+    """
+    errors: list[str] = []
+    for name, fn in (("openrouter", _openrouter_vision), ("gemini", _gemini_vision)):
+        try:
+            text = fn(prompt, image_bytes, mime)
+            if text:
+                return text
+            errors.append(f"{name}: empty response")
+        except Exception as exc:
+            errors.append(f"{name}: {exc}")
+    raise LLMError("All vision providers failed:\n" + "\n".join(errors))
 
 
 def call_llm_json(prompt: str, system: str | None = None, reasoning: bool = False) -> dict:
