@@ -62,6 +62,13 @@ def build_detailed(state: dict[str, Any], coverage: dict | None = None) -> dict[
         if m.get("metadata", {}).get("is_fraud")
     ]
 
+    # Score contributions (reason-code weights) for the PDF chart.
+    weights = {"low": 10, "medium": 25, "high": 40}
+    contributions = [(s.get("code", "signal"), weights.get(s.get("severity"), 10)) for s in signals]
+    prob = state.get("fraud_probability")
+    if prob is not None:
+        contributions.append(("ml_fraud_probability", int(prob * 40)))
+
     return {
         "risk_score": float(report.get("risk_score", 0) or 0),
         "recommended_action": report.get("recommended_action", "-"),
@@ -71,6 +78,7 @@ def build_detailed(state: dict[str, Any], coverage: dict | None = None) -> dict[
         "events": timeline.get("events", []),
         "verify": verify,
         "similar_fraud": similar_fraud,
+        "contributions": contributions,
         "coverage": coverage,
         "citations": report.get("citations", []),
     }
@@ -129,6 +137,31 @@ def to_pdf(detailed: dict[str, Any], claim_ref: str = "claim") -> bytes:
         new_x="LMARGIN", new_y="NEXT", fill=True,
     )
     pdf.set_text_color(0, 0, 0)
+
+    # Risk bar chart
+    pdf.ln(2)
+    bx, by, bw, bh = pdf.l_margin, pdf.get_y(), 180, 6
+    pdf.set_fill_color(230, 228, 222)
+    pdf.rect(bx, by, bw, bh, style="F")
+    pdf.set_fill_color(*rgb)
+    pdf.rect(bx, by, bw * min(score, 100) / 100, bh, style="F")
+    pdf.set_y(by + bh + 1)
+    mcell("Risk score (0 - 100)", size=8, color=(140, 140, 140))
+
+    # Reason-code contribution bars
+    contribs = detailed.get("contributions") or []
+    if contribs:
+        section("Score contributions (reason codes)")
+        maxc = max((c for _, c in contribs), default=1) or 1
+        pdf.set_font("Helvetica", "", 9)
+        for code, pts in contribs:
+            y = pdf.get_y()
+            pdf.set_xy(pdf.l_margin, y)
+            pdf.cell(66, 5, _san(str(code)[:32]))
+            pdf.set_fill_color(74, 58, 167)
+            pdf.rect(pdf.l_margin + 68, y + 0.6, 96 * pts / maxc, 3.6, style="F")
+            pdf.set_xy(pdf.l_margin + 168, y)
+            pdf.cell(20, 5, _san(f"{pts} pts"), new_x="LMARGIN", new_y="NEXT")
 
     if detailed.get("summary"):
         section("Summary")

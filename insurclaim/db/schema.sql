@@ -80,6 +80,21 @@ CREATE TABLE IF NOT EXISTS policy_documents (
     uploaded_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Investigator case management: status/assignee per claim and an append-only
+-- notes trail (audit-defensible).
+CREATE TABLE IF NOT EXISTS case_status (
+    claim_ref   TEXT PRIMARY KEY,
+    status      TEXT NOT NULL DEFAULT 'open',
+    assignee    TEXT,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS case_notes (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    claim_ref   TEXT NOT NULL,
+    note        TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Indexes that make the cross-claim "velocity" lookups fast.
 CREATE INDEX IF NOT EXISTS idx_parties_national_id  ON parties (national_id);
 CREATE INDEX IF NOT EXISTS idx_vehicles_vin         ON vehicles (vin);

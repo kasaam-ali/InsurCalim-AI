@@ -221,6 +221,72 @@ def list_policy_documents() -> list[dict[str, Any]]:
         return cur.fetchall()
 
 
+# --- Case management (investigator status + notes per claim) --------------
+
+def _ensure_case_tables() -> None:
+    """Create the case status + notes tables on demand."""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS case_status (
+                claim_ref   TEXT PRIMARY KEY,
+                status      TEXT NOT NULL DEFAULT 'open',
+                assignee    TEXT,
+                updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            CREATE TABLE IF NOT EXISTS case_notes (
+                id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                claim_ref   TEXT NOT NULL,
+                note        TEXT NOT NULL,
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            """
+        )
+        conn.commit()
+
+
+def set_case_status(claim_ref: str, status: str, assignee: str | None) -> None:
+    """Upsert the investigation status / assignee for a claim."""
+    _ensure_case_tables()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO case_status (claim_ref, status, assignee, updated_at)
+            VALUES (%s, %s, %s, now())
+            ON CONFLICT (claim_ref) DO UPDATE
+                SET status = EXCLUDED.status, assignee = EXCLUDED.assignee, updated_at = now()
+            """,
+            (claim_ref, status, assignee),
+        )
+        conn.commit()
+
+
+def get_case_status(claim_ref: str) -> dict[str, Any] | None:
+    """Return the case status row for a claim, if any."""
+    _ensure_case_tables()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT status, assignee, updated_at FROM case_status WHERE claim_ref = %s",
+                    (claim_ref,))
+        return cur.fetchone()
+
+
+def add_case_note(claim_ref: str, note: str) -> None:
+    """Append an investigator note to a claim."""
+    _ensure_case_tables()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("INSERT INTO case_notes (claim_ref, note) VALUES (%s, %s)", (claim_ref, note))
+        conn.commit()
+
+
+def list_case_notes(claim_ref: str) -> list[dict[str, Any]]:
+    """Return all notes for a claim, newest last."""
+    _ensure_case_tables()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT note, created_at FROM case_notes WHERE claim_ref = %s ORDER BY id",
+                    (claim_ref,))
+        return cur.fetchall()
+
+
 # --- Velocity / duplicate checks (used by deterministic fraud rules) -----
 
 def count_claims_by_national_id(national_id: str, exclude_claim_id: int | None = None) -> int:

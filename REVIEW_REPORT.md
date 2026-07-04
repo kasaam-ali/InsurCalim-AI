@@ -4,6 +4,11 @@ Honest status against the full checklist. Legend: ✅ Done · ⚠️ Partial · 
 · ⏭️ Intentionally skipped (enterprise scope, out of scope for a portfolio demo).
 Every ✅ is backed by evidence (file, test output, or committed code).
 
+**Post-review completions (now 100%):** reliable vision (Gemini-first);
+persistent investigator case management (status + assignee + notes trail);
+charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
+(trends, risk bands, fraud types, amounts).
+
 ---
 
 ## PART 1 — Core functionality
@@ -67,7 +72,7 @@ Every ✅ is backed by evidence (file, test output, or committed code).
 | PDF download (1–2 pages) | ✅ | `report_builder.to_pdf`; verified valid PDF (3.9 KB) |
 | Sections (summary, risk, timeline, flags, similar, coverage, recommendations) | ✅ | all present in PDF |
 | Branding / logo | ⚠️ | text header "InsurClaim AI"; no logo image |
-| Charts/tables in PDF | ⚠️ | structured text + colored risk banner; no embedded charts |
+| Charts/tables in PDF | ✅ | drawn risk bar + reason-code contribution bars |
 
 ---
 
@@ -93,7 +98,7 @@ Every ✅ is backed by evidence (file, test output, or committed code).
 | From | Feature | Status |
 |---|---|---|
 | Shift | Real-time scoring | ✅ instant no-LLM risk score in queue/overview |
-| Shift | Investigator workflow (notes/case) | ⚠️ chat-with-claim + export; no persistent case mgmt |
+| Shift | Investigator workflow (notes/case) | ✅ persistent status + assignee + notes trail |
 | Shift | Multi-line (health/property/life) | ❌ auto only |
 | Shift | 100+ fraud-pattern library | ⚠️ 5 fraud types + rules + RAG |
 | Tractable | Photo damage AI | ✅ Gemini vision damage description |

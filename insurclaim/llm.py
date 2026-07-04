@@ -217,8 +217,9 @@ def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> st
     Tries OpenRouter first, then Gemini as a fallback. Raises LLMError only if
     both fail; callers should handle that (degrade gracefully).
     """
+    # Gemini first — it is the reliable vision provider here; OpenRouter as backup.
     errors: list[str] = []
-    for name, fn in (("openrouter", _openrouter_vision), ("gemini", _gemini_vision)):
+    for name, fn in (("gemini", _gemini_vision), ("openrouter", _openrouter_vision)):
         try:
             text = fn(prompt, image_bytes, mime)
             if text:

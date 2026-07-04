@@ -158,6 +158,7 @@ def score_all() -> list[dict]:
                 "description": desc,
                 "location": claim.get("location") or "",
                 "amount": claim.get("claimed_amount"),
+                "incident_date": claim.get("incident_date"),
             }
         )
     return scored
@@ -375,6 +376,8 @@ def page_report(scored: list[dict]) -> None:
                 ans = f"(assistant unavailable: {exc})"
         st.info(ans)
 
+    case_management_ui(f"claim #{claim_id}")
+
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
         st.caption("Uses the LLM; on the free tier this may take a moment or fall back.")
         if st.button("Run full AI investigation", type="primary"):
@@ -383,6 +386,66 @@ def page_report(scored: list[dict]) -> None:
             with st.spinner("Running intake → timeline → fraud → report..."):
                 final = run_claim({"claim": repo.get_claim(claim_id)})
             render_detailed_and_pdf(final, f"claim #{claim_id}", s["description"])
+
+
+def case_management_ui(claim_ref: str) -> None:
+    """Persistent investigator status, assignee, and notes for a claim."""
+    st.markdown("##### 🗂️ Case management")
+    case = repo.get_case_status(claim_ref) or {}
+    statuses = ["open", "investigating", "cleared", "confirmed_fraud"]
+    cur = case.get("status", "open")
+    c1, c2 = st.columns(2)
+    status = c1.selectbox("Status", statuses,
+                          index=statuses.index(cur) if cur in statuses else 0,
+                          key=f"st_{claim_ref}")
+    assignee = c2.text_input("Assignee", case.get("assignee") or "", key=f"as_{claim_ref}")
+    if st.button("Save case", key=f"sv_{claim_ref}"):
+        repo.set_case_status(claim_ref, status, assignee)
+        st.success("Case updated.")
+    note = st.text_input("Add an investigation note", key=f"nt_{claim_ref}")
+    if st.button("Add note", key=f"an_{claim_ref}") and note.strip():
+        repo.add_case_note(claim_ref, note.strip())
+        st.success("Note added.")
+        st.rerun()
+    notes = repo.list_case_notes(claim_ref)
+    if notes:
+        st.markdown("**Notes (audit trail)**")
+        for n in notes:
+            st.markdown(f"- {n['note']}  \n  _{str(n['created_at'])[:16]}_")
+
+
+def page_analytics(scored: list[dict]) -> None:
+    import pandas as pd
+    from collections import Counter, defaultdict
+
+    st.markdown("### 📈 Analytics & trends")
+
+    months: Counter = Counter()
+    for s in scored:
+        d = s.get("incident_date")
+        if d:
+            months[str(d)[:7]] += 1
+    if months:
+        st.markdown("##### Claims per month")
+        st.line_chart(pd.Series({m: months[m] for m in sorted(months)}, name="claims"))
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("##### Claims by risk band")
+        bands = Counter(risk_meta(s["risk"])[0] for s in scored)
+        st.bar_chart(pd.Series({k: bands.get(k, 0) for k in ["HIGH", "MEDIUM", "LOW"]}, name="claims"))
+    with c2:
+        st.markdown("##### Labeled fraud types")
+        ft = Counter(s["fraud_type"] for s in scored if s["is_fraud"])
+        st.bar_chart(pd.Series(dict(ft.most_common()), name="claims"))
+
+    st.markdown("##### Average claimed amount by risk band ($)")
+    sums: dict = defaultdict(list)
+    for s in scored:
+        if s.get("amount"):
+            sums[risk_meta(s["risk"])[0]].append(float(s["amount"]))
+    avg = {k: (sum(sums[k]) / len(sums[k]) if sums.get(k) else 0) for k in ["HIGH", "MEDIUM", "LOW"]}
+    st.bar_chart(pd.Series(avg, name="avg $"))
 
 
 def page_model() -> None:
@@ -702,11 +765,12 @@ PAGES = {
     "📋 Claims queue": page_queue,
     "🔍 Investigation report": page_report,
     "🕸️ Fraud rings": page_rings,
+    "📈 Analytics": page_analytics,
     "✍️ Submit a claim": page_submit,
     "🛡️ Policy & coverage": page_policy,
-    "📈 Model performance": page_model,
+    "📉 Model performance": page_model,
 }
-NO_ARG_PAGES = ("✍️ Submit a claim", "🛡️ Policy & coverage", "📈 Model performance")
+NO_ARG_PAGES = ("✍️ Submit a claim", "🛡️ Policy & coverage", "📉 Model performance")
 
 
 def main() -> None:
