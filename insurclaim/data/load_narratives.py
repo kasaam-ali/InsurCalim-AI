@@ -120,11 +120,38 @@ def load(path: str | Path = DEFAULT_PATH) -> list[int]:
     return ids
 
 
+def seed_photo_hashes() -> int:
+    """Attach a perceptual hash to each claim, reusing one hash across a few
+    fraud claims so the duplicate-photo fraud check has something to detect.
+    """
+    import hashlib
+
+    reused = "ffff0000ffff0000"  # the "same photo" reused across staged claims
+    claims = repo.list_labeled_claims()
+    reused_count = 0
+    for claim in claims:
+        is_staged = claim.get("fraud_type") == "staged_collision"
+        if is_staged and reused_count < 4:
+            phash = reused
+            reused_count += 1
+        else:
+            phash = hashlib.md5(str(claim["id"]).encode()).hexdigest()[:16]
+        repo.insert_photo_hash(
+            claim["id"],
+            {"file_name": f"claim_{claim['id']}_damage.jpg", "phash": phash, "captured_at": None},
+        )
+    return len(claims)
+
+
 if __name__ == "__main__":
     source = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PATH
     created = load(source)
+    photos = seed_photo_hashes()
 
     from insurclaim.vectordb.ingest import ingest_prior_claims
 
     indexed = ingest_prior_claims()
-    print(f"Loaded {len(created)} narrative claims; vector store now holds {indexed} claims.")
+    print(
+        f"Loaded {len(created)} narrative claims; seeded {photos} photo hashes; "
+        f"vector store now holds {indexed} claims."
+    )
