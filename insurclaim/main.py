@@ -37,14 +37,59 @@ def _run_by_text(text: str) -> dict:
     return run_claim({"raw_documents": text})
 
 
+def _run_real_claim(claim_id: int) -> dict:
+    """Score a real (structured) claim with the tabular fraud classifier."""
+    from insurclaim.ml.predict_tabular import predict_fraud_tabular
+    from insurclaim.ml.train_tabular import DECISION_THRESHOLD
+
+    claim = repo.get_real_claim(claim_id)
+    if claim is None:
+        raise SystemExit(f"No real claim found with id {claim_id}.")
+
+    probability = predict_fraud_tabular(claim)
+    if probability is None:
+        raise SystemExit(
+            "Tabular model not trained yet. Run: python -m insurclaim.ml.train_tabular"
+        )
+
+    if probability >= DECISION_THRESHOLD:
+        action = "route_to_investigator"
+    elif probability < 0.10:
+        action = "fast_track_approve"
+    else:
+        action = "request_more_info"
+
+    return {
+        "report": {
+            "claim_id": claim_id,
+            "fraud_probability": round(probability, 3),
+            "risk_score": round(probability * 100, 1),
+            "recommended_action": action,
+            "key_facts": {
+                "incident_type": claim.get("incident_type"),
+                "incident_severity": claim.get("incident_severity"),
+                "total_claim_amount": claim.get("total_claim_amount"),
+                "authorities_contacted": claim.get("authorities_contacted"),
+            },
+            "ground_truth_is_fraud": claim.get("is_fraud"),
+        }
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Investigate one insurance claim.")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--claim", type=int, help="claim id to load from the database")
+    group.add_argument("--claim", type=int, help="synthetic claim id (runs the full agent pipeline)")
     group.add_argument("--text", type=str, help="raw claim text to investigate")
+    group.add_argument("--real-claim", type=int, help="real dataset claim id (tabular ML score)")
     args = parser.parse_args()
 
-    final_state = _run_by_id(args.claim) if args.claim else _run_by_text(args.text)
+    if args.claim:
+        final_state = _run_by_id(args.claim)
+    elif args.real_claim:
+        final_state = _run_real_claim(args.real_claim)
+    else:
+        final_state = _run_by_text(args.text)
 
     # default=str lets us print dates and decimals without a custom encoder.
     print(json.dumps(final_state.get("report", {}), indent=2, default=str))

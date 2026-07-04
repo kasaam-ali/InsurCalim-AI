@@ -170,6 +170,13 @@ def list_real_claims() -> list[dict[str, Any]]:
         return cur.fetchall()
 
 
+def get_real_claim(claim_id: int) -> dict[str, Any] | None:
+    """Return a single row from the real-world dataset by its id."""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM real_claims WHERE id = %s", (claim_id,))
+        return cur.fetchone()
+
+
 # --- Velocity / duplicate checks (used by deterministic fraud rules) -----
 
 def count_claims_by_national_id(national_id: str, exclude_claim_id: int | None = None) -> int:
