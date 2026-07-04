@@ -13,9 +13,8 @@ Run as a script:  python -m insurclaim.data.load_narratives [path-to-json]
 from __future__ import annotations
 
 import json
-import random
 import sys
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from insurclaim.db import repo
@@ -23,15 +22,22 @@ from insurclaim.db import repo
 DEFAULT_PATH = Path(__file__).resolve().parents[2] / "data" / "real" / "narratives.json"
 
 
-def _fake_policy(policy_number: str) -> dict:
-    """Create a simple policy row so the claim has something to reference."""
-    start = date.today() - timedelta(days=random.randint(60, 400))
+def _policy_for(policy_number: str, incident_date: str, claimed_amount: float) -> dict:
+    """Create a policy whose coverage window and limit fit the claim.
+
+    Anchored to the incident date (active from 90 days before to well after) and
+    a limit above the claimed amount, so deterministic policy/amount checks only
+    fire on genuinely problematic claims rather than on random defaults.
+    """
+    incident = datetime.strptime(incident_date, "%Y-%m-%d").date()
+    start = incident - timedelta(days=90)
+    limit = max(50000, int((claimed_amount or 0) * 1.5))
     return {
         "policy_number": policy_number,
         "holder_name": "Policy Holder",
         "start_date": start,
         "end_date": start + timedelta(days=365),
-        "coverage_limit": random.choice([10000, 25000, 50000]),
+        "coverage_limit": limit,
     }
 
 
@@ -42,7 +48,9 @@ def load(path: str | Path = DEFAULT_PATH) -> list[int]:
 
     ids: list[int] = []
     for data in claims:
-        repo.insert_policy(_fake_policy(data["policy_number"]))
+        repo.insert_policy(
+            _policy_for(data["policy_number"], data["incident_date"], data.get("claimed_amount", 0))
+        )
         claim_id = repo.insert_claim(
             {
                 "policy_number": data["policy_number"],
