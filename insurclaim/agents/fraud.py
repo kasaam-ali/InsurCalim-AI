@@ -21,8 +21,10 @@ from insurclaim.ml.predict import predict_fraud
 from insurclaim.rules import deterministic
 from insurclaim.vectordb.store import claim_store
 
-# Similarity above this against a known-fraud claim becomes a flag.
-SIMILAR_FRAUD_THRESHOLD = 0.85
+# Similarity above this against a known-fraud claim becomes a flag. Tuned to the
+# Chroma default embeddings (MiniLM), where genuine matches score ~0.3-0.5 and
+# unrelated claims score near zero or negative - so 0.85 would never fire.
+SIMILAR_FRAUD_THRESHOLD = 0.30
 
 FRAUD_SYSTEM = """
 You are a fraud analyst. You are given deterministic signals, an ML fraud score,
