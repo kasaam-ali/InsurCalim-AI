@@ -40,7 +40,12 @@ def run(state: dict[str, Any]) -> dict[str, Any]:
     extracted = state.get("extracted", {})
     description = extracted.get("description", "")
 
-    timeline = call_llm_json(prompt=description, system=TIMELINE_SYSTEM, reasoning=True)
+    try:
+        timeline = call_llm_json(prompt=description, system=TIMELINE_SYSTEM, reasoning=True)
+    except Exception:
+        # LLM unavailable (e.g. rate-limited): continue with an empty timeline so
+        # the deterministic and RAG layers still produce a report.
+        timeline = {"events": [], "inconsistencies": [], "gaps": []}
 
     # Deterministic kinematic sanity check over the events (pure code).
     events = timeline.get("events", [])
