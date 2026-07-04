@@ -39,6 +39,8 @@ OPENROUTER_MAX_TOKENS = int(os.getenv("OPENROUTER_MAX_TOKENS", "1500"))
 # Free models get rate-limited (429); retry a few times with a short backoff.
 OPENROUTER_MAX_RETRIES = int(os.getenv("OPENROUTER_MAX_RETRIES", "4"))
 OPENROUTER_RETRY_WAIT_SECONDS = int(os.getenv("OPENROUTER_RETRY_WAIT_SECONDS", "12"))
+# Vision model for reading damage photos (OpenRouter, OpenAI-compatible).
+OPENROUTER_VISION_MODEL = os.getenv("OPENROUTER_VISION_MODEL", "google/gemini-2.0-flash-exp:free")
 
 
 class LLMError(RuntimeError):
@@ -167,6 +169,37 @@ def call_llm(prompt: str, system: str | None = None, reasoning: bool = False) ->
             errors.append(f"{name}: {exc}")
 
     raise LLMError("All LLM providers failed:\n" + "\n".join(errors))
+
+
+def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> str:
+    """Send an image + prompt to a vision model (via OpenRouter) and return text.
+
+    Used to describe vehicle damage from a photo. Raises if OpenRouter is not
+    configured or the vision model is unavailable; callers should handle that.
+    """
+    import base64
+
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.environ["OPENROUTER_API_KEY"],
+    )
+    data_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode()}"
+    response = client.chat.completions.create(
+        model=OPENROUTER_VISION_MODEL,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ],
+        max_tokens=OPENROUTER_MAX_TOKENS,
+    )
+    return response.choices[0].message.content or ""
 
 
 def call_llm_json(prompt: str, system: str | None = None, reasoning: bool = False) -> dict:

@@ -333,6 +333,19 @@ def page_report(scored: list[dict]) -> None:
         file_name=f"claim_{s['id']}_summary.txt",
     )
 
+    if st.button("🛡️ Check policy coverage"):
+        from insurclaim import coverage
+
+        with st.spinner("Checking against uploaded policies..."):
+            cov = coverage.check_coverage(s["description"])
+        cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
+        st.markdown("##### Policy coverage")
+        st.markdown(badge(cov["decision"].upper().replace("_", " "),
+                          cmap.get(cov["decision"], MUTED)), unsafe_allow_html=True)
+        st.write(cov["rationale"])
+        if cov.get("clause"):
+            st.caption(f"Cited clause: {cov['clause'][:200]}")
+
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
         st.caption("Uses the LLM; on the free tier this may take a moment or fall back.")
         if st.button("Run full AI investigation", type="primary"):
@@ -345,29 +358,6 @@ def page_report(scored: list[dict]) -> None:
                 st.markdown("**Timeline summary**")
                 st.write(report["timeline_summary"])
             st.json(report)
-
-
-def page_analyze() -> None:
-    st.markdown("### Analyze new claim text")
-    text = st.text_area("Paste a claim narrative / FNOL text", height=180)
-    if st.button("Analyze", type="primary") and text.strip():
-        from insurclaim.graph import run_claim
-
-        with st.spinner("Running the 4-agent pipeline..."):
-            final = run_claim({"raw_documents": text})
-        report = final.get("report", {})
-        score = float(report.get("risk_score", 0) or 0)
-        label, color = risk_meta(score)
-        st.markdown(agent_trace(4), unsafe_allow_html=True)
-        st.markdown(gauge(score, color), unsafe_allow_html=True)
-        st.markdown(badge(f"{label} RISK · {report.get('recommended_action','-')}", color),
-                    unsafe_allow_html=True)
-        for f in report.get("top_flags", []):
-            st.markdown(
-                f'<div class="flag"><div class="t">{f.get("summary","")}</div>'
-                f'<div class="e">{f.get("evidence","")}</div></div>',
-                unsafe_allow_html=True,
-            )
 
 
 def page_model() -> None:
@@ -501,14 +491,137 @@ def page_rings(scored: list[dict]) -> None:
         st.divider()
 
 
+def _render_quick_report(report: dict) -> None:
+    score = float(report.get("risk_score", 0) or 0)
+    lbl, col = risk_meta(score)
+    st.markdown(agent_trace(4), unsafe_allow_html=True)
+    st.markdown(gauge(score, col), unsafe_allow_html=True)
+    st.markdown(badge(f"{lbl} RISK · {report.get('recommended_action','-')}", col), unsafe_allow_html=True)
+    for fl in report.get("top_flags", []):
+        st.markdown(
+            f'<div class="flag"><div class="t">{fl.get("summary","")}</div>'
+            f'<div class="e">{fl.get("evidence","")}</div></div>',
+            unsafe_allow_html=True,
+        )
+    if report.get("timeline_summary"):
+        st.markdown("**Timeline summary**")
+        st.write(report["timeline_summary"])
+
+
+def page_submit() -> None:
+    st.markdown("### ✍️ Submit a claim (documents & photos)")
+    st.caption(
+        "Upload the claim narrative / police report / FIR (txt or pdf) and damage "
+        "photos. The system extracts the data, checks photos for reuse and damage, "
+        "then runs the full investigation."
+    )
+    docs = st.file_uploader("Claim documents (txt / pdf)", type=["txt", "pdf"],
+                            accept_multiple_files=True)
+    photos = st.file_uploader("Damage photos", type=["jpg", "jpeg", "png"],
+                              accept_multiple_files=True)
+    extra = st.text_area("Or paste claim text", height=100)
+
+    if st.button("Process & investigate", type="primary"):
+        from insurclaim import intake_docs
+        from insurclaim.graph import run_claim
+
+        doc_tuples = [(f.name, f.getvalue()) for f in (docs or [])]
+        photo_infos = []
+        for f in photos or []:
+            info = intake_docs.process_photo(f.name, f.getvalue())
+            with st.spinner(f"Reading {f.name} with the vision model..."):
+                info["damage"] = intake_docs.analyze_damage(f.getvalue())
+            photo_infos.append(info)
+
+        text = intake_docs.build_claim_text(doc_tuples, photo_infos)
+        if extra.strip():
+            text = (extra.strip() + "\n\n" + text).strip()
+        if not text:
+            st.warning("Provide at least one document, photo, or some text.")
+            return
+
+        for info in photo_infos:
+            if info["duplicate_of"]:
+                st.error(
+                    f"⚠ Photo {info['file_name']} matches a photo already on claim "
+                    f"#{info['duplicate_of']['claim_id']} — possible reuse."
+                )
+            if info.get("damage"):
+                st.info(f"👁 Vision · {info['file_name']}: {info['damage']}")
+
+        with st.spinner("Running intake → timeline → fraud → report..."):
+            final = run_claim({"raw_documents": text})
+        _render_quick_report(final.get("report", {}))
+
+
+def page_policy() -> None:
+    st.markdown("### 🛡️ Policy & coverage")
+    st.caption(
+        "Upload your company's policies / rules. Incoming claims are checked "
+        "against them — is the claim actually covered by your policy?"
+    )
+    from insurclaim import coverage
+
+    with st.form("policy_form"):
+        company = st.text_input("Company", "DemoInsure")
+        name = st.text_input("Document name", "auto_policy")
+        text = st.text_area("Policy text (paste, or upload a file below)", height=130)
+        up = st.file_uploader("...or upload a policy file (txt / pdf)", type=["txt", "pdf"])
+        submitted = st.form_submit_button("Save & index policy")
+    if submitted:
+        content = text.strip()
+        if up:
+            from insurclaim import intake_docs
+
+            content = intake_docs.extract_text(up.name, up.getvalue())
+        if content:
+            doc_id = coverage.add_policy_document(company, name, content)
+            st.success(f"Saved policy #{doc_id} and indexed it for coverage checks.")
+            st.cache_data.clear()
+        else:
+            st.warning("Provide policy text or a file.")
+
+    docs = repo.list_policy_documents()
+    if docs:
+        st.markdown("##### Policies on file")
+        body = "".join(
+            f"<tr><td>#{d['id']}</td><td>{d['company']}</td><td>{d['doc_name']}</td>"
+            f"<td>{d['preview']}...</td></tr>"
+            for d in docs
+        )
+        st.markdown(
+            f'<table class="tbl"><tr><th>#</th><th>Company</th><th>Name</th>'
+            f"<th>Preview</th></tr>{body}</table>",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("##### Coverage check")
+    claim_text = st.text_area("Claim description to check", height=90)
+    if st.button("Check coverage", type="primary") and claim_text.strip():
+        with st.spinner("Checking against your policies..."):
+            r = coverage.check_coverage(claim_text)
+        cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
+        st.markdown(badge(r["decision"].upper().replace("_", " "),
+                          cmap.get(r["decision"], MUTED)), unsafe_allow_html=True)
+        st.write(r["rationale"])
+        if r.get("clause"):
+            st.markdown(
+                f'<div class="flag" style="border-left-color:{BLUE}">'
+                f'<div class="e">Cited clause: {r["clause"]}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+
 PAGES = {
     "📊 Overview": page_overview,
     "📋 Claims queue": page_queue,
     "🔍 Investigation report": page_report,
     "🕸️ Fraud rings": page_rings,
-    "✍️ Analyze new claim": page_analyze,
+    "✍️ Submit a claim": page_submit,
+    "🛡️ Policy & coverage": page_policy,
     "📈 Model performance": page_model,
 }
+NO_ARG_PAGES = ("✍️ Submit a claim", "🛡️ Policy & coverage", "📈 Model performance")
 
 
 def main() -> None:
@@ -524,7 +637,7 @@ def main() -> None:
         st.error(f"Could not load / score claims (is the database running?): {exc}")
         return
 
-    if choice in ("✍️ Analyze new claim", "📈 Model performance"):
+    if choice in NO_ARG_PAGES:
         PAGES[choice]()
     else:
         PAGES[choice](scored)
