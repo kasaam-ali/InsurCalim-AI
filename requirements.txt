@@ -32,8 +32,8 @@ scikit-learn           # precision / recall / confusion matrix
 numpy                  # numeric helpers
 pandas                 # tabular handling for eval
 
-# --- Fine-tuning (Phase 5) — heavy downloads, enable when we get there ---
-# torch                 # deep-learning backend
-# transformers          # HuggingFace models (e.g. DistilBERT)
-# peft                  # LoRA fine-tuning
-# datasets              # dataset handling for training
+# --- Fine-tuning (Phase 5) ---
+torch                 # deep-learning backend (CPU build on Windows by default)
+transformers          # HuggingFace models (DistilBERT sequence classifier)
+datasets              # dataset handling for training
+# peft                 # LoRA fine-tuning — not used yet (train.py does full fine-tuning)
