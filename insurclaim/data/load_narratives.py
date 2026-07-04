@@ -41,10 +41,39 @@ def _policy_for(policy_number: str, incident_date: str, claimed_amount: float) -
     }
 
 
+def _extract_claims(text: str) -> list[dict]:
+    """Pull every valid claim object out of possibly-messy JSON text.
+
+    Tolerates multiple concatenated arrays and skips malformed objects, and
+    de-duplicates by policy_number, so a large or partly-corrupted paste still
+    loads all of its good, unique records.
+    """
+    decoder = json.JSONDecoder()
+    claims: list[dict] = []
+    seen: set[str] = set()
+    index, length = 0, len(text)
+    while index < length:
+        start = text.find("{", index)
+        if start == -1:
+            break
+        try:
+            obj, end = decoder.raw_decode(text, start)
+            index = end
+        except json.JSONDecodeError:
+            index = start + 1
+            continue
+        if isinstance(obj, dict) and "description" in obj and "policy_number" in obj:
+            key = str(obj["policy_number"])
+            if key not in seen:
+                seen.add(key)
+                claims.append(obj)
+    return claims
+
+
 def load(path: str | Path = DEFAULT_PATH) -> list[int]:
     """Insert every claim from the JSON file and return the new claim ids."""
     repo.init_schema()
-    claims = json.loads(Path(path).read_text(encoding="utf-8"))
+    claims = _extract_claims(Path(path).read_text(encoding="utf-8"))
 
     ids: list[int] = []
     for data in claims:
