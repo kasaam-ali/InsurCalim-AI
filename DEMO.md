@@ -107,19 +107,19 @@ to the claim record in PostgreSQL.
 
 ---
 
-## Step 5 — Load a real-world dataset (1000 real claims)
+## Step 5 — Load a real-world dataset (30,000 real claims)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.data.load_real
 docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT is_fraud, COUNT(*) FROM real_claims GROUP BY is_fraud;"
 ```
 
-**Expect:** `Loaded 1000 real claims ...`, then a count showing ~753 legit and
-~247 fraud.
+**Expect:** `Loaded 30000 real claims ...`, then a count showing ~26,560 legit
+and ~3,440 fraud (a realistic ~11% fraud rate).
 
-**Proves:** the project is not limited to synthetic data — it loads a real,
-public, labeled auto-insurance fraud dataset into PostgreSQL for training and
-evaluation.
+**Proves:** the project is not limited to synthetic data — it downloads a real,
+public, labeled 30,000-row car-insurance fraud dataset (Kaggle) into PostgreSQL
+for training and evaluation.
 
 ---
 
@@ -129,24 +129,25 @@ evaluation.
 .venv\Scripts\python.exe -m insurclaim.ml.train_tabular
 ```
 
-**Expect:** a confusion matrix and a classification report on a held-out 20%
-split, roughly:
+**Expect:** threshold-free quality scores plus a confusion matrix and
+classification report on a held-out 20% split, roughly:
 
 ```
-Precision: 0.64
-Recall:    0.84
+PR-AUC (average precision): 0.30
+ROC-AUC:                    0.74
+
+Operating point at threshold 0.25:
               precision    recall  f1-score   support
-       legit       0.94      0.85      0.89       151
-       fraud       0.64      0.84      0.73        49
-    accuracy                           0.84       200
+       legit       0.95      0.76      0.84      5312
+       fraud       0.26      0.67      0.38       688
 ```
 
-**Proves:** a real, defensible performance number — the class-balanced Random
-Forest catches ~84% of real fraud. It also tells a genuine ML story: on this
-tabular data a text transformer collapsed to predicting "legit" for everything
-(zero fraud recall), so the right tool — gradient-style ensembles for tabular
-features — was used instead. High recall is preferred here because flagged
-claims go to a human investigator, never an automatic denial.
+**Proves:** a real, defensible result on realistic data — a class-balanced
+Random Forest with a ROC-AUC of ~0.74 that catches ~67% of fraud at a
+recall-favoring decision threshold. It also tells a genuine ML story: fraud is
+rare (~11%), so the default 0.5 cutoff misses most of it; lowering the threshold
+trades precision for recall. Flagged claims go to a human investigator, never an
+automatic denial — so higher recall is the right call here.
 
 ---
 

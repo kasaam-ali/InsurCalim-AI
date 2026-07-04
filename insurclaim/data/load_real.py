@@ -1,8 +1,8 @@
 """Load a real-world auto-insurance fraud dataset into PostgreSQL.
 
-Source: a public, widely used educational dataset of 1000 auto-insurance claims
-labeled with a `fraud_reported` (Y/N) target. It is downloaded on demand (not
-committed to the repo) and loaded into a `real_claims` table.
+Source: a public Kaggle dataset of 30,000 car-insurance claims labeled with a
+`fraud_reported` (Y/N) target. It is downloaded on demand (not committed to the
+repo) and loaded into a `real_claims` table.
 
 This gives the project real, labeled data for training and evaluating the fraud
 classifier, alongside the synthetic narratives used by the LLM agents.
@@ -14,26 +14,33 @@ from __future__ import annotations
 
 import csv
 import urllib.request
+import zipfile
 from pathlib import Path
 
 from insurclaim.db import repo
 
+# Kaggle serves this dataset as a zip from a public download endpoint.
 SOURCE_URL = (
-    "https://raw.githubusercontent.com/mwitiderrick/insurancedata/master/"
-    "insurance_claims.csv"
+    "https://www.kaggle.com/api/v1/datasets/download/"
+    "ahluwaliasaksham/car-insurance-fraud-detection-dataset"
 )
 DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "real"
-CSV_PATH = DATA_DIR / "insurance_claims.csv"
+ZIP_PATH = DATA_DIR / "car_insurance_fraud.zip"
+CSV_PATH = DATA_DIR / "car_insurance_fraud_dataset.csv"
 TABLE = "real_claims"
 
 
 def _download_if_missing() -> Path:
-    """Download the dataset once; reuse the local copy afterwards."""
+    """Download and unzip the dataset once; reuse the local copy afterwards."""
     if CSV_PATH.exists():
         return CSV_PATH
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     print(f"Downloading dataset from {SOURCE_URL} ...")
-    urllib.request.urlretrieve(SOURCE_URL, CSV_PATH)
+    request = urllib.request.Request(SOURCE_URL, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(request) as response, ZIP_PATH.open("wb") as out:
+        out.write(response.read())
+    with zipfile.ZipFile(ZIP_PATH) as archive:
+        archive.extractall(DATA_DIR)
     return CSV_PATH
 
 
