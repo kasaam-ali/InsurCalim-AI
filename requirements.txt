@@ -28,6 +28,9 @@ chromadb               # local vector database (uses its own lightweight embeddi
 Pillow                 # read image EXIF/metadata
 imagehash              # perceptual hash for duplicate-photo detection
 
+# --- Frontend dashboard (Phase 11) ---
+streamlit              # investigator dashboard UI (frontend/app.py)
+
 # --- Evaluation (Phase 9) ---
 scikit-learn           # precision / recall / confusion matrix
 numpy                  # numeric helpers
