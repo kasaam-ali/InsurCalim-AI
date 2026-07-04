@@ -56,9 +56,18 @@ def _duplicate_photo_signals(claim: dict[str, Any]) -> list[dict[str, Any]]:
     return signals
 
 
-def _similar_claim_signals(description: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Return (signals, raw_matches) from similar prior claims."""
-    matches = claim_store().similar_claims(description, n_results=3)
+def _similar_claim_signals(
+    description: str, exclude_claim_id: int | None = None
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Return (signals, raw_matches) from similar prior claims.
+
+    exclude_claim_id drops the claim being scored from its own results, so an
+    already-indexed claim does not match itself at 100%.
+    """
+    matches = claim_store().similar_claims(description, n_results=4)
+    matches = [
+        m for m in matches if m.get("metadata", {}).get("claim_id") != exclude_claim_id
+    ][:3]
     signals: list[dict[str, Any]] = []
     for match in matches:
         metadata = match.get("metadata", {})
@@ -96,7 +105,9 @@ def run(state: dict[str, Any]) -> dict[str, Any]:
 
     # 4. Similar past claims (RAG).
     try:
-        similar_signals, similar_matches = _similar_claim_signals(description)
+        similar_signals, similar_matches = _similar_claim_signals(
+            description, exclude_claim_id=claim.get("id")
+        )
         signals.extend(similar_signals)
     except Exception:  # vector store may be empty / unavailable
         similar_matches = []
