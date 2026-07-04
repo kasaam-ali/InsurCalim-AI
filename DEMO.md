@@ -23,8 +23,8 @@ timeline, flagged inconsistencies, source citations, and a recommended action
 | PostgreSQL | `insurclaim/db/` | 1, 2, 5 |
 | Vector DB + RAG (Chroma) | `insurclaim/vectordb/` | 4 (inside the pipeline) |
 | LangGraph orchestration | `insurclaim/graph.py` | 4 |
-| Fine-tuning + classic ML | `insurclaim/ml/` | 6 |
-| AWS deployment plan | `infra/deploy.md` | 8 |
+| Fine-tuning + classic ML | `insurclaim/ml/` | 6, 7 |
+| AWS deployment plan | `infra/deploy.md` | Deployment section |
 
 ---
 
@@ -151,7 +151,24 @@ automatic denial — so higher recall is the right call here.
 
 ---
 
-## Step 7 — Fine-tune DistilBERT on narratives (optional)
+## Step 7 — Score an individual real claim with the model
+
+```powershell
+.venv\Scripts\python.exe -m insurclaim.main --real-claim 1
+```
+
+**Expect:** a JSON report for that real claim — `fraud_probability`, `risk_score`,
+`recommended_action`, a few key facts, and the `ground_truth_is_fraud` label so
+you can see whether the model was right. Claim 1 (a fraud) scores ~0.99 and is
+routed to an investigator.
+
+**Proves:** the trained classifier is wired into the CLI and scores a specific
+real claim end to end, not just aggregate metrics. (The held-out ROC-AUC from
+Step 6 is the honest overall measure; this shows the model in action on one case.)
+
+---
+
+## Step 8 — Fine-tune DistilBERT on narratives (optional)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.ml.train --source narrative
@@ -168,7 +185,7 @@ claim narratives, complementing the tabular model from Step 6.
 
 ---
 
-## Step 8 — Clean, professional history
+## Step 9 — Clean, professional history
 
 ```powershell
 git log --oneline
