@@ -2,11 +2,16 @@
 
 Every model call in the project goes through call_llm() so the rest of the code
 never talks to a provider SDK directly. The wrapper tries providers in order
-(Claude -> Gemini -> Groq) and returns the first successful response. This gives
-us resilience (if one provider is down or rate-limited, another answers) and lets
-us test on free Gemini/Groq tiers without spending Claude credits.
+(OpenRouter -> Claude -> Gemini -> Groq) and returns the first successful
+response. This gives us resilience (if one provider is down or rate-limited,
+another answers) and lets us develop cheaply without spending Claude credits.
 
-Claude stays the primary provider for quality; Gemini and Groq are fallbacks.
+OpenRouter is an OpenAI-compatible gateway that can reach Claude models with a
+single key. During development we route through it to cheaper Claude tiers
+(Sonnet/Haiku) so the direct Anthropic Opus quota is preserved for the real
+demo. Remove OPENROUTER_API_KEY from .env to fall back to the direct providers.
+
+Claude (direct) stays the quality anchor; Gemini and Groq are further fallbacks.
 Groq is text-only, so image tasks should skip it (added in a later phase).
 """
 
@@ -25,6 +30,15 @@ CLAUDE_REASONING_MODEL = os.getenv("CLAUDE_REASONING_MODEL", "claude-opus-4-8")
 CLAUDE_EXTRACTION_MODEL = os.getenv("CLAUDE_EXTRACTION_MODEL", "claude-haiku-4-5")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+# OpenRouter Claude tiers used during development (cheaper than direct Opus).
+OPENROUTER_REASONING_MODEL = os.getenv("OPENROUTER_REASONING_MODEL", "anthropic/claude-sonnet-4.5")
+OPENROUTER_EXTRACTION_MODEL = os.getenv("OPENROUTER_EXTRACTION_MODEL", "anthropic/claude-haiku-4.5")
+# OpenRouter reserves credit up front against max_tokens, so keep it modest on a
+# small balance. Raise OPENROUTER_MAX_TOKENS once the account is funded.
+OPENROUTER_MAX_TOKENS = int(os.getenv("OPENROUTER_MAX_TOKENS", "1500"))
+# Free models get rate-limited (429); retry a few times with a short backoff.
+OPENROUTER_MAX_RETRIES = int(os.getenv("OPENROUTER_MAX_RETRIES", "4"))
+OPENROUTER_RETRY_WAIT_SECONDS = int(os.getenv("OPENROUTER_RETRY_WAIT_SECONDS", "12"))
 
 
 class LLMError(RuntimeError):
@@ -56,6 +70,45 @@ def _call_claude(prompt: str, system: str | None, reasoning: bool) -> str:
     return next((block.text for block in response.content if block.type == "text"), "")
 
 
+def _call_openrouter(prompt: str, system: str | None, reasoning: bool) -> str:
+    """Call OpenRouter (OpenAI-compatible gateway) to reach Claude models cheaply.
+
+    Preferred during development so the direct Anthropic Opus quota is preserved.
+    Reads OPENROUTER_API_KEY; a missing key raises and the caller falls through
+    to the next provider.
+    """
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.environ["OPENROUTER_API_KEY"],
+    )
+    model = OPENROUTER_REASONING_MODEL if reasoning else OPENROUTER_EXTRACTION_MODEL
+
+    messages: list[dict] = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    # Free models are often rate-limited upstream (429). Retry a few times with a
+    # short, capped backoff before giving up and letting the caller fall through.
+    import time
+
+    last_error: Exception | None = None
+    for attempt in range(OPENROUTER_MAX_RETRIES):
+        try:
+            response = client.chat.completions.create(
+                model=model, messages=messages, max_tokens=OPENROUTER_MAX_TOKENS
+            )
+            return response.choices[0].message.content or ""
+        except Exception as exc:  # noqa: BLE001 - retry only on rate limits
+            last_error = exc
+            if "429" not in str(exc) or attempt == OPENROUTER_MAX_RETRIES - 1:
+                raise
+            time.sleep(OPENROUTER_RETRY_WAIT_SECONDS)
+    raise last_error  # unreachable, but keeps type checkers happy
+
+
 def _call_gemini(prompt: str, system: str | None, reasoning: bool) -> str:
     """Call the Gemini API (fallback 1; also supports vision)."""
     from google import genai
@@ -81,7 +134,10 @@ def _call_groq(prompt: str, system: str | None, reasoning: bool) -> str:
 
 
 # Ordered fallback chain. Each entry is (provider_name, provider_function).
+# OpenRouter is first so development traffic uses cheap Claude tiers; if its key
+# is absent the call raises and we fall through to the direct providers.
 _PROVIDERS = [
+    ("openrouter", _call_openrouter),
     ("claude", _call_claude),
     ("gemini", _call_gemini),
     ("groq", _call_groq),
