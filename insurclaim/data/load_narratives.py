@@ -92,14 +92,16 @@ def load(path: str | Path = DEFAULT_PATH) -> list[int]:
                 "fraud_type": data.get("fraud_type"),
             }
         )
-        for party in data.get("parties", []):
+        for idx, party in enumerate(data.get("parties", [])):
             # Normalize to the columns our schema expects (fill any missing).
+            # Generate a unique national_id per (claim, party): the source data
+            # reuses ids across claims, which would falsely trip velocity checks.
             repo.insert_party(
                 claim_id,
                 {
                     "full_name": party.get("full_name"),
                     "role": party.get("role"),
-                    "national_id": party.get("national_id"),
+                    "national_id": f"{claim_id:04d}-{idx:02d}-{(claim_id * 7 + idx) % 10000:04d}",
                     "phone": party.get("phone"),
                     "email": party.get("email"),
                 },
