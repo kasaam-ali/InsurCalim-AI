@@ -1,0 +1,14 @@
+# Pin the app to a light theme so headings and body text render dark on the
+# light dashboard background, regardless of the viewer's OS/browser theme.
+# (Without this, a dark system theme makes default-colored headings white and
+# therefore invisible on our light background.)
+[theme]
+base = "light"
+primaryColor = "#2a78d6"
+backgroundColor = "#f5f7fb"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#0b1220"
+font = "sans serif"
+
+[server]
+runOnSave = true

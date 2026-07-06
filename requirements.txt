@@ -32,6 +32,10 @@ imagehash              # perceptual hash for duplicate-photo detection
 pypdf                  # extract text from uploaded PDF claim documents
 fpdf2                  # render the downloadable PDF investigation report
 
+# --- Multi-format intake (documents + video) ---
+python-docx            # extract text from uploaded Word (.docx) documents
+opencv-python-headless # sample frames from uploaded videos (dashcam / walkaround)
+
 # --- Frontend dashboard (Phase 11) ---
 streamlit              # investigator dashboard UI (frontend/app.py)
 

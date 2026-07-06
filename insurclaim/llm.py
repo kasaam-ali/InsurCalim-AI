@@ -230,6 +230,34 @@ def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> st
     raise LLMError("All vision providers failed:\n" + "\n".join(errors))
 
 
+def extract_json(text: str) -> dict | None:
+    """Parse a JSON object out of an LLM reply, tolerating Markdown code fences.
+
+    Strips ```json ... ``` fences and falls back to the first {...} span. Returns
+    None instead of raising when nothing parseable is found, so callers that only
+    want a best-effort parse (e.g. the vision checks) can ignore failures.
+    """
+    import json
+
+    text = (text or "").strip()
+    if text.startswith("```"):
+        # Drop the opening fence (``` or ```json) and the closing fence.
+        text = text.split("\n", 1)[-1]
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError):
+        start, end = text.find("{"), text.rfind("}")
+        if start != -1 and end > start:
+            try:
+                return json.loads(text[start : end + 1])
+            except ValueError:
+                return None
+        return None
+
+
 def call_llm_json(prompt: str, system: str | None = None, reasoning: bool = False) -> dict:
     """Call the LLM and parse the reply as JSON.
 
@@ -239,12 +267,10 @@ def call_llm_json(prompt: str, system: str | None = None, reasoning: bool = Fals
     import json
 
     text = call_llm(prompt, system=system, reasoning=reasoning).strip()
-    if text.startswith("```"):
-        # Drop the opening fence (``` or ```json) and the closing fence.
-        text = text.split("\n", 1)[-1]
-        if text.endswith("```"):
-            text = text.rsplit("```", 1)[0]
-    return json.loads(text)
+    parsed = extract_json(text)
+    if parsed is None:
+        raise json.JSONDecodeError("no JSON object in LLM reply", text, 0)
+    return parsed
 
 
 if __name__ == "__main__":

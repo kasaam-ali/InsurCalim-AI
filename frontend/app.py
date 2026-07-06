@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Make the project package importable when Streamlit runs this file directly.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -36,7 +37,12 @@ CSS = """
 html, body, [class*="css"], .stApp {font-family:'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;}
 .stApp {background: radial-gradient(1100px 560px at 8% -12%, #eaf0fb 0%, #f5f7fb 42%, #f3f5f9 100%);}
 .block-container {padding-top:1.4rem; max-width:1180px;}
-h1,h2,h3,h4 {letter-spacing:-.015em; color:#0b1220;}
+/* Force dark text in the main area so headings stay visible even if the viewer's
+   OS/browser theme is dark (h5/h6 + body text otherwise inherit a white color). */
+.stApp, .block-container, [data-testid="stMarkdownContainer"] {color:#1f2733;}
+.block-container h1, .block-container h2, .block-container h3,
+.block-container h4, .block-container h5, .block-container h6 {color:#0b1220 !important;}
+h1,h2,h3,h4,h5,h6 {letter-spacing:-.015em; color:#0b1220;}
 .main .block-container {animation: fadeUp .45s ease;}
 @keyframes fadeUp {from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
 
@@ -133,6 +139,94 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label div[data-baseweb="
 ::-webkit-scrollbar-thumb:hover {background:#aab6c9;}
 """
 st.markdown(f"<style>{CSS}</style>", unsafe_allow_html=True)
+
+
+# --- Floating nav toggle ----------------------------------------------------
+# A fancy black button pinned to the right edge that opens/closes the sidebar.
+# It drives Streamlit's own collapse/expand control so the sidebar state stays
+# in sync (rather than just hiding it with CSS). Runs in a 0-height component
+# iframe but appends the button to the parent document so it floats over the app.
+components.html(
+    """
+    <script>
+    const doc = window.parent.document;
+    const ID = "insur-nav-toggle";
+
+    function sidebarOpen() {
+        const sb = doc.querySelector('section[data-testid="stSidebar"]');
+        return sb && sb.getAttribute("aria-expanded") !== "false"
+                  && sb.offsetWidth > 5;
+    }
+
+    function toggleSidebar() {
+        if (sidebarOpen()) {
+            const c = doc.querySelector(
+                '[data-testid="stSidebarCollapseButton"] button,'
+              + '[data-testid="stSidebarCollapseButton"]');
+            if (c) c.click();
+        } else {
+            const e = doc.querySelector(
+                '[data-testid="stSidebarCollapsedControl"] button,'
+              + '[data-testid="stExpandSidebarButton"],'
+              + '[data-testid="stSidebarCollapsedControl"]');
+            if (e) e.click();
+        }
+        setTimeout(paint, 260);
+    }
+
+    function paint() {
+        const btn = doc.getElementById(ID);
+        if (!btn) return;
+        const open = sidebarOpen();
+        btn.innerHTML = open ? "&#10005;" : "&#9776;";
+        btn.title = open ? "Hide navigation" : "Show navigation";
+    }
+
+    if (!doc.getElementById(ID)) {
+        const btn = doc.createElement("button");
+        btn.id = ID;
+        btn.innerHTML = "&#10005;";
+        Object.assign(btn.style, {
+            position: "fixed",
+            top: "50%",
+            right: "18px",
+            transform: "translateY(-50%)",
+            zIndex: "999999",
+            width: "48px",
+            height: "48px",
+            borderRadius: "14px",
+            border: "1px solid rgba(255,255,255,.14)",
+            background: "linear-gradient(145deg,#1b1b1f,#050506)",
+            color: "#f4f6fb",
+            fontSize: "20px",
+            lineHeight: "1",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 10px 26px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10)",
+            transition: "transform .18s ease, box-shadow .2s ease, filter .18s ease",
+        });
+        btn.onmouseenter = () => {
+            btn.style.transform = "translateY(-50%) scale(1.08)";
+            btn.style.boxShadow = "0 14px 34px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.14)";
+            btn.style.filter = "brightness(1.15)";
+        };
+        btn.onmouseleave = () => {
+            btn.style.transform = "translateY(-50%) scale(1)";
+            btn.style.boxShadow = "0 10px 26px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10)";
+            btn.style.filter = "none";
+        };
+        btn.onclick = toggleSidebar;
+        doc.body.appendChild(btn);
+        paint();
+    } else {
+        paint();
+    }
+    </script>
+    """,
+    height=0,
+)
 
 
 # --- Helpers ----------------------------------------------------------------
@@ -719,42 +813,79 @@ def render_detailed_and_pdf(state: dict, claim_ref: str, description: str = "") 
 
 
 def page_submit() -> None:
-    st.markdown("### ✍️ Submit a claim (documents & photos)")
+    st.markdown("### ✍️ Submit a claim (documents, photos & videos)")
     st.caption(
-        "Upload the claim narrative / police report / FIR (txt or pdf) and damage "
-        "photos. The system extracts the data, checks photos for reuse and damage, "
-        "then runs the full investigation."
+        "Upload the claim narrative / police report / FIR (txt · pdf · docx), damage "
+        "photos, and dashcam / walkaround videos. The system extracts the data, "
+        "checks media for reuse, damage, and signs of AI-generated (deepfake) "
+        "evidence, then runs the full investigation."
     )
-    docs = st.file_uploader("Claim documents (txt / pdf)", type=["txt", "pdf"],
-                            accept_multiple_files=True)
-    photos = st.file_uploader("Damage photos", type=["jpg", "jpeg", "png"],
-                              accept_multiple_files=True)
+    files = st.file_uploader(
+        "Upload claim files (documents, photos, or videos)",
+        type=["txt", "pdf", "docx", "jpg", "jpeg", "png",
+              "mp4", "mov", "avi", "mkv", "webm"],
+        accept_multiple_files=True,
+    )
     extra = st.text_area("Or paste claim text", height=100)
 
     if st.button("Process & investigate", type="primary"):
         from insurclaim import intake_docs
         from insurclaim.graph import run_claim
 
-        doc_tuples = [(f.name, f.getvalue()) for f in (docs or [])]
-        photo_infos = []
-        for f in photos or []:
-            info = intake_docs.process_photo(f.name, f.getvalue())
-            with st.spinner(f"Reading {f.name} with the vision model..."):
-                info["damage"] = intake_docs.analyze_damage(f.getvalue())
-            photo_infos.append(info)
+        doc_tuples: list[tuple[str, bytes]] = []
+        media_infos: list[dict] = []
+        n_docs = n_img = n_vid = 0
 
-        text = intake_docs.build_claim_text(doc_tuples, photo_infos)
+        for f in files or []:
+            kind = intake_docs.classify_upload(f.name)
+            data = f.getvalue()
+            if kind == "document":
+                doc_tuples.append((f.name, data))
+                n_docs += 1
+            elif kind == "image":
+                info = intake_docs.process_photo(f.name, data)
+                info["kind"] = "photo"
+                with st.spinner(f"Reading {f.name} with the vision model..."):
+                    info["damage"] = intake_docs.analyze_damage(data)
+                    info["synthetic"] = intake_docs.detect_synthetic_media(f.name, data)
+                media_infos.append(info)
+                n_img += 1
+            elif kind == "video":
+                with st.spinner(f"Sampling frames from {f.name}..."):
+                    info = intake_docs.process_video(f.name, data)
+                frame = info.get("frame_jpeg")
+                if frame:
+                    with st.spinner(f"Analyzing {f.name} frame with the vision model..."):
+                        info["damage"] = intake_docs.analyze_damage(frame)
+                        info["synthetic"] = intake_docs.detect_synthetic_media(f.name, frame)
+                media_infos.append(info)
+                n_vid += 1
+            else:
+                st.warning(f"Unsupported file type skipped: {f.name}")
+
+        text = intake_docs.build_claim_text(doc_tuples, media_infos)
         if extra.strip():
             text = (extra.strip() + "\n\n" + text).strip()
         if not text:
-            st.warning("Provide at least one document, photo, or some text.")
+            st.warning("Provide at least one document, photo, video, or some text.")
             return
 
-        for info in photo_infos:
-            if info["duplicate_of"]:
+        st.success(
+            f"Ingested {n_docs} document(s) · {n_img} photo(s) · {n_vid} video(s)."
+        )
+
+        for info in media_infos:
+            label = info.get("kind", "media").capitalize()
+            if info.get("duplicate_of"):
                 st.error(
-                    f"⚠ Photo {info['file_name']} matches a photo already on claim "
+                    f"⚠ {label} {info['file_name']} matches media already on claim "
                     f"#{info['duplicate_of']['claim_id']} — possible reuse."
+                )
+            syn = info.get("synthetic")
+            if syn:
+                st.error(
+                    f"🧪 AI-generated media suspected · {info['file_name']} "
+                    f"({syn['severity']}): {syn['evidence']}"
                 )
             if info.get("damage"):
                 st.info(f"👁 Vision · {info['file_name']}: {info['damage']}")
@@ -777,7 +908,8 @@ def page_policy() -> None:
         company = st.text_input("Company", "DemoInsure")
         name = st.text_input("Document name", "auto_policy")
         text = st.text_area("Policy text (paste, or upload a file below)", height=130)
-        up = st.file_uploader("...or upload a policy file (txt / pdf)", type=["txt", "pdf"])
+        up = st.file_uploader("...or upload a policy file (txt / pdf / docx)",
+                              type=["txt", "pdf", "docx"])
         submitted = st.form_submit_button("Save & index policy")
     if submitted:
         content = text.strip()
