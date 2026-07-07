@@ -36,6 +36,75 @@ and similar past claims. Weigh them and return strict JSON:
 Do not invent numbers; rely on the signals provided. Return ONLY the JSON object.
 """
 
+# Cap on how much of the full claim file we send to the narrative analysis, to
+# stay within model context while still covering the key documents.
+MAX_FRAUD_TEXT = 30000
+
+NARRATIVE_FRAUD_SYSTEM = """
+You are an experienced auto-insurance fraud investigator. Read the FULL claim file
+below (all submitted documents: claim form, police report, medical report, repair
+estimate, invoice, surveyor report, photo metadata, etc.) and identify concrete
+fraud indicators that are SUPPORTED by the text. Cross-check the documents against
+each other. Look especially for:
+- location / GPS inconsistencies (e.g. photos taken away from the stated incident site)
+- timeline contradictions or long unexplained delays (late FIR/report, photos taken
+  hours after the incident)
+- physically implausible damage (e.g. a crushed panel next to an undamaged tyre,
+  shattered glass with no debris, clean tool-strike patterns, airbags deployed with
+  no injury/medical record)
+- damage patterns inconsistent with the described accident (e.g. only one side
+  damaged after a multi-impact swerve)
+- repeat or duplicate claims on the same vehicle / party
+- inflated or inconsistent repair costs versus the actual damage
+- missing expected evidence, untraceable third parties, non-authorized workshops,
+  or pressure for a fast settlement
+
+Only report indicators you can justify from the text; do NOT invent facts. If the
+file is internally consistent and looks genuine, return an empty list. Be calibrated:
+reserve "high" for strong, clearly-evidenced fraud indicators.
+
+Return strict JSON:
+{"red_flags": [{"summary": "...", "evidence": "specific detail or quote from the file",
+                "severity": "low|medium|high"}]}
+Return ONLY the JSON object.
+"""
+
+
+def _narrative_red_flags(full_text: str) -> list[dict[str, Any]]:
+    """LLM layer: read the whole claim file and surface grounded fraud red flags.
+
+    Turns each red flag into a fraud signal so it feeds the risk score and report.
+    Returns an empty list when there is no text or the model is unavailable.
+    """
+    if not full_text or not full_text.strip():
+        return []
+    try:
+        result = call_llm_json(
+            prompt=full_text[:MAX_FRAUD_TEXT],
+            system=NARRATIVE_FRAUD_SYSTEM,
+            reasoning=True,
+        )
+    except Exception:
+        return []
+
+    flags = result.get("red_flags", []) if isinstance(result, dict) else []
+    signals: list[dict[str, Any]] = []
+    for flag in flags:
+        if not isinstance(flag, dict) or not flag.get("summary"):
+            continue
+        severity = flag.get("severity", "medium")
+        if severity not in ("low", "medium", "high"):
+            severity = "medium"
+        signals.append(
+            {
+                "code": "narrative_red_flag",
+                "message": flag.get("summary", ""),
+                "evidence": flag.get("evidence", ""),
+                "severity": severity,
+            }
+        )
+    return signals
+
 
 def _duplicate_photo_signals(claim: dict[str, Any]) -> list[dict[str, Any]]:
     """Flag stored photo hashes that also appear on other claims."""
@@ -91,6 +160,9 @@ def run(state: dict[str, Any]) -> dict[str, Any]:
     claim = state.get("claim", {})
     extracted = state.get("extracted", {})
     description = extracted.get("description", "")
+    # The full claim file (all uploaded documents) when available, so the LLM can
+    # cross-check documents; falls back to the extracted description for DB claims.
+    full_text = state.get("raw_documents") or description
     events = state.get("timeline", {}).get("events", [])
 
     # 1. Deterministic rules + timeline physics signals.
@@ -112,7 +184,10 @@ def run(state: dict[str, Any]) -> dict[str, Any]:
     except Exception:  # vector store may be empty / unavailable
         similar_matches = []
 
-    # 5. LLM reasoning over everything.
+    # 5. Narrative fraud analysis over the full document file (grounded red flags).
+    signals.extend(_narrative_red_flags(full_text))
+
+    # 6. LLM reasoning over everything.
     llm_input = {
         "deterministic_signals": signals,
         "ml_fraud_probability": fraud_probability,

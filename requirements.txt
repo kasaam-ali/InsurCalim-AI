@@ -29,7 +29,9 @@ Pillow                 # read image EXIF/metadata
 imagehash              # perceptual hash for duplicate-photo detection
 
 # --- Document intake & reporting ---
-pypdf                  # extract text from uploaded PDF claim documents
+pypdf                  # extract text from uploaded PDF claim documents (fallback)
+pdfplumber             # stronger PDF text extraction (tried before pypdf)
+pypdfium2              # rasterize scanned PDF pages for vision OCR fallback
 fpdf2                  # render the downloadable PDF investigation report
 
 # --- Multi-format intake (documents + video) ---

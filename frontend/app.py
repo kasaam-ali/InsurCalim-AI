@@ -916,7 +916,19 @@ def page_policy() -> None:
         if up:
             from insurclaim import intake_docs
 
-            content = intake_docs.extract_text(up.name, up.getvalue())
+            with st.spinner(
+                f"Extracting text from {up.name} "
+                "(scanned PDFs are OCR'd with the vision model — this can take a moment)..."
+            ):
+                content = intake_docs.extract_text(up.name, up.getvalue())
+            if not content:
+                st.error(
+                    f"Could not extract any text from **{up.name}**, even with OCR. "
+                    "The vision model may be unavailable, or the file has no readable "
+                    "text. Try again, use a text-based PDF / DOCX, or paste the policy "
+                    "text into the box above."
+                )
+                return
         if content:
             doc_id = coverage.add_policy_document(company, name, content)
             st.success(f"Saved policy #{doc_id} and indexed it for coverage checks.")

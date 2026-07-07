@@ -38,14 +38,84 @@ def classify_upload(filename: str) -> str:
     return "unsupported"
 
 
+def _ocr_pdf_via_vision(data: bytes, max_pages: int = 15) -> str:
+    """OCR a scanned / image-only PDF using the vision model.
+
+    Last-resort fallback for PDFs with no text layer (each page is really an
+    image): rasterize each page with PyMuPDF and ask the vision model to
+    transcribe it. Returns "" if PyMuPDF or the vision model is unavailable.
+    """
+    try:
+        import pypdfium2 as pdfium
+    except Exception:
+        return ""
+
+    from insurclaim.llm import call_vision
+
+    prompt = (
+        "This is a scanned page from an insurance policy document. Transcribe ALL "
+        "readable text verbatim, preserving headings and line breaks. Return only "
+        "the transcribed text, with no commentary."
+    )
+    parts: list[str] = []
+    try:
+        doc = pdfium.PdfDocument(data)
+    except Exception:
+        return ""
+    try:
+        for i in range(min(len(doc), max_pages)):
+            try:
+                # scale ~2 => ~144 DPI, enough for the vision model to read text.
+                pil_image = doc[i].render(scale=2).to_pil()
+                buffer = io.BytesIO()
+                pil_image.convert("RGB").save(buffer, format="PNG")
+                page_text = call_vision(prompt, buffer.getvalue(), mime="image/png")
+                if page_text:
+                    parts.append(page_text.strip())
+            except Exception:
+                continue
+    finally:
+        doc.close()
+    return "\n\n".join(parts).strip()
+
+
+def _extract_pdf_text(data: bytes) -> str:
+    """Pull text out of a PDF, trying progressively stronger methods.
+
+    1) pdfplumber (pdfminer) — handles most real-world policy PDFs;
+    2) pypdf — fallback text extractor;
+    3) vision OCR — for scanned / image-only PDFs with no text layer at all.
+    Returns "" only if even OCR finds nothing.
+    """
+    text = ""
+    try:
+        import pdfplumber
+
+        with pdfplumber.open(io.BytesIO(data)) as pdf:
+            text = "\n".join(page.extract_text() or "" for page in pdf.pages).strip()
+    except Exception:
+        text = ""
+
+    if not text:
+        try:
+            from pypdf import PdfReader
+
+            reader = PdfReader(io.BytesIO(data))
+            text = "\n".join(page.extract_text() or "" for page in reader.pages).strip()
+        except Exception:
+            text = ""
+
+    if not text:
+        # No text layer — the PDF is almost certainly scanned images; OCR it.
+        text = _ocr_pdf_via_vision(data)
+    return text
+
+
 def extract_text(filename: str, data: bytes) -> str:
     """Extract text from an uploaded .txt / .pdf / .docx file."""
     name = filename.lower()
     if name.endswith(".pdf"):
-        from pypdf import PdfReader
-
-        reader = PdfReader(io.BytesIO(data))
-        return "\n".join(page.extract_text() or "" for page in reader.pages).strip()
+        return _extract_pdf_text(data)
     if name.endswith(".docx"):
         import docx  # python-docx
 
