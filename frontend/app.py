@@ -442,13 +442,64 @@ def _comparison(current: dict) -> None:
     )
 
 
-def page_report(scored: list[dict]) -> None:
-    st.markdown("### Investigation report")
-    by_id = {s["id"]: s for s in scored}
-    claim_id = st.selectbox("Select a claim", list(by_id.keys()),
-                            format_func=lambda i: f"#{i} · {by_id[i]['fraud_type']}")
-    s = by_id[claim_id]
+def claim_chat_ui(chat_key: str, context: str) -> None:
+    """A multi-turn AI chat about a claim; history persists in session state."""
+    st.markdown("##### 💬 Chat about this claim")
+    history = st.session_state.setdefault(f"chat_{chat_key}", [])
+    for msg in history:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+    question = st.chat_input("Ask anything about this claim...", key=f"chatin_{chat_key}")
+    if question:
+        from insurclaim.llm import call_llm
+
+        history.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.markdown(question)
+        recent = "\n".join(f"{m['role']}: {m['content']}" for m in history[-6:])
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                try:
+                    answer = call_llm(
+                        prompt=f"CLAIM CONTEXT:\n{context[:6000]}\n\n"
+                        f"CONVERSATION SO FAR:\n{recent}\n\n"
+                        "Answer the user's latest question concisely and specifically.",
+                        system="You are a claims-investigation assistant helping a human "
+                        "investigator. Answer briefly, grounded ONLY in the claim "
+                        "information provided. When asked why something was flagged or "
+                        "changed, give the concrete reason (the specific inconsistency).",
+                    )
+                except Exception as exc:
+                    answer = f"(assistant unavailable: {exc})"
+            st.markdown(answer)
+        history.append({"role": "assistant", "content": answer})
+
+
+def _investigation_context(s: dict, documents: dict | None, coverage: dict | None) -> str:
+    """Build a compact context string for the claim chat."""
+    label, _ = risk_meta(s["risk"])
+    action = ("route_to_investigator" if s["risk"] >= RISK_HIGH
+              else "fast_track_approve" if s["risk"] < RISK_MEDIUM else "request_more_info")
+    parts = [f"Risk score: {s['risk']:.0f}/100 ({label}); recommended action: {action}."]
+    if s.get("prob") is not None:
+        parts.append(f"ML fraud probability: {s['prob']*100:.0f}%.")
+    reasons = [f"- {x.get('message')} ({x.get('evidence')})" for x in s["signals"]]
+    if reasons:
+        parts.append("Flags / inconsistencies:\n" + "\n".join(reasons))
+    if documents and documents.get("missing"):
+        parts.append("Missing documents: " + ", ".join(str(d) for d in documents["missing"]))
+    if coverage:
+        parts.append(f"Coverage: {coverage.get('decision')} - {coverage.get('rationale','')}")
+    parts.append("Claim description:\n" + (s.get("description") or "")[:4000])
+    return "\n\n".join(parts)
+
+
+def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
+                          sub: dict | None = None) -> None:
+    """Render the full investigation view — the SAME layout for demo and moved claims."""
     label, color = risk_meta(s["risk"])
+    action = ("route_to_investigator" if s["risk"] >= RISK_HIGH
+              else "fast_track_approve" if s["risk"] < RISK_MEDIUM else "request_more_info")
 
     st.markdown(agent_trace(4), unsafe_allow_html=True)
     left, right = st.columns([1, 2])
@@ -457,10 +508,9 @@ def page_report(scored: list[dict]) -> None:
         st.markdown(badge(f"{label} RISK", color), unsafe_allow_html=True)
         if s["prob"] is not None:
             st.markdown(f"**ML fraud probability:** {s['prob']*100:.0f}%")
-        action = ("route_to_investigator" if s["risk"] >= RISK_HIGH
-                  else "fast_track_approve" if s["risk"] < RISK_MEDIUM else "request_more_info")
         st.markdown(f"**Recommended action:** `{action}`")
-        st.caption(f"Ground truth (demo): {'FRAUD' if s['is_fraud'] else 'legit'}")
+        if not moved:
+            st.caption(f"Ground truth (demo): {'FRAUD' if s['is_fraud'] else 'legit'}")
     with right:
         st.markdown("##### Flags")
         _render_signals(s["signals"])
@@ -483,8 +533,8 @@ def page_report(scored: list[dict]) -> None:
 
     # Audit-defensible export for the investigator.
     lines = [
-        f"InsurCalim AI - investigation summary",
-        f"Claim #{s['id']}  |  risk score: {s['risk']:.0f} ({label})  |  action: {action}",
+        "InsurCalim AI - investigation summary",
+        f"Claim {case_ref}  |  risk score: {s['risk']:.0f} ({label})  |  action: {action}",
         f"ML fraud probability: {(s['prob'] or 0) * 100:.0f}%",
         "",
         "Reason codes:",
@@ -498,51 +548,110 @@ def page_report(scored: list[dict]) -> None:
     st.download_button(
         "⬇ Export investigation summary",
         "\n".join(lines),
-        file_name=f"claim_{s['id']}_summary.txt",
+        file_name=f"{case_ref.replace(' ', '_').replace('#', '')}_summary.txt",
+        key=f"exp_{case_ref}",
     )
 
-    if st.button("🛡️ Check policy coverage"):
-        from insurclaim import coverage
+    documents = sub.get("documents") if (moved and sub) else None
+    coverage = sub.get("coverage") if (moved and sub) else None
 
-        with st.spinner("Checking against uploaded policies..."):
-            cov = coverage.check_coverage(s["description"])
-        cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
-        st.markdown("##### Policy coverage")
-        st.markdown(badge(cov["decision"].upper().replace("_", " "),
-                          cmap.get(cov["decision"], MUTED)), unsafe_allow_html=True)
-        st.write(cov["rationale"])
-        if cov.get("clause"):
-            st.caption(f"Cited clause: {cov['clause'][:200]}")
+    if moved:
+        if coverage:
+            cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
+            st.markdown("##### Policy coverage")
+            st.markdown(badge(coverage["decision"].upper().replace("_", " "),
+                              cmap.get(coverage["decision"], MUTED)), unsafe_allow_html=True)
+            st.caption(coverage.get("rationale", ""))
+    else:
+        if st.button("🛡️ Check policy coverage", key=f"cov_{case_ref}"):
+            from insurclaim import coverage as cov_mod
 
-    st.markdown("##### 💬 Ask about this claim")
-    q = st.text_input("Question", key=f"ask_{claim_id}",
-                      placeholder="e.g. Why is this suspicious? What should I verify first?")
-    if q.strip():
-        from insurclaim.llm import call_llm
+            with st.spinner("Checking against uploaded policies..."):
+                cov = cov_mod.check_coverage(s["description"])
+            cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
+            st.markdown("##### Policy coverage")
+            st.markdown(badge(cov["decision"].upper().replace("_", " "),
+                              cmap.get(cov["decision"], MUTED)), unsafe_allow_html=True)
+            st.write(cov["rationale"])
+            if cov.get("clause"):
+                st.caption(f"Cited clause: {cov['clause'][:200]}")
 
-        codes = [x.get("code") for x in s["signals"]]
-        with st.spinner("Thinking..."):
-            try:
-                ans = call_llm(
-                    prompt=f"Claim description:\n{s['description']}\n\n"
-                    f"Detected signals: {codes}\nRisk score: {s['risk']:.0f}/100\n\nQuestion: {q}",
-                    system="You are a claims-investigation assistant. Answer briefly, "
-                    "using only the claim information provided.",
-                )
-            except Exception as exc:
-                ans = f"(assistant unavailable: {exc})"
-        st.info(ans)
+    # AI chat — same for both; each claim keeps its own thread.
+    claim_chat_ui(f"moved_{case_ref}" if moved else f"demo_{case_ref}",
+                  _investigation_context(s, documents, coverage))
 
-    case_management_ui(f"claim #{claim_id}")
+    case_management_ui(case_ref)
+
+    # A moved claim additionally exposes its full detailed report + PDF.
+    if moved and sub:
+        with st.expander("📄 Full detailed report + PDF (coverage, documents, why flagged)"):
+            render_detailed_and_pdf(
+                sub["final"], case_ref, sub.get("text", ""),
+                doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
+                coverage=sub.get("coverage"),
+            )
 
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
         st.caption("Uses the LLM; on the free tier this may take a moment or fall back.")
-        if st.button("Run full AI investigation", type="primary"):
+        if st.button("Run full AI investigation", type="primary", key=f"runfull_{case_ref}"):
             from insurclaim.graph import run_claim
 
-            with st.spinner("Running intake → timeline → fraud → report..."):
-                final = run_claim({"claim": repo.get_claim(claim_id)})
-            render_detailed_and_pdf(final, f"claim #{claim_id}", s["description"])
+            if moved and sub:
+                with st.spinner("Running intake → timeline → fraud → report..."):
+                    sub["final"] = run_claim({"raw_documents": sub.get("text", "")})
+                st.rerun()
+            else:
+                with st.spinner("Running intake → timeline → fraud → report..."):
+                    final = run_claim({"claim": repo.get_claim(int(s["id"]))})
+                render_detailed_and_pdf(final, case_ref, s["description"])
+
+
+def page_report(scored: list[dict]) -> None:
+    st.markdown("### Investigation report")
+    by_id = {s["id"]: s for s in scored}
+    cases = st.session_state.get("investigation_cases", {})
+
+    # One unified picker: moved (uploaded) cases first, then the demo claims — so a
+    # moved claim never pushes the demo claims out of view.
+    options: list[str] = [f"moved::{ref}" for ref in cases] + [f"demo::{i}" for i in by_id]
+    if not options:
+        st.info("No claims to investigate.")
+        return
+
+    def _label(key: str) -> str:
+        kind, val = key.split("::", 1)
+        if kind == "moved":
+            return f"📥 {val} (uploaded)"
+        return f"#{val} · {by_id[int(val)]['fraud_type']}"
+
+    sel = st.session_state.get("selected_investigation_case")
+    default_key = f"moved::{sel}" if sel and f"moved::{sel}" in options else options[0]
+    choice = st.selectbox("Select a claim to investigate", options,
+                          index=options.index(default_key), format_func=_label,
+                          key="inv_select")
+
+    kind, val = choice.split("::", 1)
+    if kind == "moved":
+        sub = cases[val]
+        final = sub.get("final", {}) or {}
+        report = final.get("report", {}) or {}
+        # Adapt the moved claim into the exact shape the demo view expects.
+        s = {
+            "id": val,
+            "fraud_type": "uploaded",
+            "is_fraud": None,
+            "risk": float(report.get("risk_score", 0) or 0),
+            "prob": final.get("fraud_probability"),
+            "signals": final.get("fraud_signals", []) or [],
+            "matches": final.get("similar_claims", []) or [],
+            "description": sub.get("text", ""),
+            "location": "",
+            "amount": None,
+        }
+        _render_investigation(s, val, moved=True, sub=sub)
+    else:
+        claim_id = int(val)
+        _render_investigation(by_id[claim_id], f"claim #{claim_id}", moved=False)
 
 
 def case_management_ui(claim_ref: str) -> None:
@@ -753,25 +862,36 @@ def _render_quick_report(report: dict) -> None:
         st.write(report["timeline_summary"])
 
 
+_AUTO_COVERAGE = object()  # sentinel: compute coverage internally when not supplied
+
+
 def render_detailed_and_pdf(
     state: dict,
     claim_ref: str,
     description: str = "",
     doc_ids: list[int] | None = None,
     documents: dict | None = None,
+    coverage=_AUTO_COVERAGE,
 ) -> None:
-    """Show a detailed view (coverage, documents, fraud reasons, timeline) + a PDF."""
+    """Show a detailed view (coverage, documents, fraud reasons, timeline) + a PDF.
+
+    Pass a precomputed `coverage` dict (or None) to avoid re-running the coverage
+    LLM on every rerender; omit it to compute coverage here.
+    """
     from insurclaim import coverage as cov_mod
     from insurclaim import report_builder
 
-    cov = None
-    try:
-        if description:
-            cov = cov_mod.check_coverage(description, doc_ids=doc_ids)
-            if cov.get("decision") == "needs_review" and not cov.get("citations"):
-                cov = None  # no policies uploaded - skip the coverage block
-    except Exception:
+    if coverage is _AUTO_COVERAGE:
         cov = None
+        try:
+            if description:
+                cov = cov_mod.check_coverage(description, doc_ids=doc_ids)
+                if cov.get("decision") == "needs_review" and not cov.get("citations"):
+                    cov = None  # no policies uploaded - skip the coverage block
+        except Exception:
+            cov = None
+    else:
+        cov = coverage
 
     detailed = report_builder.build_detailed(state, coverage=cov, documents=documents)
     with st.expander("📄 Detailed view — coverage, documents, why flagged, timeline",
@@ -846,6 +966,52 @@ def render_detailed_and_pdf(
     )
 
 
+def _move_to_investigation(sub: dict) -> None:
+    """Button (below the PDF download) to hand this claim to the Investigation page."""
+    cases = st.session_state.setdefault("investigation_cases", {})
+    ref = sub.get("case_ref")
+    if ref and ref in cases:
+        st.success(
+            f"✔ Moved to the Investigation report as **{ref}** — open the "
+            "🔍 Investigation report section to work the case."
+        )
+        return
+    if st.button("➡ Move to Investigation Report", key="move_to_investigation"):
+        ref = f"uploaded #{len(cases) + 1}"
+        sub["case_ref"] = ref
+        cases[ref] = sub
+        try:
+            repo.set_case_status(ref, "open", None)
+        except Exception:
+            pass
+        st.session_state["selected_investigation_case"] = ref
+        st.session_state["_goto"] = "🔍 Investigation report"
+        st.rerun()
+
+
+def _render_submission(sub: dict) -> None:
+    """Render a stored claim submission (report + PDF + move button).
+
+    Reads from session state so the result survives navigating away and back.
+    """
+    for method, msg in sub.get("notices", []):
+        getattr(st, method, st.write)(msg)
+    if sub.get("degraded"):
+        st.error(
+            "⚠ AI models were unavailable (all LLM providers rate-limited), so the "
+            "document, coverage and fraud-reasoning checks were skipped — only the "
+            "local ML + similarity ran. **This risk score is not reliable.** Add a "
+            "working API key or try again later, then re-run this claim."
+        )
+    _render_quick_report(sub["final"].get("report", {}))
+    render_detailed_and_pdf(
+        sub["final"], sub.get("ref", "uploaded claim"), sub.get("text", ""),
+        doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
+        coverage=sub.get("coverage"),
+    )
+    _move_to_investigation(sub)
+
+
 def page_submit() -> None:
     st.markdown("### ✍️ Submit a claim (documents, photos & videos)")
     st.caption(
@@ -854,6 +1020,10 @@ def page_submit() -> None:
         "checks media for reuse, damage, and signs of AI-generated (deepfake) "
         "evidence, then runs the full investigation."
     )
+    if st.session_state.get("last_submission"):
+        if st.button("🆕 Start a new claim"):
+            st.session_state.pop("last_submission", None)
+            st.rerun()
     files = st.file_uploader(
         "Upload claim files (documents, photos, or videos)",
         type=["txt", "pdf", "docx", "jpg", "jpeg", "png",
@@ -920,63 +1090,72 @@ def page_submit() -> None:
             st.warning("Provide at least one document, photo, video, or some text.")
             return
 
-        st.success(
-            f"Ingested {n_docs} document(s) · {n_img} photo(s) · {n_vid} video(s)."
-        )
-
+        # Collect user-facing notices so they can be re-shown when the stored result
+        # is re-rendered after navigating away and back.
+        notices: list[tuple[str, str]] = [
+            ("success",
+             f"Ingested {n_docs} document(s) · {n_img} photo(s) · {n_vid} video(s).")
+        ]
         for info in media_infos:
             label = info.get("kind", "media").capitalize()
             if info.get("duplicate_of"):
-                st.error(
+                notices.append((
+                    "error",
                     f"⚠ {label} {info['file_name']} matches media already on claim "
-                    f"#{info['duplicate_of']['claim_id']} — possible reuse."
-                )
+                    f"#{info['duplicate_of']['claim_id']} — possible reuse.",
+                ))
             syn = info.get("synthetic")
             if syn:
-                st.error(
+                notices.append((
+                    "error",
                     f"🧪 AI-generated media suspected · {info['file_name']} "
-                    f"({syn['severity']}): {syn['evidence']}"
-                )
+                    f"({syn['severity']}): {syn['evidence']}",
+                ))
             if info.get("damage"):
-                st.info(f"👁 Vision · {info['file_name']}: {info['damage']}")
+                notices.append(("info", f"👁 Vision · {info['file_name']}: {info['damage']}"))
 
         # 1) Policy gate FIRST: coverage + required-document completeness, checked
         #    against the selected policy (or all policies if none selected).
         from insurclaim import coverage as cov_mod
 
-        documents = None
+        documents = coverage_result = None
         with st.spinner("Checking coverage and required documents against the policy..."):
             try:
                 documents = cov_mod.check_documents(text, doc_ids=selected_doc_ids or None)
             except Exception:
                 documents = None
-
+            try:
+                coverage_result = cov_mod.check_coverage(text, doc_ids=selected_doc_ids or None)
+                if (coverage_result.get("decision") == "needs_review"
+                        and not coverage_result.get("citations")):
+                    coverage_result = None  # no policies on file - skip the block
+            except Exception:
+                coverage_result = None
         if documents and documents.get("missing"):
-            st.warning(
-                "📄 Missing documents: " + ", ".join(str(d) for d in documents["missing"])
-            )
+            notices.append((
+                "warning",
+                "📄 Missing documents: " + ", ".join(str(d) for d in documents["missing"]),
+            ))
 
         # 2) Then the fraud pipeline.
         with st.spinner("Running intake → timeline → fraud → report..."):
             final = run_claim({"raw_documents": text})
 
-        # If the LLM was unavailable (all keys rate-limited), the AI layers were
-        # skipped and only the local ML + RAG ran — warn so a low score is not
-        # mistaken for a genuine "low risk" verdict.
-        if final.get("extracted", {}).get("_extraction_degraded"):
-            st.error(
-                "⚠ AI models were unavailable (all LLM providers rate-limited), so the "
-                "document, coverage and fraud-reasoning checks were skipped — only the "
-                "local ML + similarity ran. **This risk score is not reliable.** Add a "
-                "working API key or try again later, then re-run this claim."
-            )
+        # 3) Store the whole result so it survives navigation, then render below.
+        st.session_state["last_submission"] = {
+            "ref": "uploaded claim",
+            "text": text,
+            "doc_ids": selected_doc_ids or None,
+            "documents": documents,
+            "coverage": coverage_result,
+            "final": final,
+            "notices": notices,
+            "degraded": bool(final.get("extracted", {}).get("_extraction_degraded")),
+        }
 
-        # 3) Combined report: coverage, documents, fraud reasons, matches.
-        _render_quick_report(final.get("report", {}))
-        render_detailed_and_pdf(
-            final, "uploaded claim", text,
-            doc_ids=selected_doc_ids or None, documents=documents,
-        )
+    # Render the last submission (fresh, or restored after navigating away and back).
+    if st.session_state.get("last_submission"):
+        _render_submission(st.session_state["last_submission"])
 
 
 def page_policy() -> None:
@@ -1066,7 +1245,13 @@ NO_ARG_PAGES = ("✍️ Submit a claim", "🛡️ Policy & coverage", "📉 Mode
 def main() -> None:
     st.sidebar.markdown("## 🔎 InsurCalim AI")
     st.sidebar.caption("Fraud investigation dashboard")
-    choice = st.sidebar.radio("Navigate", list(PAGES.keys()), label_visibility="collapsed")
+    # Honour a one-shot programmatic navigation request (e.g. "Move to Investigation
+    # Report"). Set before the radio is created so we don't modify a live widget key.
+    goto = st.session_state.pop("_goto", None)
+    if goto in PAGES:
+        st.session_state["nav"] = goto
+    choice = st.sidebar.radio("Navigate", list(PAGES.keys()),
+                              label_visibility="collapsed", key="nav")
     st.sidebar.markdown("---")
     st.sidebar.caption("Human-in-the-loop — flags & ranks, never auto-denies.")
 
