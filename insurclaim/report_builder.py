@@ -11,7 +11,9 @@ from __future__ import annotations
 from typing import Any
 
 
-def build_detailed(state: dict[str, Any], coverage: dict | None = None) -> dict[str, Any]:
+def build_detailed(
+    state: dict[str, Any], coverage: dict | None = None, documents: dict | None = None
+) -> dict[str, Any]:
     """Assemble a detailed report dict from the pipeline final state."""
     report = state.get("report", {}) or {}
     timeline = state.get("timeline", {}) or {}
@@ -22,6 +24,14 @@ def build_detailed(state: dict[str, Any], coverage: dict | None = None) -> dict[
     flags = report.get("top_flags") or [
         {"summary": s.get("message"), "evidence": s.get("evidence"), "confidence": ""}
         for s in signals
+    ]
+
+    # The concrete "why we suspect fraud" reasons, from the narrative analysis layer.
+    fraud_reasons = [
+        {"summary": s.get("message"), "evidence": s.get("evidence"),
+         "severity": s.get("severity")}
+        for s in signals
+        if s.get("code") == "narrative_red_flag"
     ]
 
     # Points requiring verification — the "what we're suspicious about" section.
@@ -57,6 +67,8 @@ def build_detailed(state: dict[str, Any], coverage: dict | None = None) -> dict[
             "claim_id": m.get("metadata", {}).get("claim_id"),
             "similarity": m.get("similarity"),
             "fraud_type": m.get("metadata", {}).get("fraud_type"),
+            # The matched claim's own narrative, so a human can see WHAT matches.
+            "snippet": (m.get("document") or "")[:280],
         }
         for m in similar
         if m.get("metadata", {}).get("is_fraud")
@@ -75,11 +87,13 @@ def build_detailed(state: dict[str, Any], coverage: dict | None = None) -> dict[
         "fraud_probability": state.get("fraud_probability"),
         "summary": reasoning.get("narrative") or report.get("timeline_summary") or "",
         "flags": flags,
+        "fraud_reasons": fraud_reasons,
         "events": timeline.get("events", []),
         "verify": verify,
         "similar_fraud": similar_fraud,
         "contributions": contributions,
         "coverage": coverage,
+        "documents": documents,
         "citations": report.get("citations", []),
     }
 
@@ -174,6 +188,31 @@ def to_pdf(detailed: dict[str, Any], claim_ref: str = "claim") -> bytes:
         if cov.get("clause"):
             mcell(f"Cited clause: {cov['clause'][:300]}", color=(110, 110, 110))
 
+    docs = detailed.get("documents")
+    if docs and (docs.get("required") or docs.get("missing") or docs.get("incomplete")):
+        section("Document completeness")
+        if docs.get("present"):
+            mcell("Present: " + ", ".join(str(d) for d in docs["present"]))
+        if docs.get("missing"):
+            mcell("Missing: " + ", ".join(str(d) for d in docs["missing"]),
+                  color=(208, 59, 59))
+        for inc in docs.get("incomplete", []):
+            if isinstance(inc, dict):
+                mcell(f"Incomplete: {inc.get('document','')} - {inc.get('issue','')}",
+                      color=(229, 130, 14))
+            else:
+                mcell(f"Incomplete: {inc}", color=(229, 130, 14))
+        if docs.get("notes"):
+            mcell(docs["notes"], color=(110, 110, 110))
+
+    if detailed.get("fraud_reasons"):
+        section("Why this was flagged (specific inconsistencies)")
+        for i, r in enumerate(detailed["fraud_reasons"], 1):
+            sev = (r.get("severity") or "").upper()
+            mcell(f"{i}. {r.get('summary','')}" + (f"  [{sev}]" if sev else ""), style="B")
+            if r.get("evidence"):
+                mcell(f"     {r.get('evidence','')}", color=(110, 110, 110))
+
     if detailed.get("verify"):
         section("Points requiring verification (flagged as suspicious)")
         for i, v in enumerate(detailed["verify"], 1):
@@ -201,9 +240,14 @@ def to_pdf(detailed: dict[str, Any], claim_ref: str = "claim") -> bytes:
                 mcell(f"     {f.get('evidence','')}", color=(110, 110, 110))
 
     if detailed.get("similar_fraud"):
-        section("Similar known-fraud matches")
+        section("Similar known-fraud matches (what matches)")
         for m in detailed["similar_fraud"]:
-            mcell(f"- {int((m.get('similarity') or 0)*100)}% match to claim #{m.get('claim_id')} ({m.get('fraud_type')})")
+            mcell(
+                f"- {int((m.get('similarity') or 0)*100)}% match to claim "
+                f"#{m.get('claim_id')} ({m.get('fraud_type')})", style="B"
+            )
+            if m.get("snippet"):
+                mcell(f"     That claim: {m['snippet']}", color=(110, 110, 110))
 
     pdf.ln(2)
     mcell(

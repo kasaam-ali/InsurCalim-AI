@@ -753,22 +753,29 @@ def _render_quick_report(report: dict) -> None:
         st.write(report["timeline_summary"])
 
 
-def render_detailed_and_pdf(state: dict, claim_ref: str, description: str = "") -> None:
-    """Show a detailed view (events, points to verify, coverage) + a PDF download."""
+def render_detailed_and_pdf(
+    state: dict,
+    claim_ref: str,
+    description: str = "",
+    doc_ids: list[int] | None = None,
+    documents: dict | None = None,
+) -> None:
+    """Show a detailed view (coverage, documents, fraud reasons, timeline) + a PDF."""
     from insurclaim import coverage as cov_mod
     from insurclaim import report_builder
 
     cov = None
     try:
         if description:
-            cov = cov_mod.check_coverage(description)
+            cov = cov_mod.check_coverage(description, doc_ids=doc_ids)
             if cov.get("decision") == "needs_review" and not cov.get("citations"):
                 cov = None  # no policies uploaded - skip the coverage block
     except Exception:
         cov = None
 
-    detailed = report_builder.build_detailed(state, coverage=cov)
-    with st.expander("📄 Detailed view — events, points to verify, coverage", expanded=True):
+    detailed = report_builder.build_detailed(state, coverage=cov, documents=documents)
+    with st.expander("📄 Detailed view — coverage, documents, why flagged, timeline",
+                     expanded=True):
         if detailed["summary"]:
             st.markdown("**Investigator summary**")
             st.write(detailed["summary"])
@@ -778,6 +785,32 @@ def render_detailed_and_pdf(state: dict, claim_ref: str, description: str = "") 
             st.markdown(badge(cov["decision"].upper().replace("_", " "),
                               cmap.get(cov["decision"], MUTED)), unsafe_allow_html=True)
             st.caption(cov.get("rationale", ""))
+        if documents and (documents.get("required") or documents.get("missing")
+                          or documents.get("incomplete")):
+            st.markdown("**Document completeness**")
+            if documents.get("present"):
+                st.markdown("✓ Present: " + ", ".join(str(d) for d in documents["present"]))
+            if documents.get("missing"):
+                st.markdown(
+                    ":red[✗ Missing: " + ", ".join(str(d) for d in documents["missing"]) + "]"
+                )
+            for inc in documents.get("incomplete", []):
+                if isinstance(inc, dict):
+                    st.markdown(
+                        f":orange[⚠ Incomplete: {inc.get('document','')} — {inc.get('issue','')}]"
+                    )
+                else:
+                    st.markdown(f":orange[⚠ Incomplete: {inc}]")
+            if documents.get("notes"):
+                st.caption(documents["notes"])
+        if detailed.get("fraud_reasons"):
+            st.markdown("**🔎 Why we flagged this — specific inconsistencies**")
+            for i, r in enumerate(detailed["fraud_reasons"], 1):
+                sev = (r.get("severity") or "").upper()
+                st.markdown(
+                    f"{i}. **{r.get('summary','')}**" + (f" · `{sev}`" if sev else "")
+                    + (f"  \n   _{r.get('evidence','')}_" if r.get("evidence") else "")
+                )
         if detailed["verify"]:
             st.markdown("**⚠ Points requiring verification (what we're suspicious about)**")
             for i, v in enumerate(detailed["verify"], 1):
@@ -795,11 +828,12 @@ def render_detailed_and_pdf(state: dict, claim_ref: str, description: str = "") 
                     + (f"  _[{facts}]_" if facts else "")
                 )
         if detailed["similar_fraud"]:
-            st.markdown("**Similar known-fraud matches**")
+            st.markdown("**Similar known-fraud matches — what matches**")
             for m in detailed["similar_fraud"]:
                 st.markdown(
                     f"- {int((m.get('similarity') or 0)*100)}% match to claim "
                     f"#{m.get('claim_id')} ({m.get('fraud_type')})"
+                    + (f"  \n   _That claim: {m['snippet']}_" if m.get("snippet") else "")
                 )
 
     pdf = report_builder.to_pdf(detailed, claim_ref=claim_ref)
@@ -827,6 +861,22 @@ def page_submit() -> None:
         accept_multiple_files=True,
     )
     extra = st.text_area("Or paste claim text", height=100)
+
+    # Pick which uploaded policy (or policies) this claim falls under. The claim is
+    # checked for coverage and required-document completeness against these first.
+    available_policies = repo.list_policy_documents()
+    policy_label = {
+        f"#{p['id']} · {p['company']} · {p['doc_name']}": p["id"] for p in available_policies
+    }
+    selected_labels = st.multiselect(
+        "Check this claim against which policy? (select one or more)",
+        options=list(policy_label.keys()),
+        help="Policies come from the 'Policy & coverage' page. Leave empty to check "
+             "against all uploaded policies.",
+    )
+    selected_doc_ids = [policy_label[label] for label in selected_labels]
+    if not available_policies:
+        st.caption("No policies uploaded yet — add them on the 'Policy & coverage' page.")
 
     if st.button("Process & investigate", type="primary"):
         from insurclaim import intake_docs
@@ -890,10 +940,43 @@ def page_submit() -> None:
             if info.get("damage"):
                 st.info(f"👁 Vision · {info['file_name']}: {info['damage']}")
 
+        # 1) Policy gate FIRST: coverage + required-document completeness, checked
+        #    against the selected policy (or all policies if none selected).
+        from insurclaim import coverage as cov_mod
+
+        documents = None
+        with st.spinner("Checking coverage and required documents against the policy..."):
+            try:
+                documents = cov_mod.check_documents(text, doc_ids=selected_doc_ids or None)
+            except Exception:
+                documents = None
+
+        if documents and documents.get("missing"):
+            st.warning(
+                "📄 Missing documents: " + ", ".join(str(d) for d in documents["missing"])
+            )
+
+        # 2) Then the fraud pipeline.
         with st.spinner("Running intake → timeline → fraud → report..."):
             final = run_claim({"raw_documents": text})
+
+        # If the LLM was unavailable (all keys rate-limited), the AI layers were
+        # skipped and only the local ML + RAG ran — warn so a low score is not
+        # mistaken for a genuine "low risk" verdict.
+        if final.get("extracted", {}).get("_extraction_degraded"):
+            st.error(
+                "⚠ AI models were unavailable (all LLM providers rate-limited), so the "
+                "document, coverage and fraud-reasoning checks were skipped — only the "
+                "local ML + similarity ran. **This risk score is not reliable.** Add a "
+                "working API key or try again later, then re-run this claim."
+            )
+
+        # 3) Combined report: coverage, documents, fraud reasons, matches.
         _render_quick_report(final.get("report", {}))
-        render_detailed_and_pdf(final, "uploaded claim", text)
+        render_detailed_and_pdf(
+            final, "uploaded claim", text,
+            doc_ids=selected_doc_ids or None, documents=documents,
+        )
 
 
 def page_policy() -> None:
@@ -939,16 +1022,16 @@ def page_policy() -> None:
     docs = repo.list_policy_documents()
     if docs:
         st.markdown("##### Policies on file")
-        body = "".join(
-            f"<tr><td>#{d['id']}</td><td>{d['company']}</td><td>{d['doc_name']}</td>"
-            f"<td>{d['preview']}...</td></tr>"
-            for d in docs
-        )
-        st.markdown(
-            f'<table class="tbl"><tr><th>#</th><th>Company</th><th>Name</th>'
-            f"<th>Preview</th></tr>{body}</table>",
-            unsafe_allow_html=True,
-        )
+        for d in docs:
+            row = st.columns([1, 3, 3, 1])
+            row[0].markdown(f"**#{d['id']}**")
+            row[1].markdown(f"**{d['company']}**  \n{d['doc_name']}")
+            row[2].caption(f"{d['preview']}...")
+            if row[3].button("🗑 Remove", key=f"del_policy_{d['id']}"):
+                coverage.remove_policy_document(d["id"])
+                st.cache_data.clear()
+                st.success(f"Removed policy #{d['id']}.")
+                st.rerun()
 
     st.markdown("##### Coverage check")
     claim_text = st.text_area("Claim description to check", height=90)

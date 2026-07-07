@@ -221,6 +221,26 @@ def list_policy_documents() -> list[dict[str, Any]]:
         return cur.fetchall()
 
 
+def get_policy_document(doc_id: int) -> dict[str, Any] | None:
+    """Return a single policy document (including its full content)."""
+    _ensure_policy_documents_table()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, company, doc_name, content, uploaded_at "
+            "FROM policy_documents WHERE id = %s",
+            (doc_id,),
+        )
+        return cur.fetchone()
+
+
+def delete_policy_document(doc_id: int) -> None:
+    """Delete an uploaded policy document by id."""
+    _ensure_policy_documents_table()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM policy_documents WHERE id = %s", (doc_id,))
+        conn.commit()
+
+
 # --- Case management (investigator status + notes per claim) --------------
 
 def _ensure_case_tables() -> None:

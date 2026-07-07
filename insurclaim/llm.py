@@ -42,6 +42,12 @@ OPENROUTER_RETRY_WAIT_SECONDS = int(os.getenv("OPENROUTER_RETRY_WAIT_SECONDS", "
 # Vision model for reading damage photos (OpenRouter, OpenAI-compatible).
 OPENROUTER_VISION_MODEL = os.getenv("OPENROUTER_VISION_MODEL", "google/gemini-2.0-flash-exp:free")
 
+# Z.AI (Zhipu GLM) - OpenAI-compatible, has a free text model (glm-4.5-flash).
+# A strong free fallback for text when Gemini/OpenRouter free quotas are exhausted.
+ZAI_BASE_URL = os.getenv("ZAI_BASE_URL", "https://api.z.ai/api/paas/v4/")
+ZAI_MODEL = os.getenv("ZAI_MODEL", "glm-4.5-flash")
+ZAI_MAX_TOKENS = int(os.getenv("ZAI_MAX_TOKENS", "2000"))
+
 
 class LLMError(RuntimeError):
     """Raised when every provider in the fallback chain fails."""
@@ -111,6 +117,48 @@ def _call_openrouter(prompt: str, system: str | None, reasoning: bool) -> str:
     raise last_error  # unreachable, but keeps type checkers happy
 
 
+def _zai_keys() -> list[str]:
+    """Return the configured Z.AI API keys (ZAI_API_KEY may hold several, comma-separated)."""
+    raw = os.getenv("ZAI_API_KEY", "")
+    return [k.strip() for k in raw.split(",") if k.strip()]
+
+
+def _call_zai(prompt: str, system: str | None, reasoning: bool) -> str:
+    """Call Z.AI (Zhipu GLM, OpenAI-compatible). Free text model glm-4.5-flash.
+
+    ZAI_API_KEY may hold several comma-separated keys; they are tried in turn so
+    that when one key's quota is exhausted the next takes over. A missing key
+    raises and the caller falls through to the next provider. GLM-4.5's "thinking"
+    mode consumes the token budget, so we disable it for these structured calls.
+    """
+    from openai import OpenAI
+
+    keys = _zai_keys()
+    if not keys:
+        raise KeyError("ZAI_API_KEY")
+
+    messages: list[dict] = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    last_error: Exception | None = None
+    for key in keys:
+        try:
+            client = OpenAI(base_url=ZAI_BASE_URL, api_key=key)
+            response = client.chat.completions.create(
+                model=ZAI_MODEL,
+                messages=messages,
+                max_tokens=ZAI_MAX_TOKENS,
+                extra_body={"thinking": {"type": "disabled"}},
+            )
+            return response.choices[0].message.content or ""
+        except Exception as exc:  # noqa: BLE001 - try the next key on quota/errors
+            last_error = exc
+            continue
+    raise last_error  # every key failed; caller falls through to the next provider
+
+
 def _call_gemini(prompt: str, system: str | None, reasoning: bool) -> str:
     """Call the Gemini API (fallback 1; also supports vision)."""
     from google import genai
@@ -136,12 +184,14 @@ def _call_groq(prompt: str, system: str | None, reasoning: bool) -> str:
 
 
 # Ordered fallback chain. Each entry is (provider_name, provider_function).
-# OpenRouter is first so development traffic uses cheap Claude tiers; if its key
-# is absent the call raises and we fall through to the direct providers.
+# Z.AI (free glm-4.5-flash, with key rotation) is first for text so we don't burn
+# the tiny Gemini/OpenRouter free quotas; the rest are fallbacks. A provider whose
+# key is absent raises and we fall through to the next one.
 _PROVIDERS = [
+    ("zai", _call_zai),
     ("openrouter", _call_openrouter),
-    ("claude", _call_claude),
     ("gemini", _call_gemini),
+    ("claude", _call_claude),
     ("groq", _call_groq),
 ]
 

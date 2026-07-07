@@ -41,6 +41,11 @@ class VectorStore:
         """Embed and store a batch of documents."""
         self._collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
 
+    def delete(self, ids: list[str]) -> None:
+        """Remove documents from the collection by id (e.g. a deleted policy)."""
+        if ids:
+            self._collection.delete(ids=ids)
+
     def query(self, text: str, n_results: int = 5) -> list[dict[str, Any]]:
         """Return the n most similar documents to the given text."""
         result = self._collection.query(query_texts=[text], n_results=n_results)

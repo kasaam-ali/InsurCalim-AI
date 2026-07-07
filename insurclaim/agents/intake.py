@@ -25,8 +25,25 @@ Return ONLY the JSON object.
 
 
 def _extract_from_text(raw_text: str) -> dict[str, Any]:
-    """Use the cheap extraction model to structure free-text claim documents."""
-    return call_llm_json(prompt=raw_text, system=EXTRACTION_SYSTEM, reasoning=False)
+    """Use the cheap extraction model to structure free-text claim documents.
+
+    Falls back to a minimal structure built from the raw text when every LLM
+    provider is unavailable (e.g. all keys rate-limited), so the pipeline degrades
+    gracefully instead of crashing - the local ML + RAG fraud layers still run.
+    """
+    try:
+        return call_llm_json(prompt=raw_text, system=EXTRACTION_SYSTEM, reasoning=False)
+    except Exception:
+        return {
+            "incident_date": None,
+            "report_date": None,
+            "location": "",
+            "description": raw_text[:4000],
+            "claimed_amount": None,
+            "parties": [],
+            "vehicles": [],
+            "_extraction_degraded": True,
+        }
 
 
 def run(state: dict[str, Any]) -> dict[str, Any]:
