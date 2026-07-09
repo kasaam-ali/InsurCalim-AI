@@ -30,6 +30,8 @@ CLAUDE_REASONING_MODEL = os.getenv("CLAUDE_REASONING_MODEL", "claude-opus-4-8")
 CLAUDE_EXTRACTION_MODEL = os.getenv("CLAUDE_EXTRACTION_MODEL", "claude-haiku-4-5")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+# Groq vision model (free tier) - a working second vision provider alongside Gemini.
+GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 # OpenRouter Claude tiers used during development (cheaper than direct Opus).
 OPENROUTER_REASONING_MODEL = os.getenv("OPENROUTER_REASONING_MODEL", "anthropic/claude-sonnet-4.5")
 OPENROUTER_EXTRACTION_MODEL = os.getenv("OPENROUTER_EXTRACTION_MODEL", "anthropic/claude-haiku-4.5")
@@ -47,6 +49,8 @@ OPENROUTER_VISION_MODEL = os.getenv("OPENROUTER_VISION_MODEL", "google/gemini-2.
 ZAI_BASE_URL = os.getenv("ZAI_BASE_URL", "https://api.z.ai/api/paas/v4/")
 ZAI_MODEL = os.getenv("ZAI_MODEL", "glm-4.5-flash")
 ZAI_MAX_TOKENS = int(os.getenv("ZAI_MAX_TOKENS", "2000"))
+# Z.AI vision model (GLM-4V family) - a second vision provider alongside Gemini.
+ZAI_VISION_MODEL = os.getenv("ZAI_VISION_MODEL", "glm-4.5v")
 
 
 class LLMError(RuntimeError):
@@ -271,6 +275,76 @@ def _openrouter_vision(prompt: str, image_bytes: bytes, mime: str) -> str:
     return response.choices[0].message.content or ""
 
 
+def _zai_vision(prompt: str, image_bytes: bytes, mime: str) -> str:
+    """Read an image via a Z.AI vision model (GLM-4V), with key rotation.
+
+    OpenAI-compatible, so it uses the same image_url content shape as OpenRouter.
+    ZAI_API_KEY may hold several comma-separated keys; they are tried in turn. A
+    missing key or all-keys-failed raises so call_vision falls through.
+    """
+    import base64
+
+    from openai import OpenAI
+
+    keys = _zai_keys()
+    if not keys:
+        raise KeyError("ZAI_API_KEY")
+
+    data_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode()}"
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": data_url}},
+            ],
+        }
+    ]
+
+    last_error: Exception | None = None
+    for key in keys:
+        try:
+            client = OpenAI(base_url=ZAI_BASE_URL, api_key=key)
+            response = client.chat.completions.create(
+                model=ZAI_VISION_MODEL, messages=messages, max_tokens=ZAI_MAX_TOKENS
+            )
+            return response.choices[0].message.content or ""
+        except Exception as exc:  # noqa: BLE001 - try the next key on quota/errors
+            last_error = exc
+            continue
+    raise last_error  # every key failed; caller falls through to the next provider
+
+
+def _groq_vision(prompt: str, image_bytes: bytes, mime: str) -> str:
+    """Read an image via a Groq vision model (free tier, OpenAI-compatible).
+
+    Uses the same image_url content shape as OpenRouter. A missing GROQ_API_KEY
+    raises so call_vision falls through to the next provider.
+    """
+    import base64
+
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url="https://api.groq.com/openai/v1", api_key=os.environ["GROQ_API_KEY"]
+    )
+    data_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode()}"
+    response = client.chat.completions.create(
+        model=GROQ_VISION_MODEL,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ],
+        max_tokens=1024,
+    )
+    return response.choices[0].message.content or ""
+
+
 def _gemini_vision(prompt: str, image_bytes: bytes, mime: str) -> str:
     """Read an image via the Gemini API (vision-capable)."""
     from google import genai
@@ -290,9 +364,15 @@ def call_vision(prompt: str, image_bytes: bytes, mime: str = "image/jpeg") -> st
     Tries OpenRouter first, then Gemini as a fallback. Raises LLMError only if
     both fail; callers should handle that (degrade gracefully).
     """
-    # Gemini first — it is the reliable vision provider here; OpenRouter as backup.
+    # Gemini first (reliable), then Groq (free, working), then Z.AI (needs balance),
+    # then OpenRouter as a last resort. Any one working provider satisfies the call.
     errors: list[str] = []
-    for name, fn in (("gemini", _gemini_vision), ("openrouter", _openrouter_vision)):
+    for name, fn in (
+        ("gemini", _gemini_vision),
+        ("groq", _groq_vision),
+        ("zai", _zai_vision),
+        ("openrouter", _openrouter_vision),
+    ):
         try:
             text = fn(prompt, image_bytes, mime)
             if text:
