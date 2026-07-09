@@ -170,6 +170,29 @@ def _call_gemini(prompt: str, system: str | None, reasoning: bool) -> str:
     return response.text or ""
 
 
+def search_web(prompt: str, system: str | None = None) -> str:
+    """Answer a prompt grounded in live Google Search results (via Gemini).
+
+    Enables Gemini's Google Search tool so the reply is based on real, current web
+    content (e.g. actual market prices) rather than the model's own memory. Reads
+    GEMINI_API_KEY; a missing key or any error raises so callers can degrade to a
+    knowledge-only path. Note: Google Search grounding is billed per grounded prompt
+    beyond the free tier, so callers should use it only where live data matters.
+    """
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    contents = f"{system}\n\n{prompt}" if system else prompt
+    config = types.GenerateContentConfig(
+        tools=[types.Tool(google_search=types.GoogleSearch())]
+    )
+    response = client.models.generate_content(
+        model=GEMINI_MODEL, contents=contents, config=config
+    )
+    return response.text or ""
+
+
 def _call_groq(prompt: str, system: str | None, reasoning: bool) -> str:
     """Call the Groq API (fallback 2; very fast, text-only)."""
     from groq import Groq

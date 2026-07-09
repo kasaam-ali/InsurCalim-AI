@@ -905,6 +905,8 @@ def _render_amount(amount: dict | None) -> None:
     cur = amount.get("currency") or ""
     st.markdown("**💰 Claim amount assessment — is the demanded cost justified?**")
     st.markdown(badge(label, col), unsafe_allow_html=True)
+    if amount.get("priced_from") == "market":
+        st.caption("🌐 Estimated from live market prices (web search).")
     claimed = _fmt_money(cur, amount.get("claimed_amount"))
     if claimed:
         st.markdown(f"- **Demanded:** {claimed}")

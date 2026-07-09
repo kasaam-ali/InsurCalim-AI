@@ -214,6 +214,8 @@ def to_pdf(detailed: dict[str, Any], claim_ref: str = "claim") -> bytes:
         cur = amt.get("currency") or ""
         verdict = amt.get("verdict") or "insufficient_info"
         mcell(AMOUNT_VERDICT_LABELS.get(verdict, verdict), style="B")
+        if amt.get("priced_from") == "market":
+            mcell("Estimated from live market prices (web search).", color=(110, 110, 110))
         claimed = _money(cur, amt.get("claimed_amount"))
         if claimed:
             mcell(f"Demanded: {claimed}")
