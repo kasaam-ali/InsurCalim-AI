@@ -11,6 +11,7 @@ Run from the project root:  streamlit run frontend/app.py
 from __future__ import annotations
 
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -475,7 +476,9 @@ def claim_chat_ui(chat_key: str, context: str) -> None:
         history.append({"role": "assistant", "content": answer})
 
 
-def _investigation_context(s: dict, documents: dict | None, coverage: dict | None) -> str:
+def _investigation_context(
+    s: dict, documents: dict | None, coverage: dict | None, amount: dict | None = None
+) -> str:
     """Build a compact context string for the claim chat."""
     label, _ = risk_meta(s["risk"])
     action = ("route_to_investigator" if s["risk"] >= RISK_HIGH
@@ -490,6 +493,14 @@ def _investigation_context(s: dict, documents: dict | None, coverage: dict | Non
         parts.append("Missing documents: " + ", ".join(str(d) for d in documents["missing"]))
     if coverage:
         parts.append(f"Coverage: {coverage.get('decision')} - {coverage.get('rationale','')}")
+    if amount:
+        cur = amount.get("currency") or ""
+        parts.append(
+            f"Amount assessment: verdict={amount.get('verdict')}; "
+            f"demanded={cur} {amount.get('claimed_amount')}; "
+            f"fair estimate={cur} {amount.get('fair_estimate')}. "
+            f"{amount.get('rationale','')}"
+        )
     parts.append("Claim description:\n" + (s.get("description") or "")[:4000])
     return "\n\n".join(parts)
 
@@ -554,6 +565,7 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
 
     documents = sub.get("documents") if (moved and sub) else None
     coverage = sub.get("coverage") if (moved and sub) else None
+    amount = sub.get("amount") if (moved and sub) else None
 
     if moved:
         if coverage:
@@ -562,6 +574,9 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
             st.markdown(badge(coverage["decision"].upper().replace("_", " "),
                               cmap.get(coverage["decision"], MUTED)), unsafe_allow_html=True)
             st.caption(coverage.get("rationale", ""))
+        if amount:
+            st.markdown("##### Claim amount")
+            _render_amount(amount)
     else:
         if st.button("🛡️ Check policy coverage", key=f"cov_{case_ref}"):
             from insurclaim import coverage as cov_mod
@@ -578,7 +593,7 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
 
     # AI chat — same for both; each claim keeps its own thread.
     claim_chat_ui(f"moved_{case_ref}" if moved else f"demo_{case_ref}",
-                  _investigation_context(s, documents, coverage))
+                  _investigation_context(s, documents, coverage, amount))
 
     case_management_ui(case_ref)
 
@@ -588,7 +603,7 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
             render_detailed_and_pdf(
                 sub["final"], case_ref, sub.get("text", ""),
                 doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
-                coverage=sub.get("coverage"),
+                coverage=sub.get("coverage"), amount=sub.get("amount"),
             )
 
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
@@ -865,6 +880,47 @@ def _render_quick_report(report: dict) -> None:
 _AUTO_COVERAGE = object()  # sentinel: compute coverage internally when not supplied
 
 
+_AMOUNT_VERDICT = {
+    "reasonable": ("Amount looks reasonable", GOOD),
+    "overstated": ("Amount overstated", CRITICAL),
+    "understated": ("Amount understated", WARNING),
+    "insufficient_info": ("Not enough detail to price", MUTED),
+}
+
+
+def _fmt_money(currency: str, value) -> str | None:
+    """Format a monetary value like 'PKR 250,000', or None when not numeric."""
+    try:
+        return f"{currency} {float(value):,.0f}".strip()
+    except (TypeError, ValueError):
+        return None
+
+
+def _render_amount(amount: dict | None) -> None:
+    """Render the 'is the demanded amount fair, and if not how much?' block."""
+    if not amount:
+        return
+    verdict = amount.get("verdict") or "insufficient_info"
+    label, col = _AMOUNT_VERDICT.get(verdict, ("", MUTED))
+    cur = amount.get("currency") or ""
+    st.markdown("**💰 Claim amount assessment — is the demanded cost justified?**")
+    st.markdown(badge(label, col), unsafe_allow_html=True)
+    claimed = _fmt_money(cur, amount.get("claimed_amount"))
+    if claimed:
+        st.markdown(f"- **Demanded:** {claimed}")
+    fair = _fmt_money(cur, amount.get("fair_estimate"))
+    if fair:
+        lo = _fmt_money(cur, amount.get("fair_low"))
+        hi = _fmt_money(cur, amount.get("fair_high"))
+        rng = f"  _(fair range {lo} – {hi})_" if lo and hi else ""
+        st.markdown(f"- **Fair estimate:** {fair}{rng}")
+    for li in amount.get("line_items", []) or []:
+        est = _fmt_money(cur, li.get("estimate"))
+        st.markdown(f"    - {li.get('item','')}: {est or '—'}")
+    if amount.get("rationale"):
+        st.caption(amount["rationale"])
+
+
 def render_detailed_and_pdf(
     state: dict,
     claim_ref: str,
@@ -872,8 +928,9 @@ def render_detailed_and_pdf(
     doc_ids: list[int] | None = None,
     documents: dict | None = None,
     coverage=_AUTO_COVERAGE,
+    amount: dict | None = None,
 ) -> None:
-    """Show a detailed view (coverage, documents, fraud reasons, timeline) + a PDF.
+    """Show a detailed view (coverage, documents, amount, fraud reasons, timeline) + a PDF.
 
     Pass a precomputed `coverage` dict (or None) to avoid re-running the coverage
     LLM on every rerender; omit it to compute coverage here.
@@ -893,7 +950,9 @@ def render_detailed_and_pdf(
     else:
         cov = coverage
 
-    detailed = report_builder.build_detailed(state, coverage=cov, documents=documents)
+    detailed = report_builder.build_detailed(
+        state, coverage=cov, documents=documents, amount=amount
+    )
     with st.expander("📄 Detailed view — coverage, documents, why flagged, timeline",
                      expanded=True):
         if detailed["summary"]:
@@ -923,6 +982,7 @@ def render_detailed_and_pdf(
                     st.markdown(f":orange[⚠ Incomplete: {inc}]")
             if documents.get("notes"):
                 st.caption(documents["notes"])
+        _render_amount(amount)
         if detailed.get("fraud_reasons"):
             st.markdown("**🔎 Why we flagged this — specific inconsistencies**")
             for i, r in enumerate(detailed["fraud_reasons"], 1):
@@ -1007,7 +1067,7 @@ def _render_submission(sub: dict) -> None:
     render_detailed_and_pdf(
         sub["final"], sub.get("ref", "uploaded claim"), sub.get("text", ""),
         doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
-        coverage=sub.get("coverage"),
+        coverage=sub.get("coverage"), amount=sub.get("amount"),
     )
     _move_to_investigation(sub)
 
@@ -1141,13 +1201,28 @@ def page_submit() -> None:
         with st.spinner("Running intake → timeline → fraud → report..."):
             final = run_claim({"raw_documents": text})
 
-        # 3) Store the whole result so it survives navigation, then render below.
+        # 3) Assess whether the demanded amount is justified (and if not, how much
+        #    a fair settlement would be) — useful even when the claim is not fraud.
+        from insurclaim import amount as amount_mod
+
+        amount_assessment = None
+        with st.spinner("Estimating a fair claim amount..."):
+            try:
+                claimed = (final.get("extracted") or {}).get("claimed_amount")
+                amount_assessment = amount_mod.assess_amount(
+                    text, claimed_amount=claimed, doc_ids=selected_doc_ids or None
+                )
+            except Exception:
+                amount_assessment = None
+
+        # 4) Store the whole result so it survives navigation, then render below.
         st.session_state["last_submission"] = {
             "ref": "uploaded claim",
             "text": text,
             "doc_ids": selected_doc_ids or None,
             "documents": documents,
             "coverage": coverage_result,
+            "amount": amount_assessment,
             "final": final,
             "notices": notices,
             "degraded": bool(final.get("extracted", {}).get("_extraction_degraded")),
@@ -1229,6 +1304,110 @@ def page_policy() -> None:
             )
 
 
+def _render_overview(ov: dict, sub: dict) -> None:
+    """Render the consolidated claimant overview: profile, summary, documents, risk."""
+    label, color = risk_meta(ov["risk_score"])
+
+    st.markdown(
+        f'<div class="hero"><h1>🧾 {ov["claimant"]}</h1>'
+        "<p>Consolidated overview of this claimant and their claim, built from the "
+        "uploaded documents.</p></div>",
+        unsafe_allow_html=True,
+    )
+
+    # Claimed amount: reuse the amount assessment's currency when available.
+    cur = (sub.get("amount") or {}).get("currency") or "PKR"
+    claimed = _fmt_money(cur, ov.get("claimed_amount")) or "-"
+
+    row1 = st.columns(4)
+    for col, card in zip(row1, [
+        kpi("Claimant", ov["claimant"]),
+        kpi("Incident date", ov["incident_date"]),
+        kpi("Location", ov["location"] or "-"),
+        kpi("Demanded amount", claimed),
+    ]):
+        col.markdown(card, unsafe_allow_html=True)
+
+    row2 = st.columns(4)
+    docs = ov.get("documents") or {}
+    present_n = len(docs.get("present") or [])
+    required_n = len(docs.get("required") or [])
+    for col, card in zip(row2, [
+        kpi("Vehicle", ov["vehicle"]),
+        kpi("Reported date", ov["report_date"]),
+        kpi("Documents", f"{present_n}/{required_n}" if required_n else str(present_n),
+            "present / required"),
+        kpi("Risk score", f"{ov['risk_score']:.0f}", label),
+    ]):
+        col.markdown(card, unsafe_allow_html=True)
+
+    st.write("")
+    left, right = st.columns([2, 1])
+    with left:
+        st.markdown("##### Claim summary")
+        st.markdown(ov["summary"])
+
+        if ov.get("parties"):
+            st.markdown("##### Parties")
+            for p in ov["parties"]:
+                st.markdown(f"- **{p['full_name']}** — {p['role']}")
+
+        if docs and (docs.get("required") or docs.get("missing") or docs.get("incomplete")):
+            st.markdown("##### Documents checklist")
+            if docs.get("present"):
+                st.markdown("✓ Present: " + ", ".join(str(d) for d in docs["present"]))
+            if docs.get("missing"):
+                st.markdown(
+                    ":red[✗ Missing: " + ", ".join(str(d) for d in docs["missing"]) + "]"
+                )
+            for inc in docs.get("incomplete", []):
+                if isinstance(inc, dict):
+                    st.markdown(
+                        f":orange[⚠ Incomplete: {inc.get('document','')} — {inc.get('issue','')}]"
+                    )
+                else:
+                    st.markdown(f":orange[⚠ Incomplete: {inc}]")
+            if docs.get("notes"):
+                st.caption(docs["notes"])
+
+    with right:
+        st.markdown("##### Risk snapshot")
+        st.markdown(gauge(ov["risk_score"], color), unsafe_allow_html=True)
+        st.markdown(badge(f"{label} RISK", color), unsafe_allow_html=True)
+        st.markdown(f"**Recommended action:** `{ov['recommended_action']}`")
+
+
+def page_overview_claimant() -> None:
+    """A dedicated section: overview of an uploaded claimant after their documents load."""
+    from insurclaim import overview as overview_mod
+
+    st.markdown("### 🧾 Claimant overview")
+
+    # Collect uploaded cases: the latest submission plus any moved to investigation.
+    cases: dict[str, dict] = {}
+    for ref, sub in st.session_state.get("investigation_cases", {}).items():
+        cases[ref] = sub
+    last = st.session_state.get("last_submission")
+    if last:
+        cases.setdefault(last.get("ref", "uploaded claim"), last)
+
+    if not cases:
+        st.info("Upload a claim on the '✍️ Submit a claim' page first — the claimant "
+                "overview will appear here.")
+        return
+
+    refs = list(cases.keys())
+    choice = st.selectbox("Select a claimant", refs, index=len(refs) - 1,
+                          key="overview_select")
+    sub = cases[choice]
+    final = sub.get("final", {}) or {}
+
+    ov = overview_mod.build_overview(
+        final.get("extracted"), final.get("report"), sub.get("documents")
+    )
+    _render_overview(ov, sub)
+
+
 PAGES = {
     "📊 Overview": page_overview,
     "📋 Claims queue": page_queue,
@@ -1236,13 +1415,60 @@ PAGES = {
     "🕸️ Fraud rings": page_rings,
     "📈 Analytics": page_analytics,
     "✍️ Submit a claim": page_submit,
+    "🧾 Claimant overview": page_overview_claimant,
     "🛡️ Policy & coverage": page_policy,
     "📉 Model performance": page_model,
 }
-NO_ARG_PAGES = ("✍️ Submit a claim", "🛡️ Policy & coverage", "📉 Model performance")
+NO_ARG_PAGES = ("✍️ Submit a claim", "🧾 Claimant overview",
+                "🛡️ Policy & coverage", "📉 Model performance")
+
+
+def _check_auth() -> None:
+    """Gate the dashboard behind a landing page + login. Stops rendering when not authed."""
+    if st.session_state.get("authenticated"):
+        return
+
+    # Demo credentials come from the environment; defaults let the demo run out of the box.
+    expected_user = os.getenv("APP_USERNAME", "admin")
+    expected_pass = os.getenv("APP_PASSWORD", "insurclaim2026")
+
+    st.markdown(
+        '<div class="hero"><h1>🔎 InsurCalim AI</h1>'
+        "<p>AI-assisted auto-insurance claim investigation — explainable, human-in-the-loop. "
+        "The system flags and ranks; it never auto-denies. Sign in to open the investigator "
+        "dashboard.</p></div>",
+        unsafe_allow_html=True,
+    )
+    cols = st.columns(4)
+    for col, card in zip(cols, [
+        kpi("Fraud drained / yr", "$80B+", "globally (2025)"),
+        kpi("Claims with fraud", "~10%", "of P&C losses"),
+        kpi("AI-fake media", "25-30%", "of claims"),
+        kpi("Cost / claim", "~$0.02", "on the balanced tier"),
+    ]):
+        col.markdown(card, unsafe_allow_html=True)
+
+    st.write("")
+    _, mid, _ = st.columns([1, 1.4, 1])
+    with mid:
+        st.markdown("#### 🔐 Sign in")
+        with st.form("login_form"):
+            username = st.text_input("Username", value="")
+            password = st.text_input("Password", type="password", value="")
+            submitted = st.form_submit_button("Sign in", use_container_width=True)
+        if submitted:
+            if username == expected_user and password == expected_pass:
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Invalid username or password.")
+        st.caption("Demo access — synthetic & public data only, no real customer information.")
+
+    st.stop()
 
 
 def main() -> None:
+    _check_auth()
     st.sidebar.markdown("## 🔎 InsurCalim AI")
     st.sidebar.caption("Fraud investigation dashboard")
     # Honour a one-shot programmatic navigation request (e.g. "Move to Investigation
@@ -1253,6 +1479,9 @@ def main() -> None:
     choice = st.sidebar.radio("Navigate", list(PAGES.keys()),
                               label_visibility="collapsed", key="nav")
     st.sidebar.markdown("---")
+    if st.sidebar.button("🔓 Log out", use_container_width=True):
+        st.session_state["authenticated"] = False
+        st.rerun()
     st.sidebar.caption("Human-in-the-loop — flags & ranks, never auto-denies.")
 
     try:

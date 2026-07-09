@@ -12,7 +12,10 @@ from typing import Any
 
 
 def build_detailed(
-    state: dict[str, Any], coverage: dict | None = None, documents: dict | None = None
+    state: dict[str, Any],
+    coverage: dict | None = None,
+    documents: dict | None = None,
+    amount: dict | None = None,
 ) -> dict[str, Any]:
     """Assemble a detailed report dict from the pipeline final state."""
     report = state.get("report", {}) or {}
@@ -94,6 +97,7 @@ def build_detailed(
         "contributions": contributions,
         "coverage": coverage,
         "documents": documents,
+        "amount": amount,
         "citations": report.get("citations", []),
     }
 
@@ -102,6 +106,22 @@ def _san(text: Any) -> str:
     """Make text safe for the PDF core fonts (latin-1)."""
     s = str(text or "")
     return s.encode("latin-1", "replace").decode("latin-1")
+
+
+def _money(currency: str, value: Any) -> str | None:
+    """Format a monetary value like 'PKR 250,000', or None when not numeric."""
+    try:
+        return f"{currency} {float(value):,.0f}".strip()
+    except (TypeError, ValueError):
+        return None
+
+
+AMOUNT_VERDICT_LABELS = {
+    "reasonable": "Amount looks reasonable",
+    "overstated": "Amount overstated",
+    "understated": "Amount understated",
+    "insufficient_info": "Not enough detail to price",
+}
 
 
 def to_pdf(detailed: dict[str, Any], claim_ref: str = "claim") -> bytes:
@@ -187,6 +207,27 @@ def to_pdf(detailed: dict[str, Any], claim_ref: str = "claim") -> bytes:
         mcell(f"Decision: {cov.get('decision','-')}. {cov.get('rationale','')}")
         if cov.get("clause"):
             mcell(f"Cited clause: {cov['clause'][:300]}", color=(110, 110, 110))
+
+    amt = detailed.get("amount")
+    if amt:
+        section("Claim amount assessment")
+        cur = amt.get("currency") or ""
+        verdict = amt.get("verdict") or "insufficient_info"
+        mcell(AMOUNT_VERDICT_LABELS.get(verdict, verdict), style="B")
+        claimed = _money(cur, amt.get("claimed_amount"))
+        if claimed:
+            mcell(f"Demanded: {claimed}")
+        fair = _money(cur, amt.get("fair_estimate"))
+        if fair:
+            lo = _money(cur, amt.get("fair_low"))
+            hi = _money(cur, amt.get("fair_high"))
+            rng = f"  (fair range {lo} - {hi})" if lo and hi else ""
+            mcell(f"Fair estimate: {fair}{rng}")
+        for li in amt.get("line_items", []) or []:
+            est = _money(cur, li.get("estimate"))
+            mcell(f"   - {li.get('item','')}: {est or '-'}", color=(110, 110, 110))
+        if amt.get("rationale"):
+            mcell(amt["rationale"], color=(110, 110, 110))
 
     docs = detailed.get("documents")
     if docs and (docs.get("required") or docs.get("missing") or docs.get("incomplete")):
