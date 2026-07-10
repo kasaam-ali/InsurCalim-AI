@@ -21,10 +21,12 @@ export default function Stats() {
         </Reveal>
         <div className="stats">
           {STATS.map((s, i) => (
-            <Reveal key={s.lbl} className="stat" delay={i * 80}>
-              <div className="num gradient-text">{s.num}</div>
-              <div className="lbl">{s.lbl}</div>
-              <div className="cap">{s.cap}</div>
+            <Reveal key={s.lbl} delay={i * 80}>
+              <div className="stat">
+                <div className="num gradient-text">{s.num}</div>
+                <div className="lbl">{s.lbl}</div>
+                <div className="cap">{s.cap}</div>
+              </div>
             </Reveal>
           ))}
         </div>

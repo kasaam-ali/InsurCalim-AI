@@ -17,10 +17,12 @@ export default function Flow() {
         </Reveal>
         <div className="flow">
           {STEPS.map((s, i) => (
-            <Reveal key={s.n} className="step" delay={i * 80}>
-              <div className="n">{s.n}</div>
-              <h4>{s.h}</h4>
-              <p>{s.p}</p>
+            <Reveal key={s.n} delay={i * 80}>
+              <div className="step">
+                <div className="n">{s.n}</div>
+                <h4>{s.h}</h4>
+                <p>{s.p}</p>
+              </div>
             </Reveal>
           ))}
         </div>
