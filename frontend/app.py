@@ -1434,6 +1434,15 @@ def _check_auth() -> None:
     expected_user = os.getenv("APP_USERNAME", "admin")
     expected_pass = os.getenv("APP_PASSWORD", "insurclaim2026")
 
+    # Single sign-in hand-off from the React landing page: it redirects here with
+    # "?token=<APP_LOGIN_TOKEN>" after the user signs in there, so we don't ask again.
+    expected_token = os.getenv("APP_LOGIN_TOKEN", "insurclaim-demo-2026")
+    incoming_token = st.query_params.get("token")
+    if expected_token and incoming_token == expected_token:
+        st.session_state["authenticated"] = True
+        st.query_params.clear()  # drop the token from the URL once consumed
+        return
+
     st.markdown(
         '<div class="hero"><h1>🔎 InsurCalim AI</h1>'
         "<p>AI-assisted auto-insurance claim investigation — explainable, human-in-the-loop. "
