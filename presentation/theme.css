@@ -1,0 +1,252 @@
+/* =========================================================================
+   InsurCalim AI — presentation theme (overrides reveal.js base)
+   Premium dark, cyan/indigo, glassmorphism — matched to the landing page.
+   Uses a system font stack (no CDN) so it works fully offline.
+   ========================================================================= */
+
+:root {
+  --bg: #05070e;
+  --bg-2: #0a0f1e;
+  --ink: #eef2ff;
+  --muted: #9aa6c4;
+  --line: rgba(255, 255, 255, 0.10);
+  --accent: #38bdf8;
+  --accent-2: #6366f1;
+  --accent-3: #22d3ee;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #fb7185;
+  --card: rgba(17, 24, 43, 0.55);
+
+  /* reveal base overrides */
+  --r-background-color: #05070e;
+  --r-main-font: "Segoe UI", system-ui, -apple-system, Inter, Roboto, Arial, sans-serif;
+  --r-heading-font: var(--r-main-font);
+  --r-main-color: #eef2ff;
+  --r-heading-color: #ffffff;
+  --r-link-color: #38bdf8;
+  --r-main-font-size: 37.4px;
+}
+
+/* Animated gradient mesh behind the slides */
+.reveal-viewport {
+  background:
+    radial-gradient(45% 40% at 12% 16%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(40% 45% at 88% 12%, rgba(34, 211, 238, 0.18), transparent 60%),
+    radial-gradient(50% 50% at 78% 88%, rgba(56, 189, 248, 0.14), transparent 60%),
+    var(--bg);
+}
+
+.reveal {
+  font-family: var(--r-main-font);
+  /* Content base = 115.5% of the default so all body/content text is enlarged;
+     the main headings are countered below to keep their original size. */
+  font-size: 1.155em;
+  color: var(--ink);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+.reveal .slides { text-align: left; }
+/* Full-height, vertically-centred slides so the bottom brand strip anchors correctly. */
+.reveal .slides section {
+  top: 0 !important;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px 40px 26px;
+  flex-direction: column;
+  justify-content: center;
+}
+/* reveal sets an inline display:block on the visible slide; override only that
+   one (not the hidden slides) so content can centre vertically via flexbox. */
+.reveal .slides section.present {
+  display: flex !important;
+}
+.reveal .slides section.slide-center {
+  align-items: center;
+  text-align: center;
+}
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  color: #fff;
+  text-transform: none;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin: 0 0 0.4em;
+  text-shadow: none;
+  font-weight: 800;
+}
+/* Main slide titles are countered by 1/1.1 so they stay the SAME absolute size
+   while the +10% base font enlarges only the body/content text. */
+.reveal h1 { font-size: 2.076em; }
+.reveal h2 { font-size: 1.472em; }
+.reveal h3 { font-size: 1.15em; }
+.reveal p { line-height: 1.5; color: var(--ink); }
+.reveal strong { color: #fff; font-weight: 700; }
+.reveal em { color: var(--accent-3); font-style: normal; }
+.reveal a { text-decoration: none; }
+.reveal ul, .reveal ol { display: block; margin-left: 1.1em; }
+.reveal li { margin: 0.28em 0; color: var(--ink); }
+.reveal li::marker { color: var(--accent); }
+
+.gradient-text {
+  background: linear-gradient(100deg, #fff 8%, var(--accent) 48%, var(--accent-2) 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Eyebrow / kicker pill */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-3);
+  border: 1px solid var(--line);
+  background: rgba(56, 189, 248, 0.06);
+  font-size: 0.6em;
+  padding: 8px 16px;
+  border-radius: 999px;
+  margin-bottom: 0.5em;
+  align-self: flex-start; /* don't stretch to full width inside the flex column */
+}
+.slide-center .eyebrow { align-self: center; }
+.eyebrow .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--good);
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.18);
+}
+
+/* Brand mark */
+.brand { display: inline-flex; align-items: center; gap: 14px; font-weight: 800; }
+.brand .logo {
+  width: 54px; height: 54px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 28px;
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
+  box-shadow: 0 10px 30px -8px rgba(56, 189, 248, 0.7);
+}
+
+/* Cards / glass */
+.glass {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  padding: 22px 24px;
+}
+
+/* KPI tiles */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
+.kpi-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.kpi {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 16px;
+  padding: 15px 16px;
+}
+.kpi .num {
+  font-size: 1.55em; font-weight: 800; line-height: 1;
+  letter-spacing: -0.02em;
+}
+.kpi .lbl { color: var(--ink); font-weight: 700; font-size: 0.62em; margin-top: 12px; }
+.kpi .cap { color: var(--muted); font-size: 0.52em; margin-top: 6px; line-height: 1.35; }
+
+/* Generic feature/detail grid */
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+.card {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px 18px;
+}
+.card .ic {
+  width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+  font-size: 20px; margin-bottom: 8px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(99, 102, 241, 0.16));
+  border: 1px solid var(--line);
+}
+.card h3 { margin: 0 0 8px; font-size: 0.74em; }
+.card p { margin: 0; color: var(--muted); font-size: 0.6em; line-height: 1.5; }
+
+/* Agent flow pipeline */
+.flow { display: flex; align-items: stretch; gap: 10px; flex-wrap: nowrap; }
+.flow .step {
+  flex: 1; border: 1px solid var(--line); background: var(--card);
+  border-radius: 14px; padding: 12px 10px; text-align: center;
+}
+.flow .step .n { color: var(--accent); font-weight: 800; font-size: 0.56em; letter-spacing: 0.1em; }
+.flow .step .t { font-weight: 700; margin-top: 7px; font-size: 0.74em; }
+.flow .step .s { color: var(--muted); font-size: 0.52em; margin-top: 5px; }
+.flow .arrow { align-self: center; color: var(--accent); font-size: 1.1em; font-weight: 800; }
+.flow .step.out { border-color: rgba(99, 102, 241, 0.5); background: rgba(99, 102, 241, 0.12); }
+
+/* Pills / chips */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px; padding: 10px 18px; font-size: 0.62em; color: var(--ink);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.chip b { color: var(--accent-3); }
+
+/* Tables */
+.reveal table.tbl {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  font-size: 0.66em; background: var(--card);
+  border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+}
+.reveal table.tbl th {
+  text-align: left; color: var(--muted); font-weight: 700; font-size: 0.82em;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+}
+.reveal table.tbl td { border-bottom: 1px solid var(--line); padding: 11px 16px; color: var(--ink); }
+.reveal table.tbl tr:last-child td { border-bottom: none; }
+.reveal table.tbl tr.hi td { background: rgba(56, 189, 248, 0.08); font-weight: 600; }
+
+/* Screenshots framed */
+.shot {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 30px 70px -34px rgba(0, 0, 0, 0.9);
+  background: #0a0f1e;
+}
+.shot img { display: block; width: 100%; height: auto; }
+.shot-cap { color: var(--muted); font-size: 0.54em; margin-top: 10px; text-align: center; }
+
+/* Section lead (big statement slides) */
+.lead { font-size: 1.15em; color: var(--muted); max-width: 22ch; }
+
+/* Citation / footnote */
+.cite { color: var(--muted); font-size: 0.5em; margin-top: 16px; }
+.muted { color: var(--muted); }
+.accent { color: var(--accent-3); }
+
+/* Slide bottom brand strip */
+.footer-brand {
+  position: absolute; bottom: 14px; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.36em; color: var(--muted); padding: 0 4px;
+}
+.footer-brand .r { display: inline-flex; gap: 10px; align-items: center; }
+
+/* reveal chrome tint */
+.reveal .progress { color: var(--accent); height: 4px; }
+.reveal .controls { color: var(--accent); }
+.reveal .slide-number { background: rgba(0,0,0,0.4); color: var(--muted); }
+
+/* Utility spacing */
+.mt-s { margin-top: 10px; } .mt-m { margin-top: 20px; } .mt-l { margin-top: 34px; }
+.center { text-align: center; }
+.row { display: flex; gap: 22px; align-items: center; }
+.row .col { flex: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}

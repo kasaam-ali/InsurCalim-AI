@@ -17,20 +17,29 @@ from insurclaim.coverage import _selected_policy_text
 from insurclaim.llm import call_llm_json, search_web
 
 AMOUNT_SYSTEM = """
-You are a motor-insurance claims cost assessor (a quantum analyst). You are given a
-claim file (all documents concatenated) and, when known, the amount the claimant is
-demanding. Estimate a fair, reasonable settlement for the vehicle damage and any
-injuries the claim actually describes, then judge whether the demanded amount is
-justified.
+You are a motor-insurance claims cost assessor (a quantum analyst) working in the
+PAKISTANI market. You are given a claim file (all documents concatenated) and, when
+known, the amount the claimant is demanding. Estimate a fair, reasonable settlement for
+the vehicle damage and any injuries the claim actually describes, then judge whether the
+demanded amount is justified.
+
+This is an ESTIMATE to help a human adjuster, not a final settlement figure.
 
 Base every number on what the claim describes (vehicle, parts damaged, repairs,
 medical treatment, region). If a MARKET PRICE RESEARCH block is provided, it contains
 current real-world prices found via live web search - base each line-item estimate on
-those live prices rather than your own guess, and set "priced_from" to "market". If no
-market research is provided, estimate from your own knowledge and set "priced_from" to
-"model_estimate". If a policy excerpt is provided, respect any stated sum-insured
+those live prices rather than your own guess, and set "priced_from" to "market". For
+each line item, put WHERE the price came from (the marketplace / workshop / source
+name) in its "source" field. If no market research is provided, estimate from your own
+knowledge, set "priced_from" to "model_estimate", and set each "source" to
+"model estimate". If a policy excerpt is provided, respect any stated sum-insured
 limit, sub-limits, or deductible. If the file lacks enough detail to estimate a fair
 amount, say so instead of guessing.
+
+CURRENCY RULE (strict): price everything in Pakistani Rupees (PKR). If any market
+figure is found in another currency (USD, INR, etc.), CONVERT it to PKR before using
+it. "currency" must be "PKR" unless the claim file clearly states the incident happened
+in another country, in which case use that country's currency.
 
 Return strict JSON:
 {
@@ -41,7 +50,7 @@ Return strict JSON:
   "fair_high": number | null,
   "verdict": "reasonable" | "overstated" | "understated" | "insufficient_info",
   "priced_from": "market" | "model_estimate",
-  "line_items": [{"item": "...", "estimate": number}],
+  "line_items": [{"item": "...", "estimate": number, "source": "..."}],
   "rationale": "one or two sentences explaining the estimate and the verdict"
 }
 Verdict rules:
@@ -49,18 +58,21 @@ Verdict rules:
 - "overstated": the demanded amount is materially above the fair range (possible inflation).
 - "understated": the demanded amount is below the fair range.
 - "insufficient_info": there is not enough detail to estimate a fair amount.
-Infer "currency" from the file (e.g. PKR, USD); default to PKR if unclear.
 Return ONLY the JSON object.
 """
 
 PARTS_RESEARCH_PROMPT = """
-You are a vehicle parts-price researcher. From the claim file below, identify the
-vehicle (make, model, year if stated) and every damaged part or required repair.
-Then search the web for the CURRENT market price of each part and the typical labour
-cost. Use the claim's region; default to Pakistan (PKR) if the region is unclear.
+You are a vehicle parts-price researcher working in the PAKISTANI market. From the
+claim file below, identify the vehicle (make, model, year if stated) and every damaged
+part or required repair. Then search the web for the CURRENT market price of each part
+and the typical labour cost in Pakistan. Assume the Pakistani market and price in PKR
+unless the claim clearly states the incident happened in another country. If you find a
+price quoted in another currency (USD, INR, etc.), convert it to PKR.
 
-Return a concise plain-text list, one line per item:
-  <part / repair> - <price or price range with currency> - <one-line source note>
+Return a concise plain-text list, one line per item. Each line MUST end with a source
+note naming where the price came from (e.g. PakWheels, OLX Pakistan, a local workshop
+rate, a parts-dealer listing):
+  <part / repair> - PKR <price or price range> - <source name>
 Include a labour line if relevant. Do not add commentary beyond the list.
 
 CLAIM FILE:
@@ -126,6 +138,7 @@ def assess_amount(
             "verdict": "insufficient_info",
             "priced_from": "model_estimate",
             "line_items": [],
+            "sources_text": market_text,
             "rationale": "Cost-assessment model unavailable.",
         }
 
@@ -139,6 +152,14 @@ def assess_amount(
     result.setdefault("rationale", "")
     # Reflect whether the estimate was grounded in live market prices.
     result.setdefault("priced_from", "market" if market_text else "model_estimate")
+    # Ensure every line item has a "source" the UI can show (where the price came from).
+    default_source = "live web search" if market_text else "model estimate"
+    for li in result["line_items"]:
+        if isinstance(li, dict) and not li.get("source"):
+            li["source"] = default_source
+    # Carry the raw market-price findings through so the UI can show the grounding /
+    # references the estimate was based on.
+    result["sources_text"] = market_text
     # Fall back to the amount we extracted upstream if the model did not surface one.
     if result.get("claimed_amount") in (None, "") and claimed_amount not in (None, ""):
         result["claimed_amount"] = claimed_amount

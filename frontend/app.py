@@ -106,12 +106,12 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label div[data-baseweb="
 .flag .e {color:#52514e; font-size:.86rem; margin-top:.15rem;}
 .flag .c {color:#898781; font-size:.76rem; margin-top:.2rem;}
 
-.trace {display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; margin:.4rem 0 1rem;}
-.node {background:#eef4fd; color:#1c2b4a; border:1px solid #cfe0f8; border-radius:999px; padding:.32rem .85rem;
-  font-size:.82rem; font-weight:650;}
+.trace {display:flex; align-items:center; gap:.3rem; flex-wrap:wrap; margin:.2rem 0 .7rem;}
+.node {background:#eef4fd; color:#1c2b4a; border:1px solid #cfe0f8; border-radius:999px; padding:.16rem .55rem;
+  font-size:.68rem; font-weight:650;}
 .node.done {background:linear-gradient(135deg,#0f9d58,#0c8a4d); color:#fff; border-color:transparent;
-  box-shadow:0 3px 9px rgba(15,157,88,.3);}
-.arrow {color:#b6bdca; font-weight:700;}
+  box-shadow:0 2px 6px rgba(15,157,88,.28);}
+.arrow {color:#b6bdca; font-weight:700; font-size:.7rem;}
 
 .cmp {display:flex; gap:.8rem;}
 .cmp .card {flex:1; background:#fff; border:1px solid rgba(11,11,11,.06); border-radius:14px; padding:1rem;
@@ -604,6 +604,7 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
                 sub["final"], case_ref, sub.get("text", ""),
                 doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
                 coverage=sub.get("coverage"), amount=sub.get("amount"),
+                media=sub.get("media"),
             )
 
     with st.expander("Run the full LLM pipeline (timeline + narrative reasoning)"):
@@ -860,21 +861,46 @@ def page_rings(scored: list[dict]) -> None:
         st.divider()
 
 
-def _render_quick_report(report: dict) -> None:
+def _two_line(text: str, max_chars: int = 180) -> str:
+    """Trim a long block to a short ~2-line overview, cutting on a word boundary."""
+    text = " ".join((text or "").split())
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rsplit(" ", 1)[0] + "…"
+
+
+def _render_quick_report(report: dict, media: list[dict] | None = None) -> None:
     score = float(report.get("risk_score", 0) or 0)
     lbl, col = risk_meta(score)
     st.markdown(agent_trace(4), unsafe_allow_html=True)
-    st.markdown(gauge(score, col), unsafe_allow_html=True)
-    st.markdown(badge(f"{lbl} RISK · {report.get('recommended_action','-')}", col), unsafe_allow_html=True)
-    for fl in report.get("top_flags", []):
+    # Gauge + risk badge on the left; the key findings fill the space on the right.
+    left, right = st.columns([1, 1.7], gap="medium")
+    with left:
+        st.markdown(gauge(score, col), unsafe_allow_html=True)
         st.markdown(
-            f'<div class="flag"><div class="t">{fl.get("summary","")}</div>'
-            f'<div class="e">{fl.get("evidence","")}</div></div>',
+            badge(f"{lbl} RISK · {report.get('recommended_action','-')}", col),
             unsafe_allow_html=True,
         )
-    if report.get("timeline_summary"):
-        st.markdown("**Timeline summary**")
-        st.write(report["timeline_summary"])
+    with right:
+        flags = report.get("top_flags", []) or []
+        if flags:
+            st.markdown("**Key findings — what stands out about this claim**")
+            # Concise bullet points (one line each); the full evidence for each is in
+            # the "Go Deeper" detail below.
+            st.markdown("\n".join(f"- {fl['summary']}" for fl in flags if fl.get("summary")))
+        else:
+            st.caption("No specific red flags surfaced for this claim.")
+        # A short 2-line overview of each uploaded photo / video frame. The full vision
+        # read lives under "Go Deeper" so this stays a quick glance.
+        photos = [m for m in (media or []) if m.get("damage")]
+        if photos:
+            st.markdown("**📷 What the photos show**")
+            st.markdown(
+                "\n".join(
+                    f"- **{m.get('file_name','')}** — {_two_line(m.get('damage',''))}"
+                    for m in photos
+                )
+            )
 
 
 _AUTO_COVERAGE = object()  # sentinel: compute coverage internally when not supplied
@@ -902,11 +928,15 @@ def _render_amount(amount: dict | None) -> None:
         return
     verdict = amount.get("verdict") or "insufficient_info"
     label, col = _AMOUNT_VERDICT.get(verdict, ("", MUTED))
-    cur = amount.get("currency") or ""
+    cur = amount.get("currency") or "PKR"
     st.markdown("**💰 Claim amount assessment — is the demanded cost justified?**")
     st.markdown(badge(label, col), unsafe_allow_html=True)
-    if amount.get("priced_from") == "market":
-        st.caption("🌐 Estimated from live market prices (web search).")
+    st.caption(
+        "🌐 Estimated from live market prices (web search)."
+        if amount.get("priced_from") == "market"
+        else "🧮 Estimated from the model's own knowledge (no live prices available)."
+    )
+    st.caption("This is a fair-cost **estimate** to guide a human adjuster — not a final settlement.")
     claimed = _fmt_money(cur, amount.get("claimed_amount"))
     if claimed:
         st.markdown(f"- **Demanded:** {claimed}")
@@ -918,9 +948,17 @@ def _render_amount(amount: dict | None) -> None:
         st.markdown(f"- **Fair estimate:** {fair}{rng}")
     for li in amount.get("line_items", []) or []:
         est = _fmt_money(cur, li.get("estimate"))
-        st.markdown(f"    - {li.get('item','')}: {est or '—'}")
+        src = (li.get("source") or "").strip()
+        src_note = f"  ·  _{src}_" if src else ""
+        st.markdown(f"    - {li.get('item','')}: {est or '—'}{src_note}")
     if amount.get("rationale"):
         st.caption(amount["rationale"])
+    # Show the raw market-price findings the estimate was grounded in (the "reference"
+    # a reviewer asked for), when a live web search returned anything.
+    sources_text = (amount.get("sources_text") or "").strip()
+    if sources_text:
+        with st.expander("🌐 Sources (live web search) — prices this estimate is based on"):
+            st.text(sources_text)
 
 
 def render_detailed_and_pdf(
@@ -931,11 +969,14 @@ def render_detailed_and_pdf(
     documents: dict | None = None,
     coverage=_AUTO_COVERAGE,
     amount: dict | None = None,
+    media: list[dict] | None = None,
 ) -> None:
     """Show a detailed view (coverage, documents, amount, fraud reasons, timeline) + a PDF.
 
     Pass a precomputed `coverage` dict (or None) to avoid re-running the coverage
-    LLM on every rerender; omit it to compute coverage here.
+    LLM on every rerender; omit it to compute coverage here. `media` carries the
+    per-photo vision reads so the full damage description is shown here (the top panel
+    only shows a short overview).
     """
     from insurclaim import coverage as cov_mod
     from insurclaim import report_builder
@@ -960,6 +1001,12 @@ def render_detailed_and_pdf(
         if detailed["summary"]:
             st.markdown("**Investigator summary**")
             st.write(detailed["summary"])
+        # Full per-photo / per-video vision analysis (the short overview is shown up top).
+        photos = [m for m in (media or []) if m.get("damage")]
+        if photos:
+            st.markdown("**📷 Photo analysis — full damage read**")
+            for m in photos:
+                st.markdown(f"- **{m.get('file_name','')}**: {m.get('damage','')}")
         if cov:
             cmap = {"covered": GOOD, "not_covered": CRITICAL, "needs_review": WARNING}
             st.markdown("**Policy coverage**")
@@ -1051,8 +1098,60 @@ def _move_to_investigation(sub: dict) -> None:
         st.rerun()
 
 
+_ACTION_PHRASING = {
+    "route_to_investigator": "route this claim to a human investigator before any payout",
+    "investigate": "route this claim to a human investigator before any payout",
+    "auto_approve": "let this claim proceed on the normal track",
+    "approve": "let this claim proceed on the normal track",
+    "pay": "let this claim proceed on the normal track",
+    "request_more_info": "ask the claimant for more information before deciding",
+    "deny": "flag this claim for a decline decision by a human adjuster",
+}
+
+
+def _plain_summary(report: dict, amount: dict | None) -> str:
+    """Compose a short plain-English paragraph from data already in the report.
+
+    Deterministic (no extra LLM call) so it renders instantly and works even when the
+    providers are rate-limited. Explains, in everyday words, what the system concluded
+    and what it recommends a human do next.
+    """
+    score = float(report.get("risk_score", 0) or 0)
+    lbl, _ = risk_meta(score)
+    action_key = str(report.get("recommended_action", "")).lower()
+    action = _ACTION_PHRASING.get(action_key, "have a human adjuster review this claim")
+
+    sentences = [
+        f"This claim scored **{score:.0f}/100** ({lbl.lower()} risk), so the system "
+        f"recommends we **{action}**."
+    ]
+    flags = report.get("top_flags", []) or []
+    if flags:
+        first = flags[0].get("summary", "").strip().rstrip(".")
+        extra = f", the most notable being *{first}*" if first else ""
+        n = len(flags)
+        sentences.append(
+            f"It surfaced **{n} point{'s' if n != 1 else ''}** worth checking{extra}."
+        )
+    if amount:
+        verdict = amount.get("verdict") or "insufficient_info"
+        cur = amount.get("currency") or "PKR"
+        fair = _fmt_money(cur, amount.get("fair_estimate"))
+        if verdict == "insufficient_info":
+            sentences.append("There was not enough detail to estimate a fair cost.")
+        elif fair:
+            sentences.append(
+                f"On cost, the demanded amount looks **{verdict}** against a fair "
+                f"estimate of about **{fair}**."
+            )
+    sentences.append(
+        "Nothing is auto-decided — a human makes the final call using the detail below."
+    )
+    return " ".join(sentences)
+
+
 def _render_submission(sub: dict) -> None:
-    """Render a stored claim submission (report + PDF + move button).
+    """Render a stored claim submission as three tiers: headline → plain summary → detail.
 
     Reads from session state so the result survives navigating away and back.
     """
@@ -1065,12 +1164,26 @@ def _render_submission(sub: dict) -> None:
             "local ML + similarity ran. **This risk score is not reliable.** Add a "
             "working API key or try again later, then re-run this claim."
         )
-    _render_quick_report(sub["final"].get("report", {}))
-    render_detailed_and_pdf(
-        sub["final"], sub.get("ref", "uploaded claim"), sub.get("text", ""),
-        doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
-        coverage=sub.get("coverage"), amount=sub.get("amount"),
-    )
+
+    report = sub["final"].get("report", {})
+
+    # Tier 1 — headline: gauge + risk badge + key-finding bullets + short photo overview.
+    _render_quick_report(report, media=sub.get("media"))
+
+    # Tier 2 — plain-English paragraph anyone can read at a glance.
+    st.markdown("**In plain English**")
+    st.info(_plain_summary(report, sub.get("amount")))
+
+    # Tier 3 — the full investigator detail, gated behind a "Go Deeper" toggle so the
+    # headline stays clean until the reviewer asks for everything.
+    go_key = "go_deeper_submission"
+    if st.toggle("🔬 Go Deeper — full investigator detail", key=go_key):
+        render_detailed_and_pdf(
+            sub["final"], sub.get("ref", "uploaded claim"), sub.get("text", ""),
+            doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
+            coverage=sub.get("coverage"), amount=sub.get("amount"),
+            media=sub.get("media"),
+        )
     _move_to_investigation(sub)
 
 
@@ -1114,74 +1227,82 @@ def page_submit() -> None:
         from insurclaim import intake_docs
         from insurclaim.graph import run_claim
 
-        doc_tuples: list[tuple[str, bytes]] = []
-        media_infos: list[dict] = []
-        n_docs = n_img = n_vid = 0
+        # A single live "status" panel so the user can see exactly what the system is
+        # doing at each moment, using the real pipeline steps (no fake progress bar).
+        with st.status("🔎 Investigating the claim…", expanded=True) as status:
+            doc_tuples: list[tuple[str, bytes]] = []
+            media_infos: list[dict] = []
+            n_docs = n_img = n_vid = 0
 
-        for f in files or []:
-            kind = intake_docs.classify_upload(f.name)
-            data = f.getvalue()
-            if kind == "document":
-                doc_tuples.append((f.name, data))
-                n_docs += 1
-            elif kind == "image":
-                info = intake_docs.process_photo(f.name, data)
-                info["kind"] = "photo"
-                with st.spinner(f"Reading {f.name} with the vision model..."):
+            st.write("📥 **Reading the files you uploaded…**")
+            for f in files or []:
+                kind = intake_docs.classify_upload(f.name)
+                data = f.getvalue()
+                if kind == "document":
+                    st.write(f"📄 Reading the text inside `{f.name}`…")
+                    doc_tuples.append((f.name, data))
+                    n_docs += 1
+                elif kind == "image":
+                    st.write(f"🖼 Checking whether photo `{f.name}` was reused from another claim…")
+                    info = intake_docs.process_photo(f.name, data)
+                    info["kind"] = "photo"
+                    st.write(f"👁 Looking at `{f.name}` to see the damage and whether the photo is AI-generated…")
                     info["damage"] = intake_docs.analyze_damage(data)
                     info["synthetic"] = intake_docs.detect_synthetic_media(f.name, data)
-                media_infos.append(info)
-                n_img += 1
-            elif kind == "video":
-                with st.spinner(f"Sampling frames from {f.name}..."):
+                    media_infos.append(info)
+                    n_img += 1
+                elif kind == "video":
+                    st.write(f"🎞 Taking a still picture from the video `{f.name}`…")
                     info = intake_docs.process_video(f.name, data)
-                frame = info.get("frame_jpeg")
-                if frame:
-                    with st.spinner(f"Analyzing {f.name} frame with the vision model..."):
+                    frame = info.get("frame_jpeg")
+                    if frame:
+                        st.write(f"👁 Looking at the video from `{f.name}` for damage and signs of fakery…")
                         info["damage"] = intake_docs.analyze_damage(frame)
                         info["synthetic"] = intake_docs.detect_synthetic_media(f.name, frame)
-                media_infos.append(info)
-                n_vid += 1
-            else:
-                st.warning(f"Unsupported file type skipped: {f.name}")
+                    media_infos.append(info)
+                    n_vid += 1
+                else:
+                    st.warning(f"Unsupported file type skipped: {f.name}")
 
-        text = intake_docs.build_claim_text(doc_tuples, media_infos)
-        if extra.strip():
-            text = (extra.strip() + "\n\n" + text).strip()
-        if not text:
-            st.warning("Provide at least one document, photo, video, or some text.")
-            return
+            text = intake_docs.build_claim_text(doc_tuples, media_infos)
+            if extra.strip():
+                text = (extra.strip() + "\n\n" + text).strip()
+            if not text:
+                status.update(label="Nothing to investigate", state="error")
+                st.warning("Provide at least one document, photo, video, or some text.")
+                return
 
-        # Collect user-facing notices so they can be re-shown when the stored result
-        # is re-rendered after navigating away and back.
-        notices: list[tuple[str, str]] = [
-            ("success",
-             f"Ingested {n_docs} document(s) · {n_img} photo(s) · {n_vid} video(s).")
-        ]
-        for info in media_infos:
-            label = info.get("kind", "media").capitalize()
-            if info.get("duplicate_of"):
-                notices.append((
-                    "error",
-                    f"⚠ {label} {info['file_name']} matches media already on claim "
-                    f"#{info['duplicate_of']['claim_id']} — possible reuse.",
-                ))
-            syn = info.get("synthetic")
-            if syn:
-                notices.append((
-                    "error",
-                    f"🧪 AI-generated media suspected · {info['file_name']} "
-                    f"({syn['severity']}): {syn['evidence']}",
-                ))
-            if info.get("damage"):
-                notices.append(("info", f"👁 Vision · {info['file_name']}: {info['damage']}"))
+            # Collect user-facing notices so they can be re-shown when the stored result
+            # is re-rendered after navigating away and back.
+            notices: list[tuple[str, str]] = [
+                ("success",
+                 f"Ingested {n_docs} document(s) · {n_img} photo(s) · {n_vid} video(s).")
+            ]
+            for info in media_infos:
+                label = info.get("kind", "media").capitalize()
+                if info.get("duplicate_of"):
+                    notices.append((
+                        "error",
+                        f"⚠ {label} {info['file_name']} matches media already on claim "
+                        f"#{info['duplicate_of']['claim_id']} — possible reuse.",
+                    ))
+                syn = info.get("synthetic")
+                if syn:
+                    notices.append((
+                        "error",
+                        f"🧪 AI-generated media suspected · {info['file_name']} "
+                        f"({syn['severity']}): {syn['evidence']}",
+                    ))
+                # The full vision damage read is NOT dumped as a notice here — a short
+                # 2-line overview is shown in the key-findings panel, and the full text
+                # under "Go Deeper" (see _render_quick_report / render_detailed_and_pdf).
 
-        # 1) Policy gate FIRST: coverage + required-document completeness, checked
-        #    against the selected policy (or all policies if none selected).
-        from insurclaim import coverage as cov_mod
+            # 1) Policy gate FIRST: coverage + required-document completeness, checked
+            #    against the selected policy (or all policies if none selected).
+            from insurclaim import coverage as cov_mod
 
-        documents = coverage_result = None
-        with st.spinner("Checking coverage and required documents against the policy..."):
+            documents = coverage_result = None
+            st.write("🛡 **Checking whether the policy covers this claim, and which documents are missing…**")
             try:
                 documents = cov_mod.check_documents(text, doc_ids=selected_doc_ids or None)
             except Exception:
@@ -1193,22 +1314,25 @@ def page_submit() -> None:
                     coverage_result = None  # no policies on file - skip the block
             except Exception:
                 coverage_result = None
-        if documents and documents.get("missing"):
-            notices.append((
-                "warning",
-                "📄 Missing documents: " + ", ".join(str(d) for d in documents["missing"]),
-            ))
+            if documents and documents.get("missing"):
+                notices.append((
+                    "warning",
+                    "📄 Missing documents: " + ", ".join(str(d) for d in documents["missing"]),
+                ))
 
-        # 2) Then the fraud pipeline.
-        with st.spinner("Running intake → timeline → fraud → report..."):
+            # 2) Then the fraud pipeline. Describe it in plain language (no agent jargon)
+            #    so a non-technical viewer understands what the system is doing.
+            st.write("🧾 **Understanding the claim and pulling out the key facts…**")
+            st.write("🕵️ **Rebuilding what happened and checking the story for fraud…**")
+            st.write("📝 **Writing up the findings into an investigator report…**")
             final = run_claim({"raw_documents": text})
 
-        # 3) Assess whether the demanded amount is justified (and if not, how much
-        #    a fair settlement would be) — useful even when the claim is not fraud.
-        from insurclaim import amount as amount_mod
+            # 3) Assess whether the demanded amount is justified (and if not, how much
+            #    a fair settlement would be) — useful even when the claim is not fraud.
+            from insurclaim import amount as amount_mod
 
-        amount_assessment = None
-        with st.spinner("Estimating a fair claim amount..."):
+            amount_assessment = None
+            st.write("💰 **Working out a fair repair cost from today's market prices…**")
             try:
                 claimed = (final.get("extracted") or {}).get("claimed_amount")
                 amount_assessment = amount_mod.assess_amount(
@@ -1217,18 +1341,20 @@ def page_submit() -> None:
             except Exception:
                 amount_assessment = None
 
-        # 4) Store the whole result so it survives navigation, then render below.
-        st.session_state["last_submission"] = {
-            "ref": "uploaded claim",
-            "text": text,
-            "doc_ids": selected_doc_ids or None,
-            "documents": documents,
-            "coverage": coverage_result,
-            "amount": amount_assessment,
-            "final": final,
-            "notices": notices,
-            "degraded": bool(final.get("extracted", {}).get("_extraction_degraded")),
-        }
+            # 4) Store the whole result so it survives navigation, then render below.
+            st.session_state["last_submission"] = {
+                "ref": "uploaded claim",
+                "text": text,
+                "doc_ids": selected_doc_ids or None,
+                "documents": documents,
+                "coverage": coverage_result,
+                "amount": amount_assessment,
+                "final": final,
+                "notices": notices,
+                "media": media_infos,
+                "degraded": bool(final.get("extracted", {}).get("_extraction_degraded")),
+            }
+            status.update(label="✅ Investigation complete", state="complete", expanded=False)
 
     # Render the last submission (fresh, or restored after navigating away and back).
     if st.session_state.get("last_submission"):

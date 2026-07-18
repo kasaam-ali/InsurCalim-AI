@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsurCalim AI — Presentation</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="vendor/reset.css" />
+  <link rel="stylesheet" href="vendor/reveal.css" />
+  <link rel="stylesheet" href="theme.css" />
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- 1. TITLE -->
+    <section class="slide-center">
+      <div class="center" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div class="brand" style="font-size:1.6em;"><span class="logo">🔎</span> InsurCalim AI</div>
+        <h1 class="gradient-text mt-m" style="font-size:1.733em;">Investigating auto-insurance claims with explainable AI</h1>
+        <p class="lead center" style="max-width:34ch;">A multi-agent platform that reads a claim's documents, photos and video and produces a ranked, cited, human-in-the-loop investigator report.</p>
+        <div class="chips mt-l" style="justify-content:center;">
+          <span class="chip"><b>4</b> specialised agents</span>
+          <span class="chip"><b>6-layer</b> fraud detection</span>
+          <span class="chip"><b>Live</b> market-price pricing</span>
+          <span class="chip"><b>Cited</b> &amp; explainable</span>
+        </div>
+        <!-- Edit presenter / supervisor / date below -->
+        <p class="cite mt-l" style="font-size:0.5em;">Presented by <strong>Kasaam Ali</strong> &nbsp;·&nbsp; Final-year project review &nbsp;·&nbsp; July 2026</p>
+      </div>
+    </section>
+
+    <!-- 2. THE PROBLEM -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> The problem</span>
+      <h2>Claims are slow, costly, and fraud-exposed.</h2>
+      <div class="grid2 mt-m">
+        <div class="card"><div class="ic">📄</div><h3>Unstructured &amp; manual</h3><p>Every claim arrives as a pile of documents, photos and videos an adjuster must read, cross-check and price — by hand, millions of times a year.</p></div>
+        <div class="card"><div class="ic">💸</div><h3>Fraud drains billions</h3><p>Fraud is now supercharged by AI-generated fake images, medical reports and valuation certificates that legacy tools were never built to catch.</p></div>
+        <div class="card"><div class="ic">🐌</div><h3>Bottleneck</h3><p>Re-keying data into legacy systems limits growth and delays honest payouts to real customers.</p></div>
+        <div class="card"><div class="ic">⚖️</div><h3>Hard to defend</h3><p>Black-box scores can't be justified to a claimant or a regulator — insurers need an explanation, not just a number.</p></div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">The problem</span></div>
+    </section>
+
+    <!-- 3. PROBLEM SIZE -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> How big is it</span>
+      <h2>A multi-hundred-billion-dollar problem.</h2>
+      <div class="kpi-grid mt-m">
+        <div class="kpi"><div class="num gradient-text">$80B+</div><div class="lbl">Global fraud / year</div><div class="cap">across insurance (2025)</div></div>
+        <div class="kpi"><div class="num gradient-text">$308.6B</div><div class="lbl">US fraud / year</div><div class="cap">$90–122B from P&amp;C lines</div></div>
+        <div class="kpi"><div class="num gradient-text">~10%</div><div class="lbl">of P&amp;C losses</div><div class="cap">involve fraud</div></div>
+        <div class="kpi"><div class="num gradient-text">25–30%</div><div class="lbl">AI-faked media</div><div class="cap">share of manipulated claims</div></div>
+      </div>
+      <p class="mt-m"><strong>~$900 per year</strong> — the hidden fraud tax on the average US consumer's premiums.</p>
+      <p class="cite">Sources: Coalition Against Insurance Fraud; Insurance Information Institute. [1][2]</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Problem size</span></div>
+    </section>
+
+    <!-- 4. MARKET OPPORTUNITY -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Market opportunity</span>
+      <h2>Insurance is a huge, fast-moving arena for applied AI.</h2>
+      <div class="kpi-grid cols-3 mt-m">
+        <div class="kpi"><div class="num gradient-text">$10–20B → $88–246B</div><div class="lbl">AI in insurance</div><div class="cap">market size, 2025 → 2030–2035</div></div>
+        <div class="kpi"><div class="num gradient-text">~32–35%</div><div class="lbl">CAGR</div><div class="cap">annual growth rate</div></div>
+        <div class="kpi"><div class="num gradient-text">up to −30%</div><div class="lbl">Fraud losses</div><div class="cap">reducible by AI detection</div></div>
+      </div>
+      <p class="mt-m">AI in claims processing alone is forecast to grow from <strong>$0.46B (2025)</strong> to <strong>$0.97B by 2030</strong> (16.2% CAGR).</p>
+      <p class="cite">Sources: Fortune Business Insights; Mordor Intelligence; GlobeNewswire. [5][6]</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Market</span></div>
+    </section>
+
+    <!-- 5. VALIDATION -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Proven by the leaders</span>
+      <h2>Every major player is investing — and getting results.</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Player</th><th>What they did</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td><strong>EY</strong> (Nordic insurer)</td><td>Document Intelligence (OCR + NLP)</td><td><strong>70%</strong> auto-extraction</td></tr>
+          <tr><td><strong>PwC</strong> (auto insurer)</td><td>Explainable-AI damage assessment</td><td><strong>29%</strong> efficiency savings</td></tr>
+          <tr><td><strong>McKinsey / Aviva</strong></td><td>80+ AI models, human-in-the-loop</td><td><strong>£60M</strong> saved (2024)</td></tr>
+          <tr><td><strong>Shift Technology</strong></td><td>Fraud &amp; underwriting detection</td><td><strong>$30M+/yr</strong> risk mitigation</td></tr>
+          <tr><td><strong>AWS / EXL</strong></td><td>GenAI underwriting on Bedrock</td><td><strong>−80%</strong> underwriting cost</td></tr>
+          <tr><td><strong>Lemonade</strong></td><td>AI-native claims ("AI Jim")</td><td><strong>~3-second</strong> settlements</td></tr>
+        </tbody>
+      </table>
+      <p class="cite">InsurCalim AI applies the same patterns — document intelligence, explainability, human-in-the-loop. [3][7][8][9][10][11]</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Validation</span></div>
+    </section>
+
+    <!-- 6. OUR SOLUTION -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Our solution</span>
+      <h2>InsurCalim AI — a raw claim becomes a defensible report.</h2>
+      <div class="grid3 mt-s">
+        <div class="card"><div class="ic">🧠</div><h3>Four specialised agents</h3><p>A LangGraph state machine: intake → timeline → fraud → report.</p></div>
+        <div class="card"><div class="ic">📎</div><h3>Multi-format intake</h3><p>TXT, PDF, DOCX, images and video, with vision-OCR for scanned PDFs.</p></div>
+        <div class="card"><div class="ic">🕵️</div><h3>6-layer fraud detection</h3><p>Rules, photo hashing, ML, RAG, narrative red-flags, deepfake media.</p></div>
+        <div class="card"><div class="ic">🛡️</div><h3>Coverage gate</h3><p>Checks policy coverage and that every required document is present.</p></div>
+        <div class="card"><div class="ic">💰</div><h3>Amount assessment</h3><p>Judges whether the demanded cost is fair — even when it isn't fraud.</p></div>
+        <div class="card"><div class="ic">🧾</div><h3>Explainable, cited report</h3><p>Weighted reason codes + citations. It never auto-denies.</p></div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Solution</span></div>
+    </section>
+
+    <!-- 7. HOW IT WORKS -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> How it works</span>
+      <h2>From raw evidence to a defensible decision.</h2>
+      <div class="flow mt-l">
+        <div class="step"><div class="n">INPUT</div><div class="t">Claim intake</div><div class="s">docs · photos · video</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">AGENT 1</div><div class="t">Intake</div><div class="s">extract JSON</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">AGENT 2</div><div class="t">Timeline</div><div class="s">order · gaps</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">AGENT 3</div><div class="t">Fraud</div><div class="s">6-layer hybrid</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">AGENT 4</div><div class="t">Report</div><div class="s">rank · cite</div></div>
+        <div class="arrow">→</div>
+        <div class="step out"><div class="n">HUMAN</div><div class="t">Investigator</div><div class="s">decides</div></div>
+      </div>
+      <p class="mt-l center muted">A shared <span class="accent">ClaimState</span> flows through the agent graph; the human always makes the final call.</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Pipeline</span></div>
+    </section>
+
+    <!-- 8. FRAUD DETECTION -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Fraud agent</span>
+      <h2>Six layers, one hybrid score.</h2>
+      <div class="grid3 mt-s">
+        <div class="card"><div class="ic">📏</div><h3>Deterministic rules</h3><p>Hard signals: impossible timelines, lapsed/back-dated policies.</p></div>
+        <div class="card"><div class="ic">🖼️</div><h3>Duplicate-photo hashing</h3><p>Perceptual hashes catch reused or recycled damage photos.</p></div>
+        <div class="card"><div class="ic">🤖</div><h3>ML fraud score</h3><p>DistilBERT + Random Forest trained on 30k real tabular rows.</p></div>
+        <div class="card"><div class="ic">🔎</div><h3>RAG similar-claim</h3><p>Retrieves past known-fraud claims that resemble this one.</p></div>
+        <div class="card"><div class="ic">📝</div><h3>Narrative red-flags</h3><p>Reads the whole file for cross-document contradictions.</p></div>
+        <div class="card"><div class="ic">🧬</div><h3>Deepfake media</h3><p>Flags AI-generated fake images and documents.</p></div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Fraud detection</span></div>
+    </section>
+
+    <!-- 9. AMOUNT ASSESSMENT -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Amount (quantum) agent</span>
+      <h2>Is the demanded amount actually fair?</h2>
+      <div class="row mt-m">
+        <div class="col">
+          <ul>
+            <li>Not every claim is fraud — but many are <strong>inflated</strong>.</li>
+            <li>The agent <strong>searches live market prices</strong> for the damaged parts and repairs on the web.</li>
+            <li>It builds a <strong>line-item fair estimate</strong> and a fair range.</li>
+            <li>Verdict: <em>reasonable</em>, <em>overstated</em>, or <em>needs more info</em>.</li>
+          </ul>
+        </div>
+        <div class="col">
+          <div class="glass">
+            <div class="muted" style="font-size:0.5em;letter-spacing:.1em;">EXAMPLE</div>
+            <p style="margin:.3em 0;">Demanded: <strong>PKR 850,000</strong></p>
+            <p style="margin:.3em 0;">Fair estimate: <strong class="accent">~PKR 95,000</strong></p>
+            <p style="margin:.3em 0;">Front bumper ≈ 21,000 · paint ≈ 18,000 …</p>
+            <p style="margin:.5em 0 0;"><span class="chip"><b>⚠</b> Overstated</span> <span class="chip">🌐 priced from market</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Amount</span></div>
+    </section>
+
+    <!-- 10. EXPLAINABILITY / HITL -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Trust by design</span>
+      <h2>Explainable &amp; human-in-the-loop.</h2>
+      <div class="grid3 mt-m">
+        <div class="card"><div class="ic">🧮</div><h3>Weighted reason codes</h3><p>The risk score breaks down into named contributions — you see <em>why</em>.</p></div>
+        <div class="card"><div class="ic">📌</div><h3>Evidence &amp; citations</h3><p>Every flag carries its evidence and the policy clause it relies on.</p></div>
+        <div class="card"><div class="ic">🙋</div><h3>Never auto-denies</h3><p>The system flags and ranks; a human investigator makes the final call.</p></div>
+      </div>
+      <p class="mt-l center"><span class="chip">💬 Built-in AI chat — grounded, per-claim follow-up questions for the investigator.</span></p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Explainability</span></div>
+    </section>
+
+    <!-- 11. ARCHITECTURE -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Architecture</span>
+      <h2>One state, one graph, supporting stores.</h2>
+      <div style="margin-top:6px;"><img src="assets/architecture.svg" alt="Architecture diagram" style="width:100%;" /></div>
+      <p class="cite">A resilient multi-provider LLM layer powers extraction and reasoning; Postgres, Chroma (RAG) and the ML models support the agents; everything is served through a login-gated dashboard.</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Architecture</span></div>
+    </section>
+
+    <!-- 12. TECH STACK -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Technology</span>
+      <h2>Built on a modern, production-shaped stack.</h2>
+      <div class="chips mt-m">
+        <span class="chip"><b>Orchestration</b> LangGraph · LangChain-core</span>
+        <span class="chip"><b>LLMs</b> Z.AI → Gemini → Groq → Claude / OpenRouter</span>
+        <span class="chip"><b>Vision</b> Gemini · Groq · Z.AI fallback</span>
+        <span class="chip"><b>RAG</b> Chroma (Pinecone-ready)</span>
+        <span class="chip"><b>Database</b> PostgreSQL</span>
+        <span class="chip"><b>ML</b> DistilBERT · Random Forest</span>
+        <span class="chip"><b>Frontend</b> Streamlit · React landing</span>
+        <span class="chip"><b>Media</b> pypdf · pdfplumber · OpenCV · Pillow · imagehash</span>
+        <span class="chip"><b>Infra</b> Docker Compose · AWS (RDS · S3 · ECS)</span>
+      </div>
+      <p class="mt-l muted">Multi-provider fallback + key rotation means no single vendor outage stops the pipeline — and it runs at near-zero cost on free tiers.</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Tech stack</span></div>
+    </section>
+
+    <!-- 13. DEMO -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Live demo</span>
+      <h2>The product, end to end.</h2>
+      <div class="grid2 mt-s" style="align-items:start;">
+        <div><div class="shot"><img src="assets/landing.png" alt="Landing page" /></div><div class="shot-cap">Cinematic React landing + single sign-in</div></div>
+        <div><div class="shot"><img src="assets/dashboard-overview.png" alt="Dashboard overview" /></div><div class="shot-cap">Investigator dashboard — portfolio overview</div></div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Demo</span></div>
+    </section>
+
+    <!-- 13b. DEMO — queue -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Live demo</span>
+      <h2>Ranked, triaged claims queue.</h2>
+      <div class="shot mt-s" style="max-width:88%;margin-inline:auto;"><img src="assets/dashboard-queue.png" alt="Claims queue" /></div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Demo · queue</span></div>
+    </section>
+
+    <!-- 14. COST & ROI -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Cost &amp; ROI</span>
+      <h2>Cents to analyse a claim.</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Model tier</th><th>Cost / claim</th><th>Per 1,000 claims</th><th>Catches contradictions?</th></tr></thead>
+        <tbody>
+          <tr><td>Free tier (Z.AI / Groq) — <em>today</em></td><td>~$0.00</td><td>~$0</td><td>Basic</td></tr>
+          <tr><td>Gemini 2.5 Flash</td><td>~$0.02</td><td>~$20</td><td>Good</td></tr>
+          <tr class="hi"><td><strong>Hybrid — Flash + Claude Sonnet</strong> (recommended)</td><td>~$0.07</td><td>~$70</td><td>Strong ✓</td></tr>
+          <tr><td>All Claude Sonnet / Opus</td><td>$0.15 / $0.25</td><td>$150 / $250</td><td>Strongest ✓</td></tr>
+        </tbody>
+      </table>
+      <p class="mt-m"><strong>The ROI:</strong> analysing a claim costs <span class="accent">cents</span>; catching one inflated or fraudulent claim saves <strong>thousands</strong> — an order-of-magnitude return.</p>
+      <p class="cite">Sources: Google Gemini pricing; Anthropic Claude pricing. [12][13]</p>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Cost &amp; ROI</span></div>
+    </section>
+
+    <!-- 15. WHAT'S BUILT -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Status</span>
+      <h2>The MVP is complete and runs end to end.</h2>
+      <div class="grid2 mt-m">
+        <div class="card"><div class="ic">✅</div><h3>Working today</h3><p>Full pipeline, multi-format intake, 6-layer fraud, amount pricing, claimant overview, explainable report, AI chat.</p></div>
+        <div class="card"><div class="ic">🗄️</div><h3>Real data foundations</h3><p>PostgreSQL + Chroma stores; ML trained on 30k real tabular rows; synthetic &amp; public data only — no real PII.</p></div>
+        <div class="card"><div class="ic">🔐</div><h3>Polished front door</h3><p>React landing page with single sign-in into a login-gated Streamlit dashboard.</p></div>
+        <div class="card"><div class="ic">💵</div><h3>Near-zero running cost</h3><p>Runs on free LLM tiers today; scales up to paid, higher-accuracy models only where ROI justifies it.</p></div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">What's built</span></div>
+    </section>
+
+    <!-- 16. ROADMAP & ASK -->
+    <section>
+      <span class="eyebrow"><span class="dot"></span> Roadmap &amp; the ask</span>
+      <h2>From working demo to insurer pilot.</h2>
+      <div class="grid2 mt-m">
+        <div class="card"><div class="ic">⚡</div><h3>Paid LLM tier</h3><p>Move the primary path to a higher-accuracy model for production reliability.</p></div>
+        <div class="card"><div class="ic">☁️</div><h3>Cloud deployment</h3><p>AWS (RDS · S3 · ECS) so an insurer can pilot on real infrastructure.</p></div>
+        <div class="card"><div class="ic">🧪</div><h3>Pilot on real data</h3><p>Validate accuracy and fraud-catch rate on a partner's permissioned historical claims.</p></div>
+        <div class="card"><div class="ic">🛡️</div><h3>Hardening</h3><p>Output-consistency controls, audit logging, and role-based access for teams.</p></div>
+      </div>
+      <div class="footer-brand"><span>InsurCalim AI</span><span class="r">Roadmap</span></div>
+    </section>
+
+    <!-- 17. CONCLUSION -->
+    <section class="slide-center">
+      <div class="center" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <div class="brand" style="font-size:1.3em;"><span class="logo">🔎</span> InsurCalim AI</div>
+        <h1 class="gradient-text mt-m" style="font-size:1.472em;">Explainable claim investigation, built to attack a billion-dollar problem.</h1>
+        <div class="chips mt-l" style="justify-content:center;">
+          <span class="chip">🧠 4 agents</span>
+          <span class="chip">🕵️ 6-layer fraud</span>
+          <span class="chip">💰 fair-cost pricing</span>
+          <span class="chip">🧾 cited &amp; human-in-the-loop</span>
+        </div>
+        <p class="lead center mt-l" style="max-width:40ch;">Thank you — questions welcome.</p>
+        <p class="cite">Synthetic &amp; public data only · no real customer information · decision support for a human investigator, not an automated decision.</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="vendor/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    width: 853,
+    height: 480,
+    margin: 0.035,
+    hash: true,
+    controls: true,
+    progress: true,
+    slideNumber: "c/t",
+    transition: "slide",
+    backgroundTransition: "fade",
+    center: false,
+  });
+</script>
+</body>
+</html>

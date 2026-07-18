@@ -30,3 +30,7 @@ chroma/
 Thumbs.db
 .idea/
 .vscode/
+
+# Test / tooling artifacts
+.playwright-mcp/
+dash-check.png
