@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
   AlertTriangle, CheckCircle2, Info, Camera, RotateCcw, ArrowRight,
-  FileSearch, FileText,
+  FileSearch, FileText, Coins,
 } from "lucide-react";
-import { plainSummary, twoLine, riskMeta } from "../lib/report.js";
+import { plainSummary, twoLine, riskMeta, fmtMoney } from "../lib/report.js";
 import RiskGauge from "./RiskGauge.jsx";
 import AmountBlock from "./AmountBlock.jsx";
 import Disclosure from "./Disclosure.jsx";
@@ -125,7 +125,21 @@ export default function ReportView({ result, jobId, onNewClaim, onMove }) {
         </div>
       </div>
 
-      <AmountBlock amount={amount} />
+      {/* Fair-cost estimate — collapsible box (price on the button, detail inside) */}
+      {amount && (
+        <Disclosure
+          title="Fair-cost estimate"
+          subtitle="Is the amount being claimed fair?"
+          icon={Coins}
+          badge={amount.fair_estimate != null ? (
+            <span className="pill" style={{ color: "rgb(var(--c-primary))", background: "rgb(var(--c-primary) / .12)", border: "1px solid rgb(var(--c-primary) / .25)" }}>
+              {fmtMoney(amount.fair_estimate, amount.currency || "PKR")}
+            </span>
+          ) : null}
+        >
+          <AmountBlock amount={amount} bare />
+        </Disclosure>
+      )}
 
       {/* Dive Deeper — one button that opens the full, detailed report */}
       <Disclosure title="Dive Deeper — full investigator report"

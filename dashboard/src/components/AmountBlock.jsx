@@ -11,7 +11,9 @@ const VERDICT_TONE = {
 };
 
 // Fair-cost estimate: verdict, claimed vs fair, per-item price + source, sources.
-export default function AmountBlock({ amount }) {
+// `bare` drops the outer card and the internal title row so it can live inside a
+// collapsible section that already provides its own header.
+export default function AmountBlock({ amount, bare = false }) {
   const [showSources, setShowSources] = useState(false);
   if (!amount) return null;
 
@@ -19,22 +21,26 @@ export default function AmountBlock({ amount }) {
   const verdict = VERDICT_TONE[amount.verdict] || { text: amount.verdict || "Assessed", hex: "#64748B" };
   const items = amount.line_items || [];
 
-  return (
-    <Card>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="font-semibold">Fair-cost estimate</div>
-        <span className="pill" style={{ color: verdict.hex, background: `${verdict.hex}16`, border: `1px solid ${verdict.hex}33` }}>
-          {verdict.text}
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-muted">
-        A fair-cost <strong>estimate</strong> to guide a human adjuster — not a final settlement.
-      </p>
+  const body = (
+    <>
+      {!bare && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="font-semibold">Fair-cost estimate</div>
+            <span className="pill" style={{ color: verdict.hex, background: `${verdict.hex}16`, border: `1px solid ${verdict.hex}33` }}>
+              {verdict.text}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            A fair-cost <strong>estimate</strong> to guide a human adjuster — not a final settlement.
+          </p>
+        </>
+      )}
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${bare ? "" : "mt-4"}`}>
         <Stat label="Claimed" value={fmtMoney(amount.claimed_amount, ccy)} />
         <Stat label="Fair estimate" value={fmtMoney(amount.fair_estimate, ccy)} accent />
-        {amount.fair_low != null && amount.fair_high != null && (
+        {amount.fair_low != null && amount.fair_high != null && amount.fair_low !== amount.fair_high && (
           <Stat label="Fair range" value={`${fmtMoney(amount.fair_low, ccy)} – ${fmtMoney(amount.fair_high, ccy)}`} />
         )}
       </div>
@@ -67,8 +73,10 @@ export default function AmountBlock({ amount }) {
           )}
         </div>
       )}
-    </Card>
+    </>
   );
+
+  return bare ? <div>{body}</div> : <Card>{body}</Card>;
 }
 
 function Stat({ label, value, accent = false }) {
