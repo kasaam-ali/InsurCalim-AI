@@ -36,6 +36,55 @@ const BAND_WHY = {
   LOW: "Very little looked wrong here. It is low concern, but a person still confirms it.",
 };
 
+// Band-specific guidance and the concrete steps behind each recommendation, used
+// to give the investigator enough detail to act on inside each report section.
+const BAND_ACTION = {
+  HIGH: "treat this as a priority, hold any payment, and verify each finding before the claim proceeds.",
+  MEDIUM: "take a closer look and clear the doubts below before deciding — this should not be paid on trust alone.",
+  LOW: "still confirm the basic facts, but this claim can likely move forward once a person signs it off.",
+};
+
+const ACTION_STEPS = {
+  route_to_investigator: [
+    "Open a case file and assign a named investigator (started automatically below).",
+    "Re-check each finding against the original documents and photographs.",
+    "Contact the claimant and any third parties to corroborate the account.",
+    "Hold any settlement until the investigator formally signs the case off.",
+  ],
+  request_more_info: [
+    "Send the claimant a request for the outstanding documents in the checklist.",
+    "Ask for written clarification on each concern raised under Findings.",
+    "Re-assess the claim once the additional evidence has been received.",
+  ],
+  fast_track_approve: [
+    "Perform a final manual review of the claim particulars.",
+    "Confirm the demanded amount against the fair-cost estimate.",
+    "Approve and process the settlement.",
+  ],
+};
+
+const VERDICT_NOTE = {
+  overstated: "Because the demand sits materially above the fair estimate, concentrate on the line items that drive the gap and require original invoices before agreeing any figure.",
+  understated: "The demand is below the fair estimate; confirm the claimant is not under-reporting to keep a larger underlying loss out of view.",
+  fair: "The demand is in line with market repair costs; a routine documentary check should be enough to confirm it.",
+  reasonable: "The demand is in line with market repair costs; a routine documentary check should be enough to confirm it.",
+  insufficient_info: "There was not enough detail to price this claim with confidence; obtain a repair estimate and an itemised quotation before deciding.",
+};
+
+const COVERAGE_NOTE = {
+  needs_review: "This means the automatic match to a policy clause was not conclusive, so a person must confirm cover manually.",
+  covered: "This means the loss appears to fall within the policy, but the specifics should still be verified.",
+  not_covered: "This means the loss may fall outside the policy — treat any payment with caution and confirm the position before proceeding.",
+};
+
+function confWord(c) {
+  const n = Number(c);
+  if (Number.isNaN(n)) return "Indicator";
+  if (n >= 75) return "Strong indicator";
+  if (n >= 50) return "Moderate indicator";
+  return "Minor indicator";
+}
+
 // Every check the system can raise, written for a NON-technical reader:
 // what it found, and why that is a concern — in everyday words.
 const SIGNAL_INFO = {
@@ -430,9 +479,17 @@ function MovedInvestigation({ moved, onBrowse }) {
         <SectionLabel n="1" text="Risk assessment" />
         <Disclosure title="Why this claim was rated the way it was" subtitle="What pushed the concern up, and by how much"
                     icon={Gauge} defaultOpen>
-          <p className="mb-4 text-sm leading-relaxed text-ink-soft">
-            Every claim is run through automatic checks and read by an AI assistant. Each concern below added
-            to the overall rating — the bar shows how confident the system is in that finding.
+          <p className="mb-2 text-sm leading-relaxed text-ink-soft">
+            This claim was assessed in layers. Fixed rules and cross-checks run first and always return the same
+            result for the same claim — duplicate-photo detection, a comparison against thousands of past claims,
+            and a machine-learning model trained on real fraud data. An AI assistant then reads the claim
+            documents and writes up what it found. The overall concern score of{" "}
+            <strong className="text-ink">{Math.round(report.risk_score || 0)}/100</strong> combines every one of these signals.
+          </p>
+          <p className="mb-4 text-sm leading-relaxed text-muted">
+            {flags.length} concern{flags.length === 1 ? "" : "s"} contributed to this rating
+            {flags[0] ? <> — the most significant being “{flags[0].summary}”</> : ""}. The bar beside each one
+            shows how confident the system is in that finding; a fuller bar means stronger evidence behind it.
           </p>
           {flags.length === 0 ? (
             <p className="text-sm text-muted">No specific concerns were raised on this claim.</p>
@@ -460,31 +517,55 @@ function MovedInvestigation({ moved, onBrowse }) {
               })}
             </div>
           )}
-          <p className="mt-4 border-t border-line pt-3 text-xs text-muted">{BAND_WHY[meta.label]}</p>
+          <p className="mt-4 border-t border-line pt-3 text-sm leading-relaxed text-ink-soft">
+            {BAND_WHY[meta.label]} At {meta.label} concern, an investigator should {BAND_ACTION[meta.label]}
+          </p>
         </Disclosure>
 
         <SectionLabel n="2" text="Findings" />
         <Disclosure title="What was found, in detail" subtitle="Each concern explained, with the proof behind it"
                     icon={ScanSearch} badge={<CountBadge n={flags.length} tone={color} />}>
+          <p className="mb-3 text-sm leading-relaxed text-muted">
+            Every concern raised during the assessment is set out below together with the evidence behind it.
+            The label on each shows how strongly the underlying signal supports the concern — treat the strong
+            indicators as the priority for verification, and corroborate each one with independent evidence
+            before any settlement is agreed.
+          </p>
           {flags.length === 0 ? (
-            <p className="text-sm text-muted">Nothing was flagged on this claim.</p>
+            <p className="text-sm text-muted">Nothing was flagged on this claim by the automatic checks.</p>
           ) : (
             <div className="space-y-3">
-              {flags.map((f, i) => (
-                <div key={i} className="rounded-lg border border-line p-4">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" style={{ color }} />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-ink">{f.summary}</div>
-                      {f.evidence && (
-                        <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
-                          <span className="font-semibold">Proof: </span>{f.evidence}
+              {flags.map((f, i) => {
+                const conf = Number(f.confidence);
+                const hasConf = f.confidence !== undefined && f.confidence !== "" && !Number.isNaN(conf);
+                return (
+                  <div key={i} className="rounded-lg border border-line p-4">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" style={{ color }} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-ink">{f.summary}</span>
+                          {hasConf && (
+                            <span className="pill" style={{ color, background: `${color}16`, border: `1px solid ${color}33` }}>
+                              {confWord(conf)} · {Math.round(conf)}%
+                            </span>
+                          )}
+                        </div>
+                        {f.evidence && (
+                          <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                            <span className="font-semibold">What was found: </span>{f.evidence}
+                          </p>
+                        )}
+                        <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                          <span className="font-semibold">Verify by: </span>
+                          checking this point against the original documents and photographs and, where relevant,
+                          the parties involved, before the claim is paid.
                         </p>
-                      )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Disclosure>
@@ -499,7 +580,16 @@ function MovedInvestigation({ moved, onBrowse }) {
                             {fmtMoney(amount.fair_estimate, amount.currency || "PKR")}
                           </span>
                         ) : null}>
+              <p className="mb-3 text-sm leading-relaxed text-ink-soft">
+                An independent fair-cost estimate was built from live market prices for the exact parts and
+                repairs this claim describes. It is a reference for the adjuster, not a final settlement figure.
+                The amount the claimant is demanding is compared against this estimate to judge whether it is
+                reasonable, overstated or understated.
+              </p>
               <AmountBlock amount={amount} bare />
+              {amount.verdict && VERDICT_NOTE[amount.verdict] && (
+                <p className="mt-3 text-sm leading-relaxed text-muted">{VERDICT_NOTE[amount.verdict]}</p>
+              )}
             </Disclosure>
           </>
         )}
@@ -509,11 +599,20 @@ function MovedInvestigation({ moved, onBrowse }) {
             <SectionLabel n="4" text="Policy coverage" />
             <Disclosure title="What the policy says" subtitle="The coverage decision and the clauses behind it"
                         icon={ShieldCheck}>
-              <div className="text-sm">Decision: <span className="font-medium">{coverage.decision}</span></div>
+              <p className="text-sm leading-relaxed text-ink-soft">
+                The recorded coverage position for this claim is{" "}
+                <span className="font-semibold text-ink">{coverage.decision}</span>.{" "}
+                {COVERAGE_NOTE[coverage.decision] || ""} Before any settlement, confirm the policy was active on
+                the date of loss, that the described damage falls within the covered perils, and that any excess
+                or limit is applied correctly.
+              </p>
               {(coverage.citations || []).length > 0 && (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
-                  {coverage.citations.map((c, i) => <li key={i}>{formatCitation(c)}</li>)}
-                </ul>
+                <>
+                  <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted">Clauses checked</div>
+                  <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-muted">
+                    {coverage.citations.map((c, i) => <li key={i}>{formatCitation(c)}</li>)}
+                  </ul>
+                </>
               )}
             </Disclosure>
           </>
@@ -523,11 +622,23 @@ function MovedInvestigation({ moved, onBrowse }) {
         <Disclosure title="What to do next" subtitle="The suggested step, and the reason for it"
                     icon={Gavel} defaultOpen
                     badge={<span className="pill" style={{ color, background: `${color}16`, border: `1px solid ${color}33` }}>{ACTION_LABEL[report.recommended_action] || "Review"}</span>}>
-          <div className="flex items-start gap-2.5 rounded-lg border border-line p-4">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p className="text-sm leading-relaxed text-ink-soft">
-              {ACTION_WHY[report.recommended_action] ||
-                "A person should review this claim. The system only ranks and explains — it never approves or rejects a claim by itself."}
+          <div className="space-y-3 rounded-lg border border-line p-4">
+            <div className="flex items-start gap-2.5">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-sm leading-relaxed text-ink-soft">
+                {ACTION_WHY[report.recommended_action] ||
+                  "A person should review this claim. The system only ranks and explains — it never approves or rejects a claim by itself."}
+              </p>
+            </div>
+            <div className="border-t border-line pt-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted">In practice, this means</div>
+              <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-ink-soft">
+                {(ACTION_STEPS[report.recommended_action] || ACTION_STEPS.route_to_investigator).map((s, i) => <li key={i}>{s}</li>)}
+              </ol>
+            </div>
+            <p className="border-t border-line pt-3 text-sm leading-relaxed text-muted">
+              The system only ranks and explains — it never approves or rejects a claim on its own. A person
+              makes the final decision and remains accountable for it.
             </p>
           </div>
         </Disclosure>
@@ -547,6 +658,13 @@ function MovedInvestigation({ moved, onBrowse }) {
               {report.timeline_summary || overview.summary}
             </p>
           )}
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            These particulars are drawn from the material submitted with the claim and should be confirmed
+            against original documents during the investigation.
+            {(documents?.missing || []).length > 0
+              ? ` ${(documents.missing || []).length} of the standard documents expected for a claim of this type are still outstanding and are listed in the verification checklist below.`
+              : " All of the standard documents expected for a claim of this type are on file."}
+          </p>
         </Disclosure>
 
         {/* Verification checklist — investigator-desk only */}
@@ -707,6 +825,12 @@ function CaseManagement({ claimRef, autoStatus }) {
 
   return (
     <Disclosure title="Track this case" subtitle="Set the status, assign it, and add notes" icon={ClipboardList} defaultOpen>
+      <p className="mb-3 text-sm leading-relaxed text-muted">
+        This claim has been logged as an open investigation. Use this panel to drive the case to a
+        conclusion: move the status forward as you progress, assign it to the investigator who owns it, and
+        record every action you take as a dated note. Those notes form the audit trail behind the final
+        decision, so keep them specific — who you spoke to, what you checked, and what you found.
+      </p>
       <div className="grid gap-3 sm:grid-cols-[180px_1fr_auto] sm:items-end">
         <label className="text-sm">
           <span className="mb-1 block text-muted">Status</span>
