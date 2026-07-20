@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { ShieldAlert } from "lucide-react";
 import { captureToken, clearToken, LANDING_URL } from "./api.js";
 import IntroSequence from "./components/IntroSequence.jsx";
@@ -21,6 +21,12 @@ export default function App() {
   const [reportClaimId, setReportClaimId] = useState(null);
   const [lastResult, setLastResult] = useState(null);
   const [movedClaim, setMovedClaim] = useState(null); // live submit result handed to the investigator desk
+
+  // Keep-alive: a section is mounted on first visit and then kept mounted (just
+  // hidden) so in-progress work — uploaded files, a running investigation, a
+  // rendered report, case notes — survives navigating away and back.
+  const visited = useRef(new Set([section]));
+  visited.current.add(section);
 
   // The IntroSequence drives its own timing and calls onDone when finished.
 
@@ -50,38 +56,40 @@ export default function App() {
     <>
       <AnimatePresence>{intro && <IntroSequence key="intro" onDone={() => setIntro(false)} />}</AnimatePresence>
       <AppShell active={section} onNavigate={navigate} onLogout={logout}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={section === "report" ? `report:${movedClaim ? `moved:${movedClaim.jobId}` : reportClaimId}` : section}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {section === "overview" && <OverviewSection onOpenClaim={openClaim} onNavigate={navigate} />}
-            {section === "queue" && <QueueSection onOpenClaim={openClaim} />}
-            {section === "analytics" && <AnalyticsSection />}
-            {section === "rings" && <RingsSection onOpenClaim={openClaim} />}
-            {section === "submit" && (
-              <SubmitSection onResult={(r) => setLastResult(r)} onMove={moveToInvestigator} />
-            )}
-            {section === "report" && (
-              <ReportSection
-                initialClaimId={reportClaimId}
-                moved={movedClaim}
-                onClearMoved={() => setMovedClaim(null)}
-              />
-            )}
-            {section === "claimant" && (
-              <ClaimantSection result={lastResult} onGoSubmit={() => setSection("submit")} />
-            )}
-            {section === "policy" && <PolicySection />}
-            {section === "model" && <ModelSection />}
-          </motion.div>
-        </AnimatePresence>
+        {[...visited.current].map((id) => (
+          <div key={id} hidden={id !== section} className={id === section ? "animate-fade-in" : undefined}>
+            {renderSection(id, {
+              openClaim, navigate, moveToInvestigator, setLastResult, setMovedClaim, setSection,
+              reportClaimId, movedClaim, lastResult,
+            })}
+          </div>
+        ))}
       </AppShell>
     </>
   );
+}
+
+// Render a section by id with the shared handlers/state. Kept out of the
+// component body so the keep-alive map stays tidy.
+function renderSection(id, ctx) {
+  const {
+    openClaim, navigate, moveToInvestigator, setLastResult, setMovedClaim, setSection,
+    reportClaimId, movedClaim, lastResult,
+  } = ctx;
+  switch (id) {
+    case "overview": return <OverviewSection onOpenClaim={openClaim} onNavigate={navigate} />;
+    case "queue": return <QueueSection onOpenClaim={openClaim} />;
+    case "analytics": return <AnalyticsSection />;
+    case "rings": return <RingsSection onOpenClaim={openClaim} />;
+    case "submit": return <SubmitSection onResult={(r) => setLastResult(r)} onMove={moveToInvestigator} />;
+    case "report": return (
+      <ReportSection initialClaimId={reportClaimId} moved={movedClaim} onClearMoved={() => setMovedClaim(null)} />
+    );
+    case "claimant": return <ClaimantSection result={lastResult} onGoSubmit={() => setSection("submit")} />;
+    case "policy": return <PolicySection />;
+    case "model": return <ModelSection />;
+    default: return null;
+  }
 }
 
 function Unauthorized() {
