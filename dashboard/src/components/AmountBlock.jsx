@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, ChevronDown } from "lucide-react";
+import { Globe, ChevronDown, ExternalLink } from "lucide-react";
 import { fmtMoney } from "../lib/report.js";
 import { Card } from "./ui.jsx";
 
@@ -51,7 +51,7 @@ export default function AmountBlock({ amount, bare = false }) {
             <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm">
               <span className="text-ink">{li.item}</span>
               <span className="tnum font-mono font-medium text-primary">{fmtMoney(li.estimate, ccy)}</span>
-              {li.source && <span className="text-xs italic text-muted">· {li.source}</span>}
+              {li.source && <SourceLink source={li.source} item={li.item} />}
             </li>
           ))}
         </ul>
@@ -77,6 +77,22 @@ export default function AmountBlock({ amount, bare = false }) {
   );
 
   return bare ? <div>{body}</div> : <Card>{body}</Card>;
+}
+
+// The price source, made clickable. Real vendors/marketplaces open a web search
+// for that source + part so the adjuster can check where the price came from;
+// generic "estimate" sources stay as plain text.
+function SourceLink({ source, item }) {
+  const generic = /estimate|model|local workshop|n\/a|none/i.test(source);
+  if (generic) return <span className="text-xs italic text-muted">· {source}</span>;
+  const url = `https://www.google.com/search?q=${encodeURIComponent(`${source} ${item} price Pakistan`)}`;
+  return (
+    <a href={url} target="_blank" rel="noreferrer"
+       className="inline-flex items-center gap-0.5 text-xs italic text-primary underline decoration-dotted underline-offset-2 hover:decoration-solid">
+      · {source}
+      <ExternalLink className="h-3 w-3 not-italic" />
+    </a>
+  );
 }
 
 function Stat({ label, value, accent = false }) {

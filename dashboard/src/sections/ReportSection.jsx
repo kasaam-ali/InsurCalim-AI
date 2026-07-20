@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   AlertTriangle, Download, Gauge, ScanSearch, GitCompare,
   Gavel, ClipboardList, ShieldCheck, ArrowLeft, CheckCircle2, Coins, Sparkles, FileText,
+  ListChecks, Users,
 } from "lucide-react";
 import { fetchClaims, fetchClaimDetail, fetchCase, setCase, addCaseNote, pdfUrl } from "../api.js";
 import { SectionHeader, Loading, ErrorNote, RiskPill } from "../components/ui.jsx";
@@ -12,6 +13,7 @@ import AmountBlock from "../components/AmountBlock.jsx";
 import DeepReport from "../components/DeepReport.jsx";
 import ReportDocument from "../components/ReportDocument.jsx";
 import ClaimChat from "../components/ClaimChat.jsx";
+import { InvestigatorChecklist, PartiesRegister } from "../components/CaseTools.jsx";
 import Disclosure from "../components/Disclosure.jsx";
 
 const ACTION_LABEL = {
@@ -428,6 +430,27 @@ function MovedInvestigation({ moved, onBrowse }) {
         <div className="rounded-xl border border-line bg-surface p-5">
           <DeepReport result={result} jobId={jobId} />
         </div>
+
+        {/* Verification checklist — investigator-desk only */}
+        <div className="flex items-center gap-2.5 pt-2">
+          <ListChecks className="h-4 w-4 text-muted" />
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Verification checklist</span>
+          <span className="h-px flex-1 bg-line" />
+        </div>
+        <InvestigatorChecklist result={result} />
+
+        {/* Parties & contacts — investigator-desk only */}
+        {((result?.overview?.parties || []).some((p) => p.full_name && p.full_name !== "-")
+          || (result?.overview?.claimant && result.overview.claimant !== "-")) && (
+          <>
+            <div className="flex items-center gap-2.5 pt-2">
+              <Users className="h-4 w-4 text-muted" />
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Parties &amp; contacts</span>
+              <span className="h-px flex-1 bg-line" />
+            </div>
+            <PartiesRegister result={result} />
+          </>
+        )}
 
         {/* Case handling — opened as "investigating" automatically */}
         <div className="flex items-center gap-2.5 pt-2">
