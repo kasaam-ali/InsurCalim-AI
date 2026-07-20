@@ -41,6 +41,11 @@ opencv-python-headless # sample frames from uploaded videos (dashcam / walkaroun
 # --- Frontend dashboard (Phase 11) ---
 streamlit              # investigator dashboard UI (frontend/app.py)
 
+# --- API backend for the React dashboard (api/main.py) ---
+starlette              # lightweight ASGI framework (already pulled in by streamlit)
+uvicorn                # ASGI server that runs the API (python -m uvicorn api.main:app)
+python-multipart       # multipart/form-data parsing for file uploads
+
 # --- Evaluation (Phase 9) ---
 scikit-learn           # precision / recall / confusion matrix
 numpy                  # numeric helpers

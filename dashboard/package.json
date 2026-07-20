@@ -1,0 +1,26 @@
+{
+  "name": "insurclaim-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Professional React investigator dashboard for InsurCalim AI (submit → live investigation → explainable report).",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "framer-motion": "^12.42.2",
+    "lucide-react": "^0.454.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^3.9.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.2"
+  }
+}

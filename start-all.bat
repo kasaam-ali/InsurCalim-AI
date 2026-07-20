@@ -4,8 +4,10 @@ REM  InsurCalim AI - one-click launcher
 REM  Starts everything needed for the demo:
 REM    1) Docker Desktop (engine for the database)
 REM    2) PostgreSQL database (docker compose)
-REM    3) Streamlit investigator dashboard  (http://localhost:8501)
-REM    4) React landing page                (http://localhost:5173)
+REM    3) API backend (Starlette)           (http://localhost:8000)
+REM    4) React investigator dashboard      (http://localhost:5174)
+REM    5) Streamlit dashboard (classic)     (http://localhost:8501)
+REM    6) React landing page                (http://localhost:5173)
 REM  Then opens the landing page in the default browser.
 REM
 REM  Just double-click this file. Leave the windows it opens running during
@@ -66,13 +68,23 @@ goto waitdb
 :dbready
 echo.
 
-REM --- 3) Streamlit dashboard -------------------------------------------------
-echo [3/4] Starting the Streamlit dashboard in a new window...
-start "InsurCalim - Dashboard" cmd /k ".venv\Scripts\streamlit.exe run frontend/app.py --server.port 8501"
+REM --- 3) API backend ---------------------------------------------------------
+echo [3/6] Starting the API backend in a new window...
+start "InsurCalim - API" cmd /k ".venv\Scripts\python.exe -m uvicorn api.main:app --port 8000"
 echo.
 
-REM --- 4) Landing page --------------------------------------------------------
-echo [4/4] Starting the landing page in a new window...
+REM --- 4) React investigator dashboard ----------------------------------------
+echo [4/6] Starting the React investigator dashboard in a new window...
+start "InsurCalim - Dashboard (React)" cmd /k "cd dashboard && npm run dev"
+echo.
+
+REM --- 5) Streamlit dashboard (classic view) ---------------------------------
+echo [5/6] Starting the classic Streamlit dashboard in a new window...
+start "InsurCalim - Dashboard (Streamlit)" cmd /k ".venv\Scripts\streamlit.exe run frontend/app.py --server.port 8501"
+echo.
+
+REM --- 6) Landing page --------------------------------------------------------
+echo [6/6] Starting the landing page in a new window...
 start "InsurCalim - Landing" cmd /k "cd landing && npm run dev"
 echo.
 
@@ -82,14 +94,16 @@ timeout /t 10 /nobreak >nul
 echo.
 echo ============================================================
 echo   All services launched.
-echo     Landing page : http://localhost:5173
-echo     Dashboard    : http://localhost:8501
-echo     Login        : admin / insurclaim2026
+echo     Landing page      : http://localhost:5173
+echo     Dashboard (React) : http://localhost:5174
+echo     Dashboard (Streamlit) : http://localhost:8501
+echo     API backend       : http://localhost:8000
+echo     Login             : admin / insurclaim2026
 echo ============================================================
 echo   Opening the landing page in your browser...
 start "" "http://localhost:5173"
 echo.
-echo   Keep the two new windows (Dashboard + Landing) open during the demo.
+echo   Keep the new windows (API + Dashboard + Streamlit + Landing) open during the demo.
 echo   Close this window whenever you like.
 echo.
 pause

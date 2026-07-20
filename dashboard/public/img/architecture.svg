@@ -1,0 +1,65 @@
+<svg viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" width="100%">
+  <style>
+    .lbl{font-size:13px;font-weight:700;fill:#eaf2ff;}
+    .sub{font-size:10px;fill:#9aa6c4;}
+    .agent{fill:#0e1b3a;stroke:#38bdf8;stroke-width:1.6;}
+    .store{fill:#0c241b;stroke:#34d399;stroke-width:1.6;}
+    .io{fill:#2a1c0e;stroke:#e5820e;stroke-width:1.6;}
+    .out{fill:#181233;stroke:#6366f1;stroke-width:1.6;}
+    .arrow{stroke:#6b7794;stroke-width:2;marker-end:url(#a);}
+    .top{fill:#22d3ee;font-size:12px;font-weight:800;}
+  </style>
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#6b7794"/>
+    </marker>
+  </defs>
+  <text class="top" x="470" y="28" text-anchor="middle">Streamlit investigator dashboard (login-gated)</text>
+  <!-- LLM layer -->
+  <rect class="out" x="185" y="52" width="570" height="52" rx="9"/>
+  <text class="lbl" x="470" y="74" text-anchor="middle">Multi-provider LLM layer — fallback + key rotation</text>
+  <text class="sub" x="470" y="92" text-anchor="middle">Z.AI GLM → Gemini → Groq → (Claude / OpenRouter) · vision for images</text>
+  <!-- Input -->
+  <rect class="io" x="20" y="168" width="130" height="70" rx="9"/>
+  <text class="lbl" x="85" y="198" text-anchor="middle">Claim intake</text>
+  <text class="sub" x="85" y="216" text-anchor="middle">docs · photos · video</text>
+  <!-- Agents -->
+  <rect class="agent" x="185" y="173" width="120" height="60" rx="9"/>
+  <text class="lbl" x="245" y="199" text-anchor="middle">1. Intake</text>
+  <text class="sub" x="245" y="215" text-anchor="middle">extract JSON</text>
+  <rect class="agent" x="335" y="173" width="120" height="60" rx="9"/>
+  <text class="lbl" x="395" y="199" text-anchor="middle">2. Timeline</text>
+  <text class="sub" x="395" y="215" text-anchor="middle">order · gaps</text>
+  <rect class="agent" x="485" y="173" width="120" height="60" rx="9"/>
+  <text class="lbl" x="545" y="199" text-anchor="middle">3. Fraud</text>
+  <text class="sub" x="545" y="215" text-anchor="middle">6-layer hybrid</text>
+  <rect class="agent" x="635" y="173" width="120" height="60" rx="9"/>
+  <text class="lbl" x="695" y="199" text-anchor="middle">4. Report</text>
+  <text class="sub" x="695" y="215" text-anchor="middle">rank · cite</text>
+  <!-- Output -->
+  <rect class="out" x="785" y="168" width="95" height="70" rx="9"/>
+  <text class="lbl" x="832" y="196" text-anchor="middle">Investigator</text>
+  <text class="sub" x="832" y="214" text-anchor="middle">human decides</text>
+  <!-- Flow arrows -->
+  <line class="arrow" x1="150" y1="203" x2="183" y2="203"/>
+  <line class="arrow" x1="305" y1="203" x2="333" y2="203"/>
+  <line class="arrow" x1="455" y1="203" x2="483" y2="203"/>
+  <line class="arrow" x1="605" y1="203" x2="633" y2="203"/>
+  <line class="arrow" x1="755" y1="203" x2="783" y2="203"/>
+  <!-- Supporting stores -->
+  <rect class="store" x="185" y="308" width="150" height="60" rx="9"/>
+  <text class="lbl" x="260" y="334" text-anchor="middle">PostgreSQL</text>
+  <text class="sub" x="260" y="350" text-anchor="middle">claims · policies · cases</text>
+  <rect class="store" x="355" y="308" width="150" height="60" rx="9"/>
+  <text class="lbl" x="430" y="334" text-anchor="middle">Chroma (RAG)</text>
+  <text class="sub" x="430" y="350" text-anchor="middle">similar-claim retrieval</text>
+  <rect class="store" x="525" y="308" width="150" height="60" rx="9"/>
+  <text class="lbl" x="600" y="334" text-anchor="middle">ML models</text>
+  <text class="sub" x="600" y="350" text-anchor="middle">DistilBERT · RandomForest</text>
+  <!-- connectors -->
+  <line class="arrow" x1="395" y1="173" x2="410" y2="106"/>
+  <line class="arrow" x1="545" y1="173" x2="530" y2="106"/>
+  <line class="arrow" x1="545" y1="233" x2="590" y2="306"/>
+  <line class="arrow" x1="545" y1="233" x2="440" y2="306"/>
+  <line class="arrow" x1="245" y1="233" x2="258" y2="306"/>
+</svg>

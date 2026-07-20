@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================ Theme variables ============================ */
+/* Dark (default) — deep navy enterprise. */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: 11 15 23;
+  --c-surface: 20 26 36;
+  --c-surface-2: 27 34 48;
+  --c-sidebar: 13 18 28;
+  --c-sidebar-hover: 26 34 49;
+  --c-sidebar-ink: 203 213 225;
+  --c-sidebar-strong: 255 255 255;
+  --c-sidebar-muted: 107 118 136;
+  --c-sidebar-border: 30 38 52;
+  --c-ink: 231 236 243;
+  --c-ink-soft: 174 183 198;
+  --c-muted: 123 135 155;
+  --c-line: 34 42 56;
+  --c-primary: 59 130 246;
+  --c-primary-dark: 37 99 235;
+  --c-primary-soft: 22 33 58;
+  --c-accent: 139 92 246;
+  --c-accent-soft: 30 27 52;
+  --c-teal: 34 211 238;
+  --c-good: 34 197 94;
+  --c-good-soft: 16 40 28;
+  --c-warn: 245 158 11;
+  --c-warn-soft: 42 32 16;
+  --c-bad: 244 91 105;
+  --c-bad-soft: 42 20 22;
+}
+
+/* Light — white + black + light blue. Sidebar becomes white too. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --c-bg: 244 247 251;
+  --c-surface: 255 255 255;
+  --c-surface-2: 241 245 249;
+  --c-sidebar: 255 255 255;
+  --c-sidebar-hover: 239 244 250;
+  --c-sidebar-ink: 71 85 105;
+  --c-sidebar-strong: 15 23 42;
+  --c-sidebar-muted: 148 163 184;
+  --c-sidebar-border: 226 232 240;
+  --c-ink: 15 23 42;
+  --c-ink-soft: 51 65 85;
+  --c-muted: 100 116 139;
+  --c-line: 226 232 240;
+  --c-primary: 37 99 235;
+  --c-primary-dark: 29 78 216;
+  --c-primary-soft: 235 242 255;
+  --c-accent: 124 58 237;
+  --c-accent-soft: 243 240 254;
+  --c-teal: 8 145 178;
+  --c-good: 22 163 74;
+  --c-good-soft: 233 247 239;
+  --c-warn: 217 119 6;
+  --c-warn-soft: 254 243 226;
+  --c-bad: 220 38 38;
+  --c-bad-soft: 253 236 236;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    margin: 0;
+    min-height: 100dvh;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1200px 500px at 100% -5%, rgba(59, 130, 246, 0.08), transparent 60%),
+      radial-gradient(1000px 460px at -5% 105%, rgba(139, 92, 246, 0.07), transparent 60%);
+    background-attachment: fixed;
+  }
+  :root[data-theme="light"] body {
+    background-image:
+      radial-gradient(1200px 500px at 100% -5%, rgba(37, 99, 235, 0.06), transparent 60%),
+      radial-gradient(1000px 460px at -5% 105%, rgba(124, 58, 237, 0.05), transparent 60%);
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  h1, h2, h3, h4 {
+    @apply text-ink;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* "Plain" panels — no card fill/shadow/box anywhere. Blocks are separated by a
+     single hairline top divider instead of a filled, elevated card. */
+  .card {
+    @apply border-t border-line bg-transparent shadow-none rounded-none;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted;
+  }
+  .gradient-text {
+    background: linear-gradient(100deg, #e7ecf3 0%, #60a5fa 45%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm
+           font-semibold text-white transition hover:bg-primary-dark hover:shadow-glow
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface-2
+           px-4 py-2.5 text-sm font-medium text-ink-soft transition hover:border-primary/50 hover:text-ink;
+  }
+  .btn-subtle {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium
+           text-muted transition hover:bg-surface-2 hover:text-ink;
+  }
+  .field {
+    @apply w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm text-ink
+           placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

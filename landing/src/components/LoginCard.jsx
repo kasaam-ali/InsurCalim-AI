@@ -2,10 +2,15 @@ import { useState } from "react";
 
 // Demo config comes from Vite env (see .env.example). These are inlined into the
 // client bundle at build time — this is a demo gate, not real authentication.
+const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5174";
 const STREAMLIT_URL = import.meta.env.VITE_STREAMLIT_URL || "http://localhost:8501";
 const APP_USERNAME = import.meta.env.VITE_APP_USERNAME || "admin";
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || "insurclaim2026";
 const APP_LOGIN_TOKEN = import.meta.env.VITE_APP_LOGIN_TOKEN || "insurclaim-demo-2026";
+
+function handoff(baseUrl) {
+  return `${baseUrl.replace(/\/$/, "")}/?token=${encodeURIComponent(APP_LOGIN_TOKEN)}`;
+}
 
 export default function LoginCard() {
   const [username, setUsername] = useState("");
@@ -18,10 +23,9 @@ export default function LoginCard() {
     setError("");
     if (username.trim() === APP_USERNAME && password === APP_PASSWORD) {
       setLoading(true);
-      // Hand off to the Streamlit dashboard with a shared token so the user is
-      // not asked to sign in a second time.
-      const url = `${STREAMLIT_URL.replace(/\/$/, "")}/?token=${encodeURIComponent(APP_LOGIN_TOKEN)}`;
-      window.location.href = url;
+      // Hand off to the React investigator dashboard with a shared token so the
+      // user is not asked to sign in a second time.
+      window.location.href = handoff(DASHBOARD_URL);
     } else {
       setError("Invalid username or password.");
     }
@@ -62,6 +66,10 @@ export default function LoginCard() {
       <p className="hint">
         Demo access — synthetic &amp; public data only, no real customer information.
         Try <code>admin</code> / <code>insurclaim2026</code>.
+      </p>
+      <p className="hint">
+        Prefer the classic view?{" "}
+        <a href={handoff(STREAMLIT_URL)}>Open the Streamlit dashboard</a>.
       </p>
     </div>
   );
