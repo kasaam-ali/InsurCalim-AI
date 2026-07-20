@@ -7,10 +7,9 @@ import {
 } from "lucide-react";
 import { fetchClaims, fetchClaimDetail, fetchCase, setCase, addCaseNote, pdfUrl } from "../api.js";
 import { SectionHeader, Loading, ErrorNote, RiskPill } from "../components/ui.jsx";
-import { TONE_HEX, riskMeta } from "../lib/report.js";
+import { TONE_HEX, riskMeta, fmtMoney } from "../lib/report.js";
 import RiskGauge from "../components/RiskGauge.jsx";
 import AmountBlock from "../components/AmountBlock.jsx";
-import DeepReport from "../components/DeepReport.jsx";
 import ReportDocument from "../components/ReportDocument.jsx";
 import ClaimChat from "../components/ClaimChat.jsx";
 import { InvestigatorChecklist, PartiesRegister } from "../components/CaseTools.jsx";
@@ -344,6 +343,7 @@ function MovedInvestigation({ moved, onBrowse }) {
   const { result, jobId } = moved;
   const [preview, setPreview] = useState(false);
   const report = result?.final?.report || {};
+  const overview = result?.overview || {};
   const amount = result?.amount || null;
   const coverage = result?.coverage || null;
   const documents = result?.documents || null;
@@ -426,10 +426,128 @@ function MovedInvestigation({ moved, onBrowse }) {
           </div>
         </div>
 
-        {/* Full, detailed investigator report (same as the submit-flow Dive Deeper) */}
-        <div className="rounded-xl border border-line bg-surface p-5">
-          <DeepReport result={result} jobId={jobId} />
-        </div>
+        {/* Report body — same numbered, sectioned format as the stored claim report */}
+        <SectionLabel n="1" text="Risk assessment" />
+        <Disclosure title="Why this claim was rated the way it was" subtitle="What pushed the concern up, and by how much"
+                    icon={Gauge} defaultOpen>
+          <p className="mb-4 text-sm leading-relaxed text-ink-soft">
+            Every claim is run through automatic checks and read by an AI assistant. Each concern below added
+            to the overall rating — the bar shows how confident the system is in that finding.
+          </p>
+          {flags.length === 0 ? (
+            <p className="text-sm text-muted">No specific concerns were raised on this claim.</p>
+          ) : (
+            <div className="space-y-4">
+              {flags.map((f, i) => {
+                const conf = Number(f.confidence);
+                const hasConf = f.confidence !== undefined && f.confidence !== "" && !Number.isNaN(conf);
+                return (
+                  <div key={i}>
+                    <div className="mb-1 flex items-baseline justify-between gap-3">
+                      <span className="text-sm font-semibold text-ink">{f.summary}</span>
+                      {hasConf && <span className="shrink-0 text-xs text-muted">How sure · {Math.round(conf)}%</span>}
+                    </div>
+                    {hasConf && (
+                      <div className="h-2 overflow-hidden rounded-full bg-line">
+                        <motion.div className="h-full rounded-full" style={{ background: color }}
+                                    initial={{ width: 0 }} animate={{ width: `${Math.min(100, Math.max(0, conf))}%` }}
+                                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} />
+                      </div>
+                    )}
+                    {f.evidence && <p className="mt-1.5 text-xs leading-relaxed text-muted">{f.evidence}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <p className="mt-4 border-t border-line pt-3 text-xs text-muted">{BAND_WHY[meta.label]}</p>
+        </Disclosure>
+
+        <SectionLabel n="2" text="Findings" />
+        <Disclosure title="What was found, in detail" subtitle="Each concern explained, with the proof behind it"
+                    icon={ScanSearch} badge={<CountBadge n={flags.length} tone={color} />}>
+          {flags.length === 0 ? (
+            <p className="text-sm text-muted">Nothing was flagged on this claim.</p>
+          ) : (
+            <div className="space-y-3">
+              {flags.map((f, i) => (
+                <div key={i} className="rounded-lg border border-line p-4">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" style={{ color }} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-ink">{f.summary}</div>
+                      {f.evidence && (
+                        <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
+                          <span className="font-semibold">Proof: </span>{f.evidence}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Disclosure>
+
+        {amount && (
+          <>
+            <SectionLabel n="3" text="Cost assessment" />
+            <Disclosure title="Is the amount being claimed fair?" subtitle="A market-based estimate to guide the adjuster"
+                        icon={Coins}
+                        badge={amount.fair_estimate != null ? (
+                          <span className="pill" style={{ color, background: `${color}16`, border: `1px solid ${color}33` }}>
+                            {fmtMoney(amount.fair_estimate, amount.currency || "PKR")}
+                          </span>
+                        ) : null}>
+              <AmountBlock amount={amount} bare />
+            </Disclosure>
+          </>
+        )}
+
+        {coverage && (
+          <>
+            <SectionLabel n="4" text="Policy coverage" />
+            <Disclosure title="What the policy says" subtitle="The coverage decision and the clauses behind it"
+                        icon={ShieldCheck}>
+              <div className="text-sm">Decision: <span className="font-medium">{coverage.decision}</span></div>
+              {(coverage.citations || []).length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
+                  {coverage.citations.map((c, i) => <li key={i}>{formatCitation(c)}</li>)}
+                </ul>
+              )}
+            </Disclosure>
+          </>
+        )}
+
+        <SectionLabel n="5" text="Recommendation" />
+        <Disclosure title="What to do next" subtitle="The suggested step, and the reason for it"
+                    icon={Gavel} defaultOpen
+                    badge={<span className="pill" style={{ color, background: `${color}16`, border: `1px solid ${color}33` }}>{ACTION_LABEL[report.recommended_action] || "Review"}</span>}>
+          <div className="flex items-start gap-2.5 rounded-lg border border-line p-4">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-sm leading-relaxed text-ink-soft">
+              {ACTION_WHY[report.recommended_action] ||
+                "A person should review this claim. The system only ranks and explains — it never approves or rejects a claim by itself."}
+            </p>
+          </div>
+        </Disclosure>
+
+        <SectionLabel n="6" text="Claim record" />
+        <Disclosure title="The claim on file" subtitle="The basic facts this report is based on" icon={ClipboardList}>
+          <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+            <Row k="Claimant" v={overview.claimant && overview.claimant !== "-" ? overview.claimant : "—"} />
+            <Row k="Vehicle" v={overview.vehicle && overview.vehicle !== "-" ? overview.vehicle : "—"} />
+            <Row k="Incident date" v={overview.incident_date && overview.incident_date !== "-" ? overview.incident_date : "—"} />
+            <Row k="Location" v={overview.location && overview.location !== "-" ? overview.location : "—"} />
+            <Row k="Amount claimed" v={overview.claimed_amount != null ? fmtMoney(overview.claimed_amount, amount?.currency || "PKR") : "—"} />
+            <Row k="Documents missing" v={`${(documents?.missing || []).length}`} />
+          </dl>
+          {(report.timeline_summary || overview.summary) && (
+            <p className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-ink-soft">
+              {report.timeline_summary || overview.summary}
+            </p>
+          )}
+        </Disclosure>
 
         {/* Verification checklist — investigator-desk only */}
         <div className="flex items-center gap-2.5 pt-2">
