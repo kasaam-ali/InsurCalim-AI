@@ -58,7 +58,7 @@ export default function App() {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
-            {section === "overview" && <OverviewSection />}
+            {section === "overview" && <OverviewSection onOpenClaim={openClaim} onNavigate={navigate} />}
             {section === "queue" && <QueueSection onOpenClaim={openClaim} />}
             {section === "analytics" && <AnalyticsSection />}
             {section === "rings" && <RingsSection onOpenClaim={openClaim} />}

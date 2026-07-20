@@ -1,89 +1,195 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import Counter from "./Counter.jsx";
+import Sparkline from "./Sparkline.jsx";
 import { riskMeta, BAND_TONE, TONE_HEX } from "../lib/report.js";
 
-// Shared, light-theme building blocks used across the dashboard sections.
+// Shared building blocks for the "precision console" system.
+
+/* -------------------------------------------------------------------------- */
+/*  Headers & panels                                                          */
+/* -------------------------------------------------------------------------- */
 
 export function SectionHeader({ eyebrow, title, subtitle, actions }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        {eyebrow && <div className="eyebrow mb-1">{eyebrow}</div>}
-        <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0">
+        {eyebrow && <div className="eyebrow mb-1.5">{eyebrow}</div>}
+        <h1 className="text-lg font-semibold tracking-tight text-ink">{title}</h1>
+        {subtitle && <p className="mt-1 text-[13px] text-muted">{subtitle}</p>}
       </div>
-      {actions}
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
 }
 
-export function Card({ className = "", children }) {
-  return <div className={`card p-5 ${className}`}>{children}</div>;
+// A titled panel with an optional header row (title + subtitle + actions).
+export function Panel({ title, subtitle, icon: Icon, actions, className = "", bodyClass = "p-4", children }) {
+  return (
+    <section className={`panel ${className}`}>
+      {(title || actions) && (
+        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {Icon && (
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-surface-2 text-muted">
+                <Icon className="h-4 w-4" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <h3 className="truncate text-[13px] font-semibold text-ink">{title}</h3>
+              {subtitle && <p className="truncate text-xs text-muted">{subtitle}</p>}
+            </div>
+          </div>
+          {actions && <div className="flex shrink-0 items-center gap-1.5">{actions}</div>}
+        </header>
+      )}
+      <div className={bodyClass}>{children}</div>
+    </section>
+  );
 }
 
-export function StatCard({ label, value, sub, prefix = "", suffix = "", tone = "#2563EB", icon: Icon, delay = 0 }) {
+export function Card({ className = "", children }) {
+  return <div className={`panel p-4 ${className}`}>{children}</div>;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Metric / KPI card                                                         */
+/* -------------------------------------------------------------------------- */
+
+// Enterprise KPI tile: icon, label, big mono value, trend delta, mini sparkline,
+// and a comparison line. Subtle hover lift.
+export function MetricCard({
+  label, value, prefix = "", suffix = "", delta, compare, spark = [],
+  icon: Icon, tone = "#3B82F6", delay = 0,
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.35 }}
-      className="card p-5"
+      transition={{ delay, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="panel group p-4 transition-shadow hover:shadow-md"
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted">{label}</span>
+        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{label}</span>
         {Icon && (
-          <span className="grid h-8 w-8 place-items-center rounded-lg" style={{ background: `${tone}14`, color: tone }}>
-            <Icon className="h-4 w-4" />
+          <span className="grid h-7 w-7 place-items-center rounded-md" style={{ background: `${tone}1a`, color: tone }}>
+            <Icon className="h-3.5 w-3.5" />
           </span>
         )}
       </div>
-      <div className="tnum mt-2 font-mono text-2xl font-bold text-ink">
-        {typeof value === "number" ? <Counter value={value} prefix={prefix} suffix={suffix} /> : value}
+
+      <div className="mt-2.5 flex items-end justify-between gap-2 overflow-hidden">
+        <div className="tnum min-w-0 truncate text-[26px] font-semibold leading-none text-ink">
+          {typeof value === "number" ? <Counter value={value} prefix={prefix} suffix={suffix} /> : value}
+        </div>
+        {spark && spark.length > 1 && (
+          <div className="shrink-0 opacity-80 transition-opacity group-hover:opacity-100">
+            <Sparkline values={spark} color={tone} width={64} height={34} />
+          </div>
+        )}
       </div>
-      {sub && <div className="mt-1 text-xs text-muted">{sub}</div>}
+
+      <div className="mt-2.5 flex items-center gap-2 text-xs">
+        {delta !== undefined && <Delta delta={delta} />}
+        {compare && <span className="truncate text-muted">{compare}</span>}
+      </div>
     </motion.div>
   );
 }
 
-export function RiskPill({ score, band }) {
-  const meta = band ? { label: band, tone: BAND_TONE[band] } : riskMeta(score);
-  const hex = TONE_HEX[meta.tone];
+// Kept for backward-compat with older sections.
+export function StatCard({ label, value, sub, prefix = "", suffix = "", tone = "#3B82F6", icon }) {
+  return <MetricCard label={label} value={value} prefix={prefix} suffix={suffix} tone={tone} icon={icon} compare={sub} />;
+}
+
+export function Delta({ delta }) {
+  const d = Number(delta) || 0;
+  if (!d) return <span className="inline-flex items-center gap-0.5 text-muted"><Minus className="h-3 w-3" /> 0%</span>;
+  const up = d > 0;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
+  const hex = up ? "#22C55E" : "#EF4444";
   return (
-    <span className="pill" style={{ color: hex, background: `${hex}16`, border: `1px solid ${hex}33` }}>
-      <span className="h-1.5 w-1.5 rounded-full" style={{ background: hex }} />
-      {score !== undefined ? `${Math.round(score)} ${meta.label}` : `${meta.label} RISK`}
+    <span className="inline-flex items-center gap-0.5 font-semibold" style={{ color: hex }}>
+      <Icon className="h-3.5 w-3.5" /> {Math.abs(d)}%
     </span>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Badges                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const BADGE_TONE = {
+  neutral: { c: "var(--c-muted)", chan: "--c-muted" },
+  blue: { chan: "--c-primary" },
+  green: { chan: "--c-good" },
+  amber: { chan: "--c-warn" },
+  red: { chan: "--c-bad" },
+};
+
+// A status/priority badge. `tone` in {neutral, blue, green, amber, red}. Set
+// `dot` for a leading status dot, `solid` for a filled variant.
+export function Badge({ tone = "neutral", dot = false, solid = false, className = "", children }) {
+  const chan = (BADGE_TONE[tone] || BADGE_TONE.neutral).chan;
+  const style = solid
+    ? { background: `rgb(var(${chan}))`, color: "#fff", borderColor: "transparent" }
+    : { color: `rgb(var(${chan}))`, background: `rgb(var(${chan}) / 0.12)`, borderColor: `rgb(var(${chan}) / 0.25)` };
+  return (
+    <span className={`badge ${className}`} style={style}>
+      {dot && <span className="h-1.5 w-1.5 rounded-full" style={{ background: solid ? "#fff" : `rgb(var(${chan}))` }} />}
+      {children}
+    </span>
+  );
+}
+
+const BAND_BADGE = { HIGH: "red", MEDIUM: "amber", LOW: "green" };
+
+export function RiskPill({ score, band }) {
+  const meta = band ? { label: band } : riskMeta(score);
+  const tone = BAND_BADGE[meta.label] || "neutral";
+  return (
+    <Badge tone={tone} dot>
+      {score !== undefined ? `${Math.round(score)} · ${meta.label}` : meta.label}
+    </Badge>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Feedback                                                                  */
+/* -------------------------------------------------------------------------- */
+
 export function Loading({ label = "Loading…" }) {
   return (
-    <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted">
+    <div className="flex items-center justify-center gap-2 py-16 text-[13px] text-muted">
       <Loader2 className="h-4 w-4 animate-spin" /> {label}
     </div>
   );
 }
 
+// Skeleton block for loading states.
+export function Skeleton({ className = "" }) {
+  return <div className={`shimmer rounded-md ${className}`} />;
+}
+
 export function ErrorNote({ children }) {
   return (
-    <div className="rounded-lg border border-bad/30 bg-bad-soft px-4 py-3 text-sm text-bad">{children}</div>
+    <div className="rounded-md border border-bad/30 bg-bad-soft px-4 py-3 text-[13px] text-bad">{children}</div>
   );
 }
 
-// Horizontal labelled bar (for distributions / importances).
-export function Bar({ label, value, max, tone = "#2563EB", suffix = "" }) {
+/* -------------------------------------------------------------------------- */
+/*  Horizontal labelled bar (distributions / importances)                     */
+/* -------------------------------------------------------------------------- */
+
+export function Bar({ label, value, max, tone = "#3B82F6", suffix = "" }) {
   const pct = max ? Math.round((value / max) * 100) : 0;
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-sm">
+      <div className="mb-1.5 flex items-center justify-between text-[13px]">
         <span className="text-ink-soft">{label}</span>
-        <span className="tnum text-muted">
-          {value}
-          {suffix}
-        </span>
+        <span className="tnum text-muted">{value}{suffix}</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-line">
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
         <motion.div
           className="h-full rounded-full"
           style={{ background: tone }}

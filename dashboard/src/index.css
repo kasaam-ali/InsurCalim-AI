@@ -2,128 +2,218 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================ Theme variables ============================ */
-/* Dark (default) — deep navy enterprise. */
+/* ========================================================================== */
+/*  InsurCalim — "Precision console" design system                            */
+/*  Neutral zinc surfaces, a single blue accent, hairline structure. Token     */
+/*  names are stable so every section re-themes from one [data-theme] switch.  */
+/* ========================================================================== */
+
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --c-bg: 11 15 23;
-  --c-surface: 20 26 36;
-  --c-surface-2: 27 34 48;
-  --c-sidebar: 13 18 28;
-  --c-sidebar-hover: 26 34 49;
-  --c-sidebar-ink: 203 213 225;
-  --c-sidebar-strong: 255 255 255;
-  --c-sidebar-muted: 107 118 136;
-  --c-sidebar-border: 30 38 52;
-  --c-ink: 231 236 243;
-  --c-ink-soft: 174 183 198;
-  --c-muted: 123 135 155;
-  --c-line: 34 42 56;
+  --c-bg: 9 9 11;
+  --c-surface: 17 17 20;
+  --c-surface-2: 24 24 27;
+  --c-sidebar: 9 9 11;
+  --c-sidebar-hover: 24 24 27;
+  --c-sidebar-ink: 161 161 170;
+  --c-sidebar-strong: 250 250 250;
+  --c-sidebar-muted: 82 82 91;
+  --c-sidebar-border: 32 32 36;
+  --c-ink: 244 244 245;
+  --c-ink-soft: 189 189 196;
+  --c-muted: 113 113 122;
+  --c-line: 34 34 38;
+  --c-line-strong: 46 46 51;
   --c-primary: 59 130 246;
   --c-primary-dark: 37 99 235;
-  --c-primary-soft: 22 33 58;
-  --c-accent: 139 92 246;
-  --c-accent-soft: 30 27 52;
-  --c-teal: 34 211 238;
+  --c-primary-soft: 23 37 62;
+  --c-accent: 59 130 246;
+  --c-accent-soft: 23 37 62;
+  --c-teal: 45 212 191;
   --c-good: 34 197 94;
-  --c-good-soft: 16 40 28;
+  --c-good-soft: 19 43 29;
   --c-warn: 245 158 11;
-  --c-warn-soft: 42 32 16;
-  --c-bad: 244 91 105;
-  --c-bad-soft: 42 20 22;
+  --c-warn-soft: 47 36 15;
+  --c-bad: 239 68 68;
+  --c-bad-soft: 48 22 24;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55);
 }
 
-/* Light — white + black + light blue. Sidebar becomes white too. */
 :root[data-theme="light"] {
   color-scheme: light;
-  --c-bg: 244 247 251;
+  --c-bg: 249 249 250;
   --c-surface: 255 255 255;
-  --c-surface-2: 241 245 249;
+  --c-surface-2: 244 244 245;
   --c-sidebar: 255 255 255;
-  --c-sidebar-hover: 239 244 250;
-  --c-sidebar-ink: 71 85 105;
-  --c-sidebar-strong: 15 23 42;
-  --c-sidebar-muted: 148 163 184;
-  --c-sidebar-border: 226 232 240;
-  --c-ink: 15 23 42;
-  --c-ink-soft: 51 65 85;
-  --c-muted: 100 116 139;
-  --c-line: 226 232 240;
+  --c-sidebar-hover: 244 244 245;
+  --c-sidebar-ink: 82 82 91;
+  --c-sidebar-strong: 24 24 27;
+  --c-sidebar-muted: 161 161 170;
+  --c-sidebar-border: 231 231 234;
+  --c-ink: 24 24 27;
+  --c-ink-soft: 63 63 70;
+  --c-muted: 113 113 122;
+  --c-line: 231 231 234;
+  --c-line-strong: 218 218 222;
   --c-primary: 37 99 235;
   --c-primary-dark: 29 78 216;
-  --c-primary-soft: 235 242 255;
-  --c-accent: 124 58 237;
-  --c-accent-soft: 243 240 254;
-  --c-teal: 8 145 178;
+  --c-primary-soft: 235 241 254;
+  --c-accent: 37 99 235;
+  --c-accent-soft: 235 241 254;
+  --c-teal: 13 148 136;
   --c-good: 22 163 74;
   --c-good-soft: 233 247 239;
   --c-warn: 217 119 6;
   --c-warn-soft: 254 243 226;
   --c-bad: 220 38 38;
   --c-bad-soft: 253 236 236;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.08);
+  --shadow-pop: 0 12px 32px rgba(16, 24, 40, 0.14);
 }
 
 @layer base {
+  html {
+    font-size: 14px;
+  }
   body {
     @apply bg-bg text-ink font-sans antialiased;
     margin: 0;
     min-height: 100dvh;
+    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
     text-rendering: optimizeLegibility;
-    background-image:
-      radial-gradient(1200px 500px at 100% -5%, rgba(59, 130, 246, 0.08), transparent 60%),
-      radial-gradient(1000px 460px at -5% 105%, rgba(139, 92, 246, 0.07), transparent 60%);
-    background-attachment: fixed;
-  }
-  :root[data-theme="light"] body {
-    background-image:
-      radial-gradient(1200px 500px at 100% -5%, rgba(37, 99, 235, 0.06), transparent 60%),
-      radial-gradient(1000px 460px at -5% 105%, rgba(124, 58, 237, 0.05), transparent 60%);
   }
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
+    font-family: "JetBrains Mono", ui-monospace, monospace;
   }
   h1, h2, h3, h4 {
     @apply text-ink;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.014em;
+  }
+  ::selection {
+    background: rgb(var(--c-primary) / 0.28);
+  }
+  /* Refined scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--c-line-strong)) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgb(var(--c-line-strong));
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--c-muted) / 0.6);
+    background-clip: content-box;
   }
 }
 
 @layer components {
-  /* "Plain" panels — no card fill/shadow/box anywhere. Blocks are separated by a
-     single hairline top divider instead of a filled, elevated card. */
+  /* ---- Surfaces -------------------------------------------------------- */
+  .panel {
+    @apply rounded-lg border border-line bg-surface;
+    box-shadow: var(--shadow-sm);
+  }
+  /* Back-compat alias used by existing sections. */
   .card {
-    @apply border-t border-line bg-transparent shadow-none rounded-none;
+    @apply rounded-lg border border-line bg-surface;
+    box-shadow: var(--shadow-sm);
   }
+
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted;
+    @apply inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
   }
-  .gradient-text {
-    background: linear-gradient(100deg, #e7ecf3 0%, #60a5fa 45%, #a78bfa 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
+
+  /* ---- Buttons (compact, enterprise) ---------------------------------- */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm
-           font-semibold text-white transition hover:bg-primary-dark hover:shadow-glow
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3.5 text-[13px]
+           font-semibold text-white transition-colors hover:bg-primary-dark
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
            disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface-2
-           px-4 py-2.5 text-sm font-medium text-ink-soft transition hover:border-primary/50 hover:text-ink;
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-md border border-line bg-surface
+           px-3.5 text-[13px] font-medium text-ink-soft transition-colors
+           hover:border-line-strong hover:bg-surface-2 hover:text-ink
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30;
   }
   .btn-subtle {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium
-           text-muted transition hover:bg-surface-2 hover:text-ink;
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-md px-2.5 text-[13px] font-medium
+           text-muted transition-colors hover:bg-surface-2 hover:text-ink;
   }
+  .icon-btn {
+    @apply relative grid h-8 w-8 place-items-center rounded-md text-muted transition-colors
+           hover:bg-surface-2 hover:text-ink;
+  }
+
+  /* ---- Inputs ---------------------------------------------------------- */
   .field {
-    @apply w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm text-ink
-           placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25;
+    @apply h-9 w-full rounded-md border border-line bg-surface px-3 text-[13px] text-ink
+           placeholder:text-muted/70 transition-colors
+           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25;
   }
+  textarea.field {
+    @apply h-auto py-2 leading-relaxed;
+  }
+
+  /* ---- Badges / pills -------------------------------------------------- */
   .pill {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-semibold;
+  }
+  .kbd {
+    @apply inline-flex h-5 min-w-[20px] items-center justify-center rounded border border-line
+           bg-surface-2 px-1 font-mono text-[10px] font-semibold text-muted;
+  }
+
+  /* ---- Data table ------------------------------------------------------ */
+  .thead {
+    @apply sticky top-0 z-10 border-b border-line bg-surface-2/80 text-[11px] font-semibold
+           uppercase tracking-[0.06em] text-muted backdrop-blur;
+  }
+  .trow {
+    @apply border-b border-line transition-colors last:border-0 hover:bg-surface-2/60;
+  }
+
+  /* ---- Section label rule --------------------------------------------- */
+  .rule {
+    @apply flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+  }
+}
+
+@layer utilities {
+  .grid-lines {
+    background-image:
+      linear-gradient(rgb(var(--c-line) / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--c-line) / 0.5) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--c-surface-2)) 25%,
+      rgb(var(--c-line-strong)) 37%,
+      rgb(var(--c-surface-2)) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
   }
 }
 

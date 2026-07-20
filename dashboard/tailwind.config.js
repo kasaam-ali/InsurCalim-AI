@@ -1,16 +1,12 @@
 /** @type {import('tailwindcss').Config} */
-// Dark "enterprise premium" palette (Linear/Vercel-leaning, InsightAI-inspired):
-// deep near-black navy, elevated cards, a blue primary with subtle violet + teal
-// accents for gradients. Restrained glow — serious, not a neon toy. Token names
-// are kept from the light theme so components re-theme automatically.
+// "Precision console" system — neutral zinc surfaces, one blue accent, hairline
+// structure. All colours are CSS variables (space-separated RGB) so a single
+// [data-theme] switch re-themes the app and Tailwind opacity modifiers work.
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        // All colours are CSS variables (space-separated RGB channels) so a
-        // single [data-theme] switch re-themes the whole app, and Tailwind
-        // opacity modifiers (e.g. bg-primary/15) keep working.
         bg: "rgb(var(--c-bg) / <alpha-value>)",
         surface: "rgb(var(--c-surface) / <alpha-value>)",
         "surface-2": "rgb(var(--c-surface-2) / <alpha-value>)",
@@ -24,6 +20,7 @@ export default {
         "ink-soft": "rgb(var(--c-ink-soft) / <alpha-value>)",
         muted: "rgb(var(--c-muted) / <alpha-value>)",
         line: "rgb(var(--c-line) / <alpha-value>)",
+        "line-strong": "rgb(var(--c-line-strong) / <alpha-value>)",
         primary: "rgb(var(--c-primary) / <alpha-value>)",
         "primary-dark": "rgb(var(--c-primary-dark) / <alpha-value>)",
         "primary-soft": "rgb(var(--c-primary-soft) / <alpha-value>)",
@@ -38,22 +35,19 @@ export default {
         "bad-soft": "rgb(var(--c-bad-soft) / <alpha-value>)",
       },
       fontFamily: {
-        sans: ['"IBM Plex Sans"', "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
-        mono: ['"IBM Plex Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ['Inter', "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
+      },
+      fontSize: {
+        "2xs": ["0.6875rem", { lineHeight: "1rem" }],
       },
       borderRadius: {
-        card: "14px",
-      },
-      backgroundImage: {
-        "grad-primary": "linear-gradient(135deg, #3B82F6, #8B5CF6)",
-        "grad-teal": "linear-gradient(135deg, #22D3EE, #3B82F6)",
-        "grad-violet": "linear-gradient(135deg, #8B5CF6, #6366F1)",
+        card: "10px",
       },
       boxShadow: {
-        card: "0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3)",
-        "card-hover": "0 8px 24px rgba(0,0,0,.5)",
-        glow: "0 0 24px rgba(59,130,246,.25)",
-        "glow-violet": "0 0 30px rgba(139,92,246,.28)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        pop: "var(--shadow-pop)",
       },
       keyframes: {
         "fade-in": { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
@@ -61,14 +55,15 @@ export default {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        float: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-6px)" } },
-        "spin-slow": { to: { transform: "rotate(360deg)" } },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.97)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
-        "fade-in": "fade-in .3s ease-out both",
-        "fade-up": "fade-up .35s ease-out both",
-        float: "float 6s ease-in-out infinite",
-        "spin-slow": "spin-slow 18s linear infinite",
+        "fade-in": "fade-in .25s ease-out both",
+        "fade-up": "fade-up .3s ease-out both",
+        "scale-in": "scale-in .16s ease-out both",
       },
     },
   },

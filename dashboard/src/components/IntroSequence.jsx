@@ -44,7 +44,7 @@ export default function IntroSequence({ onDone }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 overflow-hidden"
+      className="fixed inset-0 z-[100] overflow-hidden"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.6, ease: EASE } }}
       style={{
@@ -162,7 +162,7 @@ function BrandOverlay() {
       {/* Each letter pops in one-by-one, then the full wordmark stands complete. */}
       <div className="flex items-end" style={{ filter: "drop-shadow(0 2px 14px rgba(0,0,0,.6))" }}>
         {WORD.split("").map((ch, i) => (
-          <motion.span key={i} className="gradient-text text-3xl font-bold tracking-tight sm:text-5xl"
+          <motion.span key={i} className="text-3xl font-bold tracking-tight text-white sm:text-5xl"
                        initial={{ opacity: 0, y: 18, scale: 0.7 }}
                        animate={{ opacity: 1, y: 0, scale: 1 }}
                        transition={{ duration: 0.32, ease: EASE, delay: 0.3 + i * 0.13 }}
@@ -172,7 +172,7 @@ function BrandOverlay() {
         ))}
       </div>
 
-      <motion.span className="h-[2px] rounded-full bg-grad-primary"
+      <motion.span className="h-[2px] rounded-full bg-primary"
                    initial={{ width: 0, opacity: 0 }} animate={{ width: 180, opacity: 1 }}
                    transition={{ duration: 0.7, ease: EASE, delay: 2.15 }} />
       <motion.div className="text-xs tracking-[0.2em] text-white/70"
