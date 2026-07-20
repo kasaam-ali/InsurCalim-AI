@@ -1,13 +1,14 @@
 import { useState } from "react";
 import {
   AlertTriangle, CheckCircle2, Info, Camera, RotateCcw, ArrowRight,
-  FileSearch,
+  FileSearch, FileText,
 } from "lucide-react";
 import { plainSummary, twoLine, riskMeta } from "../lib/report.js";
 import RiskGauge from "./RiskGauge.jsx";
 import AmountBlock from "./AmountBlock.jsx";
 import Disclosure from "./Disclosure.jsx";
 import DeepReport from "./DeepReport.jsx";
+import ReportDocument from "./ReportDocument.jsx";
 
 const NOTICE_STYLE = {
   success: { Icon: CheckCircle2, hex: "#16A34A" },
@@ -30,6 +31,7 @@ const ACTION_CTA = {
 
 export default function ReportView({ result, jobId, onNewClaim, onMove }) {
   const [sent, setSent] = useState(false);
+  const [preview, setPreview] = useState(false);
   const report = result?.final?.report || {};
   const amount = result?.amount || null;
   const media = result?.media || [];
@@ -44,8 +46,15 @@ export default function ReportView({ result, jobId, onNewClaim, onMove }) {
     <div className="mx-auto max-w-4xl space-y-5 animate-fade-up">
       <div className="flex items-center justify-between">
         <div className="eyebrow">Investigator report</div>
-        <button className="btn-ghost" onClick={onNewClaim}><RotateCcw className="h-4 w-4" /> New claim</button>
+        <div className="flex items-center gap-2">
+          <button className="btn-primary" onClick={() => setPreview(true)}>
+            <FileText className="h-4 w-4" /> Preview report
+          </button>
+          <button className="btn-ghost" onClick={onNewClaim}><RotateCcw className="h-4 w-4" /> New claim</button>
+        </div>
       </div>
+
+      {preview && <ReportDocument result={result} onClose={() => setPreview(false)} />}
 
       {notices.length > 0 && (
         <div className="flex flex-col gap-1.5">

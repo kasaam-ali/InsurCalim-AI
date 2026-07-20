@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   AlertTriangle, Download, Gauge, ScanSearch, GitCompare,
-  Gavel, ClipboardList, ShieldCheck, ArrowLeft, CheckCircle2, Coins, Sparkles,
+  Gavel, ClipboardList, ShieldCheck, ArrowLeft, CheckCircle2, Coins, Sparkles, FileText,
 } from "lucide-react";
 import { fetchClaims, fetchClaimDetail, fetchCase, setCase, addCaseNote, pdfUrl } from "../api.js";
 import { SectionHeader, Loading, ErrorNote, RiskPill } from "../components/ui.jsx";
@@ -10,6 +10,7 @@ import { TONE_HEX, riskMeta } from "../lib/report.js";
 import RiskGauge from "../components/RiskGauge.jsx";
 import AmountBlock from "../components/AmountBlock.jsx";
 import DeepReport from "../components/DeepReport.jsx";
+import ReportDocument from "../components/ReportDocument.jsx";
 import ClaimChat from "../components/ClaimChat.jsx";
 import Disclosure from "../components/Disclosure.jsx";
 
@@ -339,6 +340,7 @@ function Report({ detail }) {
 // case handling. The case is opened as "investigating" automatically.
 function MovedInvestigation({ moved, onBrowse }) {
   const { result, jobId } = moved;
+  const [preview, setPreview] = useState(false);
   const report = result?.final?.report || {};
   const amount = result?.amount || null;
   const coverage = result?.coverage || null;
@@ -372,11 +374,18 @@ function MovedInvestigation({ moved, onBrowse }) {
         title="Investigation report"
         subtitle="A claim moved here from the submit flow — full analysis and case handling."
         actions={
-          <button className="btn-ghost" onClick={onBrowse}>
-            <ArrowLeft className="h-4 w-4" /> Browse stored claims
-          </button>
+          <>
+            <button className="btn-primary" onClick={() => setPreview(true)}>
+              <FileText className="h-4 w-4" /> Preview report
+            </button>
+            <button className="btn-ghost" onClick={onBrowse}>
+              <ArrowLeft className="h-4 w-4" /> Browse stored claims
+            </button>
+          </>
         }
       />
+
+      {preview && <ReportDocument result={result} onClose={() => setPreview(false)} />}
 
       <div className="space-y-4">
         {/* Moved-in confirmation */}
