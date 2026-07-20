@@ -34,3 +34,14 @@ Thumbs.db
 # Test / tooling artifacts
 .playwright-mcp/
 dash-*.png
+
+# Local verification screenshots (not part of the app)
+/reportview-verified.png
+/moved-deepreport-verified.png
+/redesign-*.png
+/report-preview*.png
+/fair-collapsed.png
+/fair-open.png
+/intro-fix.png
+/investigation-richer.png
+/moved-stored-format.png
