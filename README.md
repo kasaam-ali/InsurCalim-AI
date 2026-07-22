@@ -4,7 +4,7 @@
 
 ### Multi-agent AI platform for investigating auto-insurance claims
 
-Takes a claim (documents · photos · videos) and produces a **ranked, explainable investigator report** —
+Takes a claim (documents · photos · videos) and produces a **ranked, explainable investigator report**
 risk score, event timeline, flagged inconsistencies, source citations, and a recommended action.
 **Human-in-the-loop by design: it flags and ranks, it never auto-denies.**
 
@@ -36,18 +36,18 @@ risk score, event timeline, flagged inconsistencies, source citations, and a rec
 ## ✨ Highlights
 
 - 🧠 **Four specialized agents** orchestrated with a **LangGraph** state machine (`intake → timeline → fraud → report`).
-- 🕵️ **Document-level fraud detection** — reads the *whole* claim file and surfaces concrete inconsistencies (location/GPS mismatch, timeline gaps, physically-impossible damage, airbags-but-no-medical, repeat claims, inflated cost).
-- 🧾 **Explainable reason codes** — every risk score breaks down into weighted signals with an evidence pointer; nothing is a black box.
-- 📎 **Multi-format intake** — TXT · PDF · **DOCX** · images · **video** (frame sampling). Scanned/image-only PDFs are read with a **vision-OCR fallback**.
-- 🧪 **AI-generated (deepfake) media detection** — metadata/EXIF/C2PA forensics + a vision-model artifact check flag synthetic damage photos/videos.
-- 🛡️ **Policy-driven coverage gate** — pick which policy a claim falls under; the system checks coverage **and** whether every document that *policy* requires is present before fraud runs.
-- 🕸️ **Fraud-ring detection** — connected components over the RAG similarity graph reveal organized rings.
-- 💬 **AI chat + case management** — ask grounded follow-up questions per claim, set status/assignee, and keep an audit-trail of notes.
-- 🔁 **Resilient LLM layer** — a 5-provider fallback chain with key rotation; the pipeline degrades gracefully instead of crashing when quotas are exhausted.
+- 🕵️ **Document-level fraud detection** reads the *whole* claim file and surfaces concrete inconsistencies (location/GPS mismatch, timeline gaps, physically-impossible damage, airbags-but-no-medical, repeat claims, inflated cost).
+- 🧾 **Explainable reason codes** every risk score breaks down into weighted signals with an evidence pointer; nothing is a black box.
+- 📎 **Multi-format intake** TXT · PDF · **DOCX** · images · **video** (frame sampling). Scanned/image-only PDFs are read with a **vision-OCR fallback**.
+- 🧪 **AI-generated (deepfake) media detection** metadata/EXIF/C2PA forensics + a vision-model artifact check flag synthetic damage photos/videos.
+- 🛡️ **Policy-driven coverage gate** pick which policy a claim falls under; the system checks coverage **and** whether every document that *policy* requires is present before fraud runs.
+- 🕸️ **Fraud-ring detection** connected components over the RAG similarity graph reveal organized rings.
+- 💬 **AI chat + case management** ask grounded follow-up questions per claim, set status/assignee, and keep an audit-trail of notes.
+- 🔁 **Resilient LLM layer** a 5-provider fallback chain with key rotation; the pipeline degrades gracefully instead of crashing when quotas are exhausted.
 
 ---
 
-## 🏗️ Architecture — 4 agents, one shared state
+## 🏗️ Architecture 4 agents, one shared state
 
 A shared `ClaimState` flows through the graph: **`intake → timeline → fraud → report`**.
 
@@ -77,11 +77,11 @@ A shared `ClaimState` flows through the graph: **`intake → timeline → fraud 
 
 ## 📊 Data
 
-- **Synthetic claims** — an LLM generator produces realistic narratives with injected fraud patterns and ground-truth labels (used by the LLM agents and narrative fine-tuning).
-- **Real dataset** — a public **30,000-row** car-insurance fraud dataset, downloaded on demand and loaded into PostgreSQL to train and evaluate the tabular classifier
+- **Synthetic claims** an LLM generator produces realistic narratives with injected fraud patterns and ground-truth labels (used by the LLM agents and narrative fine-tuning).
+- **Real dataset** a public **30,000-row** car-insurance fraud dataset, downloaded on demand and loaded into PostgreSQL to train and evaluate the tabular classifier
   (**ROC-AUC ≈ 0.74**, ~**67%** fraud recall at a recall-favoring threshold).
 
-> No real personal data is used — the real dataset is a public, anonymized research dataset.
+> No real personal data is used the real dataset is a public, anonymized research dataset.
 
 ---
 
@@ -102,7 +102,7 @@ python -m insurclaim.main --claim 1
 streamlit run frontend/app.py        # → http://localhost:8501
 ```
 
-Configuration (API keys, database, model names) lives in **`.env`** — copy `.env.example` and fill it in.
+Configuration (API keys, database, model names) lives in **`.env`** copy `.env.example` and fill it in.
 See **[`DEMO.md`](./DEMO.md)** for a full walkthrough, **[`PLAN.md`](./PLAN.md)** for the build plan, and
 **[`COMPETITORS.md`](./COMPETITORS.md)** for market positioning.
 

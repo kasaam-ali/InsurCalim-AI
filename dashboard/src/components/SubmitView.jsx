@@ -89,7 +89,7 @@ export default function SubmitView({ policies = [], onSubmit }) {
             <ShieldCheck className="h-4 w-4 text-primary" /> Check against which policy?
           </div>
           {policies.length === 0 ? (
-            <p className="mt-2 text-xs text-muted">No policies on file — checked against all uploaded policies.</p>
+            <p className="mt-2 text-xs text-muted">No policies on file checked against all uploaded policies.</p>
           ) : (
             <div className="mt-2 flex flex-wrap gap-2">
               {policies.map((p) => {

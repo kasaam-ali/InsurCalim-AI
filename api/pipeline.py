@@ -1,7 +1,7 @@
 """Run a full claim investigation and report progress step by step.
 
 This is a faithful extraction of the orchestration in ``frontend/app.py``'s
-``page_submit`` — the same calls, in the same order — refactored so it can be
+``page_submit`` the same calls, in the same order refactored so it can be
 driven from the HTTP API and emit live progress through an ``on_step`` callback
 instead of Streamlit's ``st.write`` / ``st.status``.
 
@@ -106,7 +106,7 @@ def run_investigation(
             notices.append({
                 "level": "error",
                 "message": (f"⚠ {label} {info['file_name']} matches media already on claim "
-                            f"#{info['duplicate_of']['claim_id']} — possible reuse."),
+                            f"#{info['duplicate_of']['claim_id']} possible reuse."),
             })
         syn = info.get("synthetic")
         if syn:

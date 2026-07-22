@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-// A glossy, glowing "AI" sphere — radial-gradient highlight + soft glow + a slow
+// A glossy, glowing "AI" sphere radial-gradient highlight + soft glow + a slow
 // rotating conic ring. The premium accent from the reference, kept tasteful.
 export default function Orb({ size = 84, label = "AI" }) {
   return (

@@ -28,7 +28,7 @@ export default function ClaimChat({ context }) {
       const { answer } = await askAssistant(text, context);
       setMsgs((m) => [...m, { role: "bot", text: answer || "No answer was returned." }]);
     } catch (_) {
-      setMsgs((m) => [...m, { role: "bot", text: "The assistant is unavailable right now — please try again." }]);
+      setMsgs((m) => [...m, { role: "bot", text: "The assistant is unavailable right now please try again." }]);
     } finally {
       setBusy(false);
     }

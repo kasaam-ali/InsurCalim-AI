@@ -1,4 +1,4 @@
-# InsurClaim AI — Review & Enhancement Report
+# InsurClaim AI Review & Enhancement Report
 
 Honest status against the full checklist. Legend: ✅ Done · ⚠️ Partial · ❌ Missing
 · ⏭️ Intentionally skipped (enterprise scope, out of scope for a portfolio demo).
@@ -11,7 +11,7 @@ charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
 
 ---
 
-## PART 1 — Core functionality
+## PART 1 Core functionality
 
 ### 1.1 End-to-end pipeline
 | Item | Status | Evidence |
@@ -43,7 +43,7 @@ charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
 
 ---
 
-## PART 2 — New features
+## PART 2 New features
 
 ### 2.1 Company policy management
 | Item | Status | Evidence |
@@ -76,7 +76,7 @@ charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
 
 ---
 
-## PART 3 — Production-ready frontend
+## PART 3 Production-ready frontend
 
 | Item | Status | Evidence |
 |---|---|---|
@@ -93,7 +93,7 @@ charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
 
 ---
 
-## PART 4 — Competitor features
+## PART 4 Competitor features
 
 | From | Feature | Status |
 |---|---|---|
@@ -112,7 +112,7 @@ charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
 
 ---
 
-## PART 5 — Wow factors
+## PART 5 Wow factors
 
 | Item | Status | Evidence |
 |---|---|---|
@@ -130,22 +130,22 @@ charts in the PDF (risk bar + reason-code bars); a dedicated Analytics page
 
 ---
 
-## PART 6 — Production readiness
+## PART 6 Production readiness
 
 | Area | Status | Note |
 |---|---|---|
-| Auth / RBAC | ⏭️ | skipped — needs a user system; ~2–3 days |
+| Auth / RBAC | ⏭️ | skipped needs a user system; ~2–3 days |
 | Encryption at rest/in transit | ⏭️ | deployment concern (RDS/TLS) |
 | Audit logs | ❌ | not implemented |
 | Rate limiting / input validation | ⚠️ | LLM retry/backoff; parameterized SQL (no injection); no app-level rate limit |
-| Load testing / caching / async | ⏭️ | skipped — Streamlit `@st.cache_data` used; no Redis/Celery |
+| Load testing / caching / async | ⏭️ | skipped Streamlit `@st.cache_data` used; no Redis/Celery |
 | Monitoring / Sentry / alerts | ⏭️ | skipped |
 
 Security note that IS handled: **no hardcoded secrets in code** (all keys in git-ignored `.env`), **parameterized SQL** throughout `repo.py`.
 
 ---
 
-## PART 7 — Documentation & demo
+## PART 7 Documentation & demo
 
 | Item | Status | Evidence |
 |---|---|---|
@@ -158,7 +158,7 @@ Security note that IS handled: **no hardcoded secrets in code** (all keys in git
 
 ---
 
-## PART 8 — Code quality & git
+## PART 8 Code quality & git
 
 | Item | Status | Evidence |
 |---|---|---|
@@ -181,7 +181,7 @@ Security note that IS handled: **no hardcoded secrets in code** (all keys in git
 
 ## Performance metrics (measured)
 - Tabular fraud model: ROC-AUC **0.74**, fraud recall **0.67** @ threshold 0.25 (real 30k held-out).
-- Narrative model: acc **0.94**, recall **1.0** (small test set — treat as indicative).
+- Narrative model: acc **0.94**, recall **1.0** (small test set treat as indicative).
 - RAG: fires on **54/55** fraud claims; 4 fraud rings detected.
 - Quick (no-LLM) risk scoring: whole 80-claim portfolio in seconds (cached).
 - Full LLM investigation: ~seconds per claim when providers respond; degrades gracefully when rate-limited.
@@ -192,8 +192,8 @@ Security note that IS handled: **no hardcoded secrets in code** (all keys in git
 - **Large (weeks):** GNN fraud rings; SHAP; multi-line support; async/Redis/monitoring; AR/voice; blockchain.
 
 ## Bottom line
-The core product — upload → investigate → explainable ranked report → coverage
-check → PDF — **works end to end** with real data, a live fallback LLM, and working
+The core product upload → investigate → explainable ranked report → coverage
+check → PDF **works end to end** with real data, a live fallback LLM, and working
 vision. It is **demo/pitch-ready**. The unchecked items are mostly enterprise
 hardening (auth, scaling, monitoring) and research features (GNN, AR) that are
 correctly deferred for a portfolio build.

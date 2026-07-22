@@ -1,4 +1,4 @@
-# InsurCalim AI — Python dependencies
+# InsurCalim AI Python dependencies
 # We install packages phase by phase, so this file grows as the project grows.
 # Heavy machine-learning packages (torch, transformers, ...) are commented out
 # below and will be enabled when we reach the fine-tuning phase (Phase 5).
@@ -9,8 +9,8 @@ python-dotenv        # loads API keys / secrets from the .env file
 pydantic             # data models; validates structured claim JSON
 
 # --- Multi-provider LLM fallback (Phase 1, used inside llm.py) ---
-openai               # OpenRouter gateway (OpenAI-compatible) — cheap Claude access in dev
-google-genai         # Gemini API (fallback; supports vision) — current SDK
+openai               # OpenRouter gateway (OpenAI-compatible) cheap Claude access in dev
+google-genai         # Gemini API (fallback; supports vision) current SDK
 groq                 # Groq API (fallback; very fast, text-only)
 
 # --- Database: PostgreSQL (Phase 1) ---
@@ -56,4 +56,4 @@ torch                 # deep-learning backend (CPU build on Windows by default)
 transformers          # HuggingFace models (DistilBERT sequence classifier)
 accelerate            # required backend for the HuggingFace Trainer
 datasets              # dataset handling for training
-# peft                 # LoRA fine-tuning — not used yet (train.py does full fine-tuning)
+# peft                 # LoRA fine-tuning not used yet (train.py does full fine-tuning)

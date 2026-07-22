@@ -9,7 +9,7 @@ const EASE = [0.16, 1, 0.3, 1];
 const WORD = "InsurCalim AI";
 
 // Drop a real car at dashboard/public/video/car.mp4 (best) or dashboard/public/
-// img/car-hero.png|jpg to replace the vector fallback — it is used automatically.
+// img/car-hero.png|jpg to replace the vector fallback it is used automatically.
 const CAR_VIDEO = "/video/car.mp4";
 const CAR_IMAGE = "/img/car-hero.png";
 
@@ -65,7 +65,7 @@ export default function IntroSequence({ onDone }) {
           <video src={CAR_VIDEO} autoPlay muted playsInline
                  onError={() => setMedia("image")}
                  className="absolute inset-0 h-full w-full object-cover" />
-          {/* Light vignette — middle stays clear/bright, gentle fade at edges. */}
+          {/* Light vignette middle stays clear/bright, gentle fade at edges. */}
           <div className="pointer-events-none absolute inset-0"
                style={{ background: "linear-gradient(180deg, rgba(5,7,12,.28) 0%, transparent 18%, transparent 80%, rgba(5,7,12,.42) 100%)" }} />
           {/* When the brand takes over, blur + darken the clip and wash it in the
@@ -99,7 +99,7 @@ export default function IntroSequence({ onDone }) {
         </AnimatePresence>
       )}
 
-      {/* Brand animation — overlaid on top of the still-playing video */}
+      {/* Brand animation overlaid on top of the still-playing video */}
       <AnimatePresence>
         {showBrand && (
           <motion.div key="brand" className="absolute inset-0 grid place-items-center"

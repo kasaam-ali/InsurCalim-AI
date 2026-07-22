@@ -3,7 +3,7 @@ import Reveal from "./Reveal.jsx";
 const STEPS = [
   { n: "1", h: "Upload the case", p: "Drop in the claim documents, damage photos and video for one claimant." },
   { n: "2", h: "Agents investigate", p: "Intake, timeline, fraud and amount agents read everything and write to a shared case file." },
-  { n: "3", h: "Ranked report", p: "You get a risk score, flagged inconsistencies, coverage view and a priced amount check — all cited." },
+  { n: "3", h: "Ranked report", p: "You get a risk score, flagged inconsistencies, coverage view and a priced amount check all cited." },
   { n: "4", h: "Human decides", p: "The adjuster reviews, asks the built-in chat follow-ups, and makes the call. Never auto-denied." },
 ];
 

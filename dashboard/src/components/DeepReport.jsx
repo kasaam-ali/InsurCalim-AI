@@ -8,7 +8,7 @@ import { pdfUrl } from "../api.js";
 import AmountBlock from "./AmountBlock.jsx";
 
 // A single, comprehensive, plain-English investigator report rendered from a
-// live investigation result. Every section that has data is shown in full — a
+// live investigation result. Every section that has data is shown in full a
 // proper report document, not a summary. Used by the submit-flow "Dive Deeper"
 // panel and by the "moved to investigator" view so both read identically.
 
@@ -22,9 +22,9 @@ const ACTION_WHY = {
   route_to_investigator:
     "Enough warning signs came up that this claim should not be paid on trust. An investigator should examine the evidence and speak to the people involved before any money is released.",
   request_more_info:
-    "The picture is mixed — some things look fine, some do not. The safest next step is to ask the claimant for a few more documents so the doubts can be cleared before a decision is made.",
+    "The picture is mixed some things look fine, some do not. The safest next step is to ask the claimant for a few more documents so the doubts can be cleared before a decision is made.",
   fast_track_approve:
-    "Almost nothing looked wrong with this claim. It can move quickly towards approval — a person still gives the final yes; the system never approves on its own.",
+    "Almost nothing looked wrong with this claim. It can move quickly towards approval a person still gives the final yes; the system never approves on its own.",
 };
 
 const ACTION_STEPS = {
@@ -47,7 +47,7 @@ const ACTION_STEPS = {
 };
 
 const VERDICT_MEANING = {
-  overstated: "The amount being demanded is materially higher than a fair market repair cost — a common sign of an inflated claim.",
+  overstated: "The amount being demanded is materially higher than a fair market repair cost a common sign of an inflated claim.",
   understated: "The amount being demanded is actually lower than the fair market repair cost.",
   fair: "The amount being demanded is in line with fair market repair costs.",
   reasonable: "The amount being demanded is in line with fair market repair costs.",
@@ -115,7 +115,7 @@ export default function DeepReport({ result, jobId }) {
 
   return (
     <div className="space-y-6">
-      {/* 1 — Claim data sheet */}
+      {/* 1 Claim data sheet */}
       <Section n="1" title="Claim on file" Icon={FileText}>
         {facts.length === 0 && parties.length === 0 ? (
           <p className="text-sm text-muted">No structured claim details were extracted.</p>
@@ -142,7 +142,7 @@ export default function DeepReport({ result, jobId }) {
                     <li key={i} className="flex items-center gap-2 text-sm">
                       <Users className="h-3.5 w-3.5 text-muted" />
                       <span className="font-medium text-ink">{p.full_name}</span>
-                      <span className="text-muted">— {p.role}</span>
+                      <span className="text-muted"> {p.role}</span>
                     </li>
                   ))}
                 </ul>
@@ -152,14 +152,14 @@ export default function DeepReport({ result, jobId }) {
         )}
       </Section>
 
-      {/* 2 — What happened */}
+      {/* 2 What happened */}
       {summaryText && (
         <Section n="2" title="What happened" Icon={ClipboardCheck}>
           <p className="text-sm leading-relaxed text-ink-soft">{summaryText}</p>
         </Section>
       )}
 
-      {/* 3 — Why this was flagged */}
+      {/* 3 Why this was flagged */}
       <Section n="3" title="Why this claim was flagged" Icon={AlertTriangle}
                badge={<Count n={flags.length} />}>
         <p className="mb-4 text-sm leading-relaxed text-muted">
@@ -209,7 +209,7 @@ export default function DeepReport({ result, jobId }) {
         )}
       </Section>
 
-      {/* 4 — Damage & media analysis */}
+      {/* 4 Damage & media analysis */}
       {media.length > 0 && (
         <Section n="4" title="Damage & media analysis" Icon={Camera} badge={<Count n={media.length} />}>
           <div className="space-y-3">
@@ -224,10 +224,10 @@ export default function DeepReport({ result, jobId }) {
                 <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-xs">
                   <Check ok={!m.synthetic}
                          yes="Looks like a genuine photo (no AI-generation signs)"
-                         no={m.synthetic ? `Possible AI-generated media — ${m.synthetic.evidence || m.synthetic.severity || "flagged"}` : ""} />
+                         no={m.synthetic ? `Possible AI-generated media ${m.synthetic.evidence || m.synthetic.severity || "flagged"}` : ""} />
                   <Check ok={!m.duplicate_of}
                          yes="Not seen on any other claim"
-                         no={m.duplicate_of ? `Reused — same image is on claim #${m.duplicate_of.claim_id}` : ""} />
+                         no={m.duplicate_of ? `Reused same image is on claim #${m.duplicate_of.claim_id}` : ""} />
                 </div>
               </div>
             ))}
@@ -235,7 +235,7 @@ export default function DeepReport({ result, jobId }) {
         </Section>
       )}
 
-      {/* 5 — Fair-cost assessment */}
+      {/* 5 Fair-cost assessment */}
       {amount && (
         <Section n="5" title="Is the amount being claimed fair?" Icon={Coins}>
           {gap && amount.verdict === "overstated" && (
@@ -252,7 +252,7 @@ export default function DeepReport({ result, jobId }) {
         </Section>
       )}
 
-      {/* 6 — Policy coverage */}
+      {/* 6 Policy coverage */}
       {coverage && (
         <Section n="6" title="Policy coverage" Icon={ShieldCheck}>
           <p className="text-sm text-ink-soft">
@@ -270,7 +270,7 @@ export default function DeepReport({ result, jobId }) {
         </Section>
       )}
 
-      {/* 7 — Document checklist */}
+      {/* 7 Document checklist */}
       {(present.length > 0 || missing.length > 0) && (
         <Section n="7" title="Document checklist" Icon={FolderCheck}
                  badge={<span className="text-xs text-muted">{present.length} on file · {missing.length} missing</span>}>
@@ -289,7 +289,7 @@ export default function DeepReport({ result, jobId }) {
         </Section>
       )}
 
-      {/* 8 — How this was assessed */}
+      {/* 8 How this was assessed */}
       <Section n="8" title="How this assessment was made" Icon={Cpu}>
         <p className="text-sm leading-relaxed text-ink-soft">
           This claim was checked in layers. First, fixed rules and cross-checks run automatically and
@@ -299,12 +299,12 @@ export default function DeepReport({ result, jobId }) {
           combines all of these signals.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          The system only ranks and explains — it never approves or rejects a claim on its own. A person
+          The system only ranks and explains it never approves or rejects a claim on its own. A person
           always makes the final decision.
         </p>
       </Section>
 
-      {/* 9 — Recommendation & next steps */}
+      {/* 9 Recommendation & next steps */}
       <Section n="9" title="Recommendation & next steps" Icon={Gavel}
                badge={<span className="pill" style={{ color: "#2563EB", background: "#2563EB16", border: "1px solid #2563EB33" }}>{ACTION_LABEL[action] || "Human review"}</span>}>
         <p className="text-sm leading-relaxed text-ink-soft">{ACTION_WHY[action] ||

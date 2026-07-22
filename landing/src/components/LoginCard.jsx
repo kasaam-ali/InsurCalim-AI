@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // Demo config comes from Vite env (see .env.example). These are inlined into the
-// client bundle at build time — this is a demo gate, not real authentication.
+// client bundle at build time this is a demo gate, not real authentication.
 const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || "http://localhost:5174";
 const STREAMLIT_URL = import.meta.env.VITE_STREAMLIT_URL || "http://localhost:8501";
 const APP_USERNAME = import.meta.env.VITE_APP_USERNAME || "admin";
@@ -64,7 +64,7 @@ export default function LoginCard() {
         {error && <p className="error">⚠️ {error}</p>}
       </form>
       <p className="hint">
-        Demo access — synthetic &amp; public data only, no real customer information.
+        Demo access synthetic &amp; public data only, no real customer information.
         Try <code>admin</code> / <code>insurclaim2026</code>.
       </p>
       <p className="hint">

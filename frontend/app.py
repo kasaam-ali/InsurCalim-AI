@@ -47,7 +47,7 @@ h1,h2,h3,h4,h5,h6 {letter-spacing:-.015em; color:#0b1220;}
 .main .block-container {animation: fadeUp .45s ease;}
 @keyframes fadeUp {from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
 
-/* Sidebar — dark modern with nav hover/active */
+/* Sidebar dark modern with nav hover/active */
 section[data-testid="stSidebar"] {background:linear-gradient(180deg,#0e1628,#131d33); border-right:1px solid rgba(255,255,255,.06);}
 section[data-testid="stSidebar"] * {color:#cbd5e1;}
 section[data-testid="stSidebar"] h2 {color:#fff; font-weight:800;}
@@ -326,7 +326,7 @@ def score_all() -> list[dict]:
 def page_overview(scored: list[dict]) -> None:
     st.markdown(
         '<div class="hero"><h1>🔎 InsurCalim AI</h1>'
-        "<p>AI-assisted auto-insurance claim investigation — explainable, human-in-the-loop. "
+        "<p>AI-assisted auto-insurance claim investigation explainable, human-in-the-loop. "
         "The system flags and ranks; it never auto-denies.</p></div>",
         unsafe_allow_html=True,
     )
@@ -345,14 +345,14 @@ def page_overview(scored: list[dict]) -> None:
     for col, card in zip(cols, cards):
         col.markdown(card, unsafe_allow_html=True)
 
-    # Business impact — the mission: catch fraud, and pay honest people faster.
+    # Business impact the mission: catch fraud, and pay honest people faster.
     money = sum(float(s["amount"] or 0) for s in scored if s["risk"] >= RISK_HIGH)
     fast = sum(1 for s in scored if s["risk"] < RISK_MEDIUM)
     rings = len(detect_rings(scored)[0])
     st.write("")
     d, e, f = st.columns(3)
     d.markdown(kpi("Money at risk", f"${money:,.0f}", "flagged in high-risk claims"), unsafe_allow_html=True)
-    e.markdown(kpi("Fast-trackable", fast, "low-risk — pay honest claimants in days"), unsafe_allow_html=True)
+    e.markdown(kpi("Fast-trackable", fast, "low-risk pay honest claimants in days"), unsafe_allow_html=True)
     f.markdown(kpi("Fraud rings", rings, "organized fraud detected"), unsafe_allow_html=True)
 
     st.write("")
@@ -507,7 +507,7 @@ def _investigation_context(
 
 def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
                           sub: dict | None = None) -> None:
-    """Render the full investigation view — the SAME layout for demo and moved claims."""
+    """Render the full investigation view the SAME layout for demo and moved claims."""
     label, color = risk_meta(s["risk"])
     action = ("route_to_investigator" if s["risk"] >= RISK_HIGH
               else "fast_track_approve" if s["risk"] < RISK_MEDIUM else "request_more_info")
@@ -591,7 +591,7 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
             if cov.get("clause"):
                 st.caption(f"Cited clause: {cov['clause'][:200]}")
 
-    # AI chat — same for both; each claim keeps its own thread.
+    # AI chat same for both; each claim keeps its own thread.
     claim_chat_ui(f"moved_{case_ref}" if moved else f"demo_{case_ref}",
                   _investigation_context(s, documents, coverage, amount))
 
@@ -627,7 +627,7 @@ def page_report(scored: list[dict]) -> None:
     by_id = {s["id"]: s for s in scored}
     cases = st.session_state.get("investigation_cases", {})
 
-    # One unified picker: moved (uploaded) cases first, then the demo claims — so a
+    # One unified picker: moved (uploaded) cases first, then the demo claims so a
     # moved claim never pushes the demo claims out of view.
     options: list[str] = [f"moved::{ref}" for ref in cases] + [f"demo::{i}" for i in by_id]
     if not options:
@@ -848,7 +848,7 @@ def page_rings(scored: list[dict]) -> None:
 
         types = Counter(by_id[m]["fraud_type"] for m in ring if m in by_id)
         pattern = types.most_common(1)[0][0] if types else "?"
-        st.markdown(f"#### Ring {i} — {len(ring)} linked claims · pattern: `{pattern}`")
+        st.markdown(f"#### Ring {i} {len(ring)} linked claims · pattern: `{pattern}`")
         left, right = st.columns([1, 1])
         with left:
             st.markdown(ring_svg(ring, adj), unsafe_allow_html=True)
@@ -884,7 +884,7 @@ def _render_quick_report(report: dict, media: list[dict] | None = None) -> None:
     with right:
         flags = report.get("top_flags", []) or []
         if flags:
-            st.markdown("**Key findings — what stands out about this claim**")
+            st.markdown("**Key findings what stands out about this claim**")
             # Concise bullet points (one line each); the full evidence for each is in
             # the "Go Deeper" detail below.
             st.markdown("\n".join(f"- {fl['summary']}" for fl in flags if fl.get("summary")))
@@ -897,7 +897,7 @@ def _render_quick_report(report: dict, media: list[dict] | None = None) -> None:
             st.markdown("**📷 What the photos show**")
             st.markdown(
                 "\n".join(
-                    f"- **{m.get('file_name','')}** — {_two_line(m.get('damage',''))}"
+                    f"- **{m.get('file_name','')}** {_two_line(m.get('damage',''))}"
                     for m in photos
                 )
             )
@@ -929,14 +929,14 @@ def _render_amount(amount: dict | None) -> None:
     verdict = amount.get("verdict") or "insufficient_info"
     label, col = _AMOUNT_VERDICT.get(verdict, ("", MUTED))
     cur = amount.get("currency") or "PKR"
-    st.markdown("**💰 Claim amount assessment — is the demanded cost justified?**")
+    st.markdown("**💰 Claim amount assessment is the demanded cost justified?**")
     st.markdown(badge(label, col), unsafe_allow_html=True)
     st.caption(
         "🌐 Estimated from live market prices (web search)."
         if amount.get("priced_from") == "market"
         else "🧮 Estimated from the model's own knowledge (no live prices available)."
     )
-    st.caption("This is a fair-cost **estimate** to guide a human adjuster — not a final settlement.")
+    st.caption("This is a fair-cost **estimate** to guide a human adjuster not a final settlement.")
     claimed = _fmt_money(cur, amount.get("claimed_amount"))
     if claimed:
         st.markdown(f"- **Demanded:** {claimed}")
@@ -950,14 +950,14 @@ def _render_amount(amount: dict | None) -> None:
         est = _fmt_money(cur, li.get("estimate"))
         src = (li.get("source") or "").strip()
         src_note = f"  ·  _{src}_" if src else ""
-        st.markdown(f"    - {li.get('item','')}: {est or '—'}{src_note}")
+        st.markdown(f"    - {li.get('item','')}: {est or ' '}{src_note}")
     if amount.get("rationale"):
         st.caption(amount["rationale"])
     # Show the raw market-price findings the estimate was grounded in (the "reference"
     # a reviewer asked for), when a live web search returned anything.
     sources_text = (amount.get("sources_text") or "").strip()
     if sources_text:
-        with st.expander("🌐 Sources (live web search) — prices this estimate is based on"):
+        with st.expander("🌐 Sources (live web search) prices this estimate is based on"):
             st.text(sources_text)
 
 
@@ -996,7 +996,7 @@ def render_detailed_and_pdf(
     detailed = report_builder.build_detailed(
         state, coverage=cov, documents=documents, amount=amount
     )
-    with st.expander("📄 Detailed view — coverage, documents, why flagged, timeline",
+    with st.expander("📄 Detailed view coverage, documents, why flagged, timeline",
                      expanded=True):
         if detailed["summary"]:
             st.markdown("**Investigator summary**")
@@ -1004,7 +1004,7 @@ def render_detailed_and_pdf(
         # Full per-photo / per-video vision analysis (the short overview is shown up top).
         photos = [m for m in (media or []) if m.get("damage")]
         if photos:
-            st.markdown("**📷 Photo analysis — full damage read**")
+            st.markdown("**📷 Photo analysis full damage read**")
             for m in photos:
                 st.markdown(f"- **{m.get('file_name','')}**: {m.get('damage','')}")
         if cov:
@@ -1025,7 +1025,7 @@ def render_detailed_and_pdf(
             for inc in documents.get("incomplete", []):
                 if isinstance(inc, dict):
                     st.markdown(
-                        f":orange[⚠ Incomplete: {inc.get('document','')} — {inc.get('issue','')}]"
+                        f":orange[⚠ Incomplete: {inc.get('document','')} {inc.get('issue','')}]"
                     )
                 else:
                     st.markdown(f":orange[⚠ Incomplete: {inc}]")
@@ -1033,7 +1033,7 @@ def render_detailed_and_pdf(
                 st.caption(documents["notes"])
         _render_amount(amount)
         if detailed.get("fraud_reasons"):
-            st.markdown("**🔎 Why we flagged this — specific inconsistencies**")
+            st.markdown("**🔎 Why we flagged this specific inconsistencies**")
             for i, r in enumerate(detailed["fraud_reasons"], 1):
                 sev = (r.get("severity") or "").upper()
                 st.markdown(
@@ -1057,7 +1057,7 @@ def render_detailed_and_pdf(
                     + (f"  _[{facts}]_" if facts else "")
                 )
         if detailed["similar_fraud"]:
-            st.markdown("**Similar known-fraud matches — what matches**")
+            st.markdown("**Similar known-fraud matches what matches**")
             for m in detailed["similar_fraud"]:
                 st.markdown(
                     f"- {int((m.get('similarity') or 0)*100)}% match to claim "
@@ -1081,7 +1081,7 @@ def _move_to_investigation(sub: dict) -> None:
     ref = sub.get("case_ref")
     if ref and ref in cases:
         st.success(
-            f"✔ Moved to the Investigation report as **{ref}** — open the "
+            f"✔ Moved to the Investigation report as **{ref}** open the "
             "🔍 Investigation report section to work the case."
         )
         return
@@ -1145,7 +1145,7 @@ def _plain_summary(report: dict, amount: dict | None) -> str:
                 f"estimate of about **{fair}**."
             )
     sentences.append(
-        "Nothing is auto-decided — a human makes the final call using the detail below."
+        "Nothing is auto-decided a human makes the final call using the detail below."
     )
     return " ".join(sentences)
 
@@ -1160,24 +1160,24 @@ def _render_submission(sub: dict) -> None:
     if sub.get("degraded"):
         st.error(
             "⚠ AI models were unavailable (all LLM providers rate-limited), so the "
-            "document, coverage and fraud-reasoning checks were skipped — only the "
+            "document, coverage and fraud-reasoning checks were skipped only the "
             "local ML + similarity ran. **This risk score is not reliable.** Add a "
             "working API key or try again later, then re-run this claim."
         )
 
     report = sub["final"].get("report", {})
 
-    # Tier 1 — headline: gauge + risk badge + key-finding bullets + short photo overview.
+    # Tier 1 headline: gauge + risk badge + key-finding bullets + short photo overview.
     _render_quick_report(report, media=sub.get("media"))
 
-    # Tier 2 — plain-English paragraph anyone can read at a glance.
+    # Tier 2 plain-English paragraph anyone can read at a glance.
     st.markdown("**In plain English**")
     st.info(_plain_summary(report, sub.get("amount")))
 
-    # Tier 3 — the full investigator detail, gated behind a "Go Deeper" toggle so the
+    # Tier 3 the full investigator detail, gated behind a "Go Deeper" toggle so the
     # headline stays clean until the reviewer asks for everything.
     go_key = "go_deeper_submission"
-    if st.toggle("🔬 Go Deeper — full investigator detail", key=go_key):
+    if st.toggle("🔬 Go Deeper full investigator detail", key=go_key):
         render_detailed_and_pdf(
             sub["final"], sub.get("ref", "uploaded claim"), sub.get("text", ""),
             doc_ids=sub.get("doc_ids"), documents=sub.get("documents"),
@@ -1221,7 +1221,7 @@ def page_submit() -> None:
     )
     selected_doc_ids = [policy_label[label] for label in selected_labels]
     if not available_policies:
-        st.caption("No policies uploaded yet — add them on the 'Policy & coverage' page.")
+        st.caption("No policies uploaded yet add them on the 'Policy & coverage' page.")
 
     if st.button("Process & investigate", type="primary"):
         from insurclaim import intake_docs
@@ -1284,7 +1284,7 @@ def page_submit() -> None:
                     notices.append((
                         "error",
                         f"⚠ {label} {info['file_name']} matches media already on claim "
-                        f"#{info['duplicate_of']['claim_id']} — possible reuse.",
+                        f"#{info['duplicate_of']['claim_id']} possible reuse.",
                     ))
                 syn = info.get("synthetic")
                 if syn:
@@ -1293,7 +1293,7 @@ def page_submit() -> None:
                         f"🧪 AI-generated media suspected · {info['file_name']} "
                         f"({syn['severity']}): {syn['evidence']}",
                     ))
-                # The full vision damage read is NOT dumped as a notice here — a short
+                # The full vision damage read is NOT dumped as a notice here a short
                 # 2-line overview is shown in the key-findings panel, and the full text
                 # under "Go Deeper" (see _render_quick_report / render_detailed_and_pdf).
 
@@ -1328,7 +1328,7 @@ def page_submit() -> None:
             final = run_claim({"raw_documents": text})
 
             # 3) Assess whether the demanded amount is justified (and if not, how much
-            #    a fair settlement would be) — useful even when the claim is not fraud.
+            #    a fair settlement would be) useful even when the claim is not fraud.
             from insurclaim import amount as amount_mod
 
             amount_assessment = None
@@ -1365,7 +1365,7 @@ def page_policy() -> None:
     st.markdown("### 🛡️ Policy & coverage")
     st.caption(
         "Upload your company's policies / rules. Incoming claims are checked "
-        "against them — is the claim actually covered by your policy?"
+        "against them is the claim actually covered by your policy?"
     )
     from insurclaim import coverage
 
@@ -1383,7 +1383,7 @@ def page_policy() -> None:
 
             with st.spinner(
                 f"Extracting text from {up.name} "
-                "(scanned PDFs are OCR'd with the vision model — this can take a moment)..."
+                "(scanned PDFs are OCR'd with the vision model this can take a moment)..."
             ):
                 content = intake_docs.extract_text(up.name, up.getvalue())
             if not content:
@@ -1478,7 +1478,7 @@ def _render_overview(ov: dict, sub: dict) -> None:
         if ov.get("parties"):
             st.markdown("##### Parties")
             for p in ov["parties"]:
-                st.markdown(f"- **{p['full_name']}** — {p['role']}")
+                st.markdown(f"- **{p['full_name']}** {p['role']}")
 
         if docs and (docs.get("required") or docs.get("missing") or docs.get("incomplete")):
             st.markdown("##### Documents checklist")
@@ -1491,7 +1491,7 @@ def _render_overview(ov: dict, sub: dict) -> None:
             for inc in docs.get("incomplete", []):
                 if isinstance(inc, dict):
                     st.markdown(
-                        f":orange[⚠ Incomplete: {inc.get('document','')} — {inc.get('issue','')}]"
+                        f":orange[⚠ Incomplete: {inc.get('document','')} {inc.get('issue','')}]"
                     )
                 else:
                     st.markdown(f":orange[⚠ Incomplete: {inc}]")
@@ -1520,7 +1520,7 @@ def page_overview_claimant() -> None:
         cases.setdefault(last.get("ref", "uploaded claim"), last)
 
     if not cases:
-        st.info("Upload a claim on the '✍️ Submit a claim' page first — the claimant "
+        st.info("Upload a claim on the '✍️ Submit a claim' page first the claimant "
                 "overview will appear here.")
         return
 
@@ -1571,7 +1571,7 @@ def _check_auth() -> None:
 
     st.markdown(
         '<div class="hero"><h1>🔎 InsurCalim AI</h1>'
-        "<p>AI-assisted auto-insurance claim investigation — explainable, human-in-the-loop. "
+        "<p>AI-assisted auto-insurance claim investigation explainable, human-in-the-loop. "
         "The system flags and ranks; it never auto-denies. Sign in to open the investigator "
         "dashboard.</p></div>",
         unsafe_allow_html=True,
@@ -1599,7 +1599,7 @@ def _check_auth() -> None:
                 st.rerun()
             else:
                 st.error("Invalid username or password.")
-        st.caption("Demo access — synthetic & public data only, no real customer information.")
+        st.caption("Demo access synthetic & public data only, no real customer information.")
 
     st.stop()
 
@@ -1619,7 +1619,7 @@ def main() -> None:
     if st.sidebar.button("🔓 Log out", use_container_width=True):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.sidebar.caption("Human-in-the-loop — flags & ranks, never auto-denies.")
+    st.sidebar.caption("Human-in-the-loop flags & ranks, never auto-denies.")
 
     try:
         scored = score_all()

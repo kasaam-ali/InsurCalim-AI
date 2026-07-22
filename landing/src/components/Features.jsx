@@ -6,7 +6,7 @@ const FEATURES = [
     icon: "🕵️",
     title: "Fraud & inconsistency detection",
     body:
-      "A narrative agent cross-checks the story against every document and photo, surfacing the exact contradictions — dates that don't line up, damage that doesn't match the report.",
+      "A narrative agent cross-checks the story against every document and photo, surfacing the exact contradictions dates that don't line up, damage that doesn't match the report.",
   },
   {
     icon: "🧭",
@@ -24,7 +24,7 @@ const FEATURES = [
     icon: "🔍",
     title: "Explainable, cited decisions",
     body:
-      "Every risk score, flag and recommendation carries its evidence and a citation. Nothing is a black box — an adjuster can defend each call.",
+      "Every risk score, flag and recommendation carries its evidence and a citation. Nothing is a black box an adjuster can defend each call.",
   },
 ];
 
@@ -56,7 +56,7 @@ export default function Features() {
           <h2>Four agents, one investigator report.</h2>
           <p>
             Each agent handles one part of the investigation and writes to a shared case file.
-            The result is a single ranked, explainable report — not a black-box score.
+            The result is a single ranked, explainable report not a black-box score.
           </p>
         </Reveal>
         <div className="features">

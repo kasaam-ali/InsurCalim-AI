@@ -2,7 +2,7 @@ import { useTheme } from "./theme.js";
 
 // Recharts styling that follows the active theme (Recharts needs literal colours,
 // not CSS classes, so we resolve them from the current theme here). Muted grids,
-// tabular tick labels, restrained tooltips — enterprise, not decorative.
+// tabular tick labels, restrained tooltips enterprise, not decorative.
 const DARK = {
   grid: "#212127",
   axisTick: { fontSize: 11, fill: "#71717A", fontFamily: "JetBrains Mono, monospace" },
@@ -31,5 +31,5 @@ export function useChart() {
 
 // Risk band colours (constant across themes; readable on both).
 export const BAND_COLORS = { HIGH: "#EF4444", MEDIUM: "#F59E0B", LOW: "#22C55E" };
-// Categorical series — blue-led, a single hue family with restrained support colours.
+// Categorical series blue-led, a single hue family with restrained support colours.
 export const SERIES = ["#3B82F6", "#60A5FA", "#0EA5E9", "#F59E0B", "#22C55E"];

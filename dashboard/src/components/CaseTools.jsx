@@ -95,7 +95,7 @@ export function PartiesRegister({ result }) {
               <div className="truncate text-[13px] font-semibold text-ink">{p.full_name}</div>
               <div className="text-xs capitalize text-muted">{p.role}</div>
             </div>
-            <button className="btn-subtle h-8" disabled title="Demo — contact action">
+            <button className="btn-subtle h-8" disabled title="Demo contact action">
               Contact <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </li>

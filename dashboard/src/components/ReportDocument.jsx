@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { X, Printer, ChevronDown } from "lucide-react";
 import { fmtMoney } from "../lib/report.js";
 
-// A professional, monochrome, print-ready investigation report — expository
+// A professional, monochrome, print-ready investigation report expository
 // prose in a proper sequence, no charts or colour. Each section is a button you
 // open for detail; the fair-cost figure appears exactly once. "Download PDF"
 // prints this same document (all sections expanded) via the browser.
@@ -111,7 +111,7 @@ export default function ReportDocument({ result, onClose }) {
           </p>
         </header>
 
-        {/* 1 — Executive summary (open) */}
+        {/* 1 Executive summary (open) */}
         <Section n="1" title="Executive summary" defaultOpen>
           <p>
             This claim has been assessed at an overall concern score of{" "}
@@ -125,7 +125,7 @@ export default function ReportDocument({ result, onClose }) {
           </p>
         </Section>
 
-        {/* 2 — Claim particulars */}
+        {/* 2 Claim particulars */}
         {particulars.length > 0 && (
           <Section n="2" title="Claim particulars" hint="the facts on record" defaultOpen>
             <dl className="grid grid-cols-1 gap-x-10 gap-y-2 sm:grid-cols-2">
@@ -146,14 +146,14 @@ export default function ReportDocument({ result, onClose }) {
           </Section>
         )}
 
-        {/* 3 — Narrative of the incident */}
+        {/* 3 Narrative of the incident */}
         {(report.timeline_summary || overview.summary) && (
           <Section n="3" title="Narrative of the incident" hint="what is said to have happened">
             <p>{report.timeline_summary || overview.summary}</p>
           </Section>
         )}
 
-        {/* 4 — Findings */}
+        {/* 4 Findings */}
         <Section n="4" title="Findings" hint={`${flags.length} matter${flags.length === 1 ? "" : "s"} raised`} defaultOpen={flags.length > 0}>
           {flags.length === 0 ? (
             <p>No specific concerns were raised against this claim during the automated assessment.</p>
@@ -174,7 +174,7 @@ export default function ReportDocument({ result, onClose }) {
           )}
         </Section>
 
-        {/* 5 — Cost assessment (fair estimate appears exactly once) */}
+        {/* 5 Cost assessment (fair estimate appears exactly once) */}
         {amount && (
           <Section
             n="5"
@@ -202,7 +202,7 @@ export default function ReportDocument({ result, onClose }) {
                     <tr key={i} className="border-b border-neutral-100">
                       <td className="py-1.5 text-neutral-800">{li.item}</td>
                       <td className="py-1.5 text-right font-medium text-neutral-900">{fmtMoney(li.estimate, ccy)}</td>
-                      <td className="hidden py-1.5 text-neutral-500 sm:table-cell">{li.source || "—"}</td>
+                      <td className="hidden py-1.5 text-neutral-500 sm:table-cell">{li.source || " "}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -217,7 +217,7 @@ export default function ReportDocument({ result, onClose }) {
           </Section>
         )}
 
-        {/* 6 — Coverage position */}
+        {/* 6 Coverage position */}
         {coverage && (
           <Section n="6" title="Coverage position" hint={coverage.decision}>
             <p>
@@ -233,7 +233,7 @@ export default function ReportDocument({ result, onClose }) {
           </Section>
         )}
 
-        {/* 7 — Documentation status */}
+        {/* 7 Documentation status */}
         {(present.length > 0 || missing.length > 0) && (
           <Section n="7" title="Documentation status" hint={`${missing.length} outstanding`}>
             {present.length > 0 && (
@@ -245,7 +245,7 @@ export default function ReportDocument({ result, onClose }) {
           </Section>
         )}
 
-        {/* 8 — Recommendation */}
+        {/* 8 Recommendation */}
         <Section n="8" title="Recommendation" hint="next steps" defaultOpen>
           <p>
             It is recommended that the insurer {ACTION_LABEL[action] || "have this claim reviewed by a person"}.
@@ -280,7 +280,7 @@ function Section({ n, title, hint, defaultOpen = false, children }) {
               className="flex w-full items-center gap-3 text-left">
         <span className="font-mono text-[12px] font-bold text-neutral-400">{String(n).padStart(2, "0")}</span>
         <h2 className="text-[15px] font-bold tracking-tight text-neutral-900">{title}</h2>
-        {hint && <span className="no-print truncate text-[11px] italic text-neutral-400">— {hint}</span>}
+        {hint && <span className="no-print truncate text-[11px] italic text-neutral-400"> {hint}</span>}
         <ChevronDown className={`no-print ml-auto h-4 w-4 shrink-0 text-neutral-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       <div className={`doc-body mt-2.5 pl-8 text-neutral-800 ${open ? "" : "hidden"}`}>

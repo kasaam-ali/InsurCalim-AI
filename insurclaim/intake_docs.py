@@ -82,9 +82,9 @@ def _ocr_pdf_via_vision(data: bytes, max_pages: int = 15) -> str:
 def _extract_pdf_text(data: bytes) -> str:
     """Pull text out of a PDF, trying progressively stronger methods.
 
-    1) pdfplumber (pdfminer) — handles most real-world policy PDFs;
-    2) pypdf — fallback text extractor;
-    3) vision OCR — for scanned / image-only PDFs with no text layer at all.
+    1) pdfplumber (pdfminer) handles most real-world policy PDFs;
+    2) pypdf fallback text extractor;
+    3) vision OCR for scanned / image-only PDFs with no text layer at all.
     Returns "" only if even OCR finds nothing.
     """
     text = ""
@@ -106,7 +106,7 @@ def _extract_pdf_text(data: bytes) -> str:
             text = ""
 
     if not text:
-        # No text layer — the PDF is almost certainly scanned images; OCR it.
+        # No text layer the PDF is almost certainly scanned images; OCR it.
         text = _ocr_pdf_via_vision(data)
     return text
 
@@ -179,7 +179,7 @@ def process_video(filename: str, data: bytes) -> dict[str, Any]:
         import cv2
 
         # OpenCV's VideoCapture needs a file path, so buffer the bytes to a temp
-        # file (and close it before reading — required on Windows).
+        # file (and close it before reading required on Windows).
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(data)
             tmp_path = tmp.name
@@ -305,7 +305,7 @@ def detect_synthetic_media(
     # Best-effort byte scan for C2PA / Content Credentials provenance markers.
     low_bytes = data[:200_000].lower()
     if any(marker in low_bytes for marker in _PROVENANCE_MARKERS):
-        reasons.append("embedded content-provenance (C2PA) data present — verify origin")
+        reasons.append("embedded content-provenance (C2PA) data present verify origin")
         if severity == "low":
             severity = "medium"
 
@@ -339,7 +339,7 @@ def detect_synthetic_media(
     # "No camera metadata" on its own is too weak to raise an alarm (ordinary
     # re-saved photos / screenshots also lack EXIF), so only surface a signal once
     # something stronger fired (generator tag, provenance data, or a vision
-    # verdict) — i.e. medium or high severity.
+    # verdict) i.e. medium or high severity.
     if not reasons or severity == "low":
         return None
     return {

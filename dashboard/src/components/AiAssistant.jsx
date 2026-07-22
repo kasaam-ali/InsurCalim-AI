@@ -32,7 +32,7 @@ export default function AiAssistant({ open, onClose, context = "" }) {
       const { answer } = await askAssistant(q, context);
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
     } catch (e) {
-      setMessages((m) => [...m, { role: "assistant", text: `Sorry — ${e.message}` }]);
+      setMessages((m) => [...m, { role: "assistant", text: `Sorry ${e.message}` }]);
     } finally {
       setBusy(false);
     }

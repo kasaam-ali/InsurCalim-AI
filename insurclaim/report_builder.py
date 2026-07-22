@@ -37,7 +37,7 @@ def build_detailed(
         if s.get("code") == "narrative_red_flag"
     ]
 
-    # Points requiring verification — the "what we're suspicious about" section.
+    # Points requiring verification the "what we're suspicious about" section.
     verify: list[dict] = []
     for inc in timeline.get("inconsistencies", []):
         verify.append(

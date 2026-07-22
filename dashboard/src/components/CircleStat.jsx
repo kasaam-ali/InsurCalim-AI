@@ -1,4 +1,4 @@
-// Circular progress "donut" with a centered label — like the reference's
+// Circular progress "donut" with a centered label like the reference's
 // accuracy dial. Pure SVG.
 export default function CircleStat({ value = 0, max = 100, size = 132, color = "#3B82F6", label, sub }) {
   const pct = Math.max(0, Math.min(1, value / max));

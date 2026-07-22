@@ -32,7 +32,7 @@ export default function AmountBlock({ amount, bare = false }) {
             </span>
           </div>
           <p className="mt-1 text-xs text-muted">
-            A fair-cost <strong>estimate</strong> to guide a human adjuster — not a final settlement.
+            A fair-cost <strong>estimate</strong> to guide a human adjuster not a final settlement.
           </p>
         </>
       )}

@@ -1,4 +1,4 @@
-# InsurCalim AI — Landing page
+# InsurCalim AI Landing page
 
 A cinematic React (Vite) landing page and sign-in gate for the InsurCalim AI dashboard.
 On a successful sign-in it hands off to the Streamlit dashboard (port 8501) using a shared

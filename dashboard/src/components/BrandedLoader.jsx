@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 //   1) the wordmark "InsurCalim AI" reveals letter-by-letter,
 //   2) the magnifier logo strokes itself in above it (with a soft glow),
 //   3) the whole thing fades away into the dashboard.
-// Restrained, premium — dark navy backdrop with a subtle radial glow.
+// Restrained, premium dark navy backdrop with a subtle radial glow.
 const WORD = "InsurCalim AI";
 const EASE = [0.16, 1, 0.3, 1];
 
@@ -21,7 +21,7 @@ export default function BrandedLoader() {
       }}
     >
       <div className="flex flex-col items-center gap-6">
-        {/* 2) Logo — appears AFTER the wordmark (delay 1.05s) */}
+        {/* 2) Logo appears AFTER the wordmark (delay 1.05s) */}
         <motion.svg
           viewBox="0 0 64 64" className="h-16 w-16" fill="none"
           initial={{ opacity: 0, scale: 0.6 }}
@@ -40,7 +40,7 @@ export default function BrandedLoader() {
           />
         </motion.svg>
 
-        {/* 1) Wordmark — reveals first, letter by letter */}
+        {/* 1) Wordmark reveals first, letter by letter */}
         <div className="flex items-end">
           {WORD.split("").map((ch, i) => (
             <motion.span

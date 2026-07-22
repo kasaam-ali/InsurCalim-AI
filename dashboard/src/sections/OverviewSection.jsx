@@ -154,7 +154,7 @@ export default function OverviewSection({ onOpenClaim, onNavigate }) {
         {kpis.map((k, i) => <MetricCard key={k.label} {...k} delay={i * 0.04} />)}
       </div>
 
-      {/* Row A — trends + distribution/model */}
+      {/* Row A trends + distribution/model */}
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
         <Panel
           className="xl:col-span-8"
@@ -235,7 +235,7 @@ export default function OverviewSection({ onOpenClaim, onNavigate }) {
         </div>
       </div>
 
-      {/* Row B — queue + right rail */}
+      {/* Row B queue + right rail */}
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
         <Panel
           className="xl:col-span-8"
@@ -305,7 +305,7 @@ export default function OverviewSection({ onOpenClaim, onNavigate }) {
         </div>
       </div>
 
-      {/* Row C — fraud types + activity */}
+      {/* Row C fraud types + activity */}
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
         <Panel className="xl:col-span-6" title="Fraud patterns" subtitle="Confirmed cases by type" icon={TrendingUp}>
           <ResponsiveContainer width="100%" height={200}>
@@ -331,9 +331,9 @@ export default function OverviewSection({ onOpenClaim, onNavigate }) {
                   <button onClick={() => onOpenClaim?.(c.id)} className="text-left">
                     <div className="text-[13px] text-ink-soft">
                       Claim <span className="tnum font-semibold text-ink">#{c.id}</span> flagged{" "}
-                      <span style={{ color: toneHex }} className="font-semibold">{p.label}</span> — {c.fraud_type}
+                      <span style={{ color: toneHex }} className="font-semibold">{p.label}</span> {c.fraud_type}
                     </div>
-                    <div className="text-xs text-muted">Scored {Math.round(c.risk)}/100 · {c.location?.split(",")[0] || "—"}</div>
+                    <div className="text-xs text-muted">Scored {Math.round(c.risk)}/100 · {c.location?.split(",")[0] || " "}</div>
                   </button>
                 </li>
               );

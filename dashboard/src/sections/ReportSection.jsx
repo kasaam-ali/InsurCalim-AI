@@ -25,14 +25,14 @@ const ACTION_WHY = {
   route_to_investigator:
     "Enough warning signs came up that this claim should not be paid on trust. An investigator should look at the evidence and speak to the people involved before any money is paid out.",
   request_more_info:
-    "The picture is mixed — some things look fine, some don't. The safest next step is to ask the claimant for a few more documents so the doubts can be cleared up before deciding.",
+    "The picture is mixed some things look fine, some don't. The safest next step is to ask the claimant for a few more documents so the doubts can be cleared up before deciding.",
   fast_track_approve:
-    "Almost nothing looked wrong with this claim. It can move quickly towards approval — a person still gives the final yes, the system never approves on its own.",
+    "Almost nothing looked wrong with this claim. It can move quickly towards approval a person still gives the final yes, the system never approves on its own.",
 };
 
 const BAND_WHY = {
   HIGH: "This is treated as high concern. It should be looked at by a person before anything is paid.",
-  MEDIUM: "This sits in the middle — not clearly fine, not clearly wrong. It needs a second look.",
+  MEDIUM: "This sits in the middle not clearly fine, not clearly wrong. It needs a second look.",
   LOW: "Very little looked wrong here. It is low concern, but a person still confirms it.",
 };
 
@@ -40,7 +40,7 @@ const BAND_WHY = {
 // to give the investigator enough detail to act on inside each report section.
 const BAND_ACTION = {
   HIGH: "treat this as a priority, hold any payment, and verify each finding before the claim proceeds.",
-  MEDIUM: "take a closer look and clear the doubts below before deciding — this should not be paid on trust alone.",
+  MEDIUM: "take a closer look and clear the doubts below before deciding this should not be paid on trust alone.",
   LOW: "still confirm the basic facts, but this claim can likely move forward once a person signs it off.",
 };
 
@@ -74,7 +74,7 @@ const VERDICT_NOTE = {
 const COVERAGE_NOTE = {
   needs_review: "This means the automatic match to a policy clause was not conclusive, so a person must confirm cover manually.",
   covered: "This means the loss appears to fall within the policy, but the specifics should still be verified.",
-  not_covered: "This means the loss may fall outside the policy — treat any payment with caution and confirm the position before proceeding.",
+  not_covered: "This means the loss may fall outside the policy treat any payment with caution and confirm the position before proceeding.",
 };
 
 function confWord(c) {
@@ -86,7 +86,7 @@ function confWord(c) {
 }
 
 // Every check the system can raise, written for a NON-technical reader:
-// what it found, and why that is a concern — in everyday words.
+// what it found, and why that is a concern in everyday words.
 const SIGNAL_INFO = {
   policy_inactive: { label: "Accident date not covered",
     meaning: "The accident happened on a date the policy did not actually cover.",
@@ -116,7 +116,7 @@ const SIGNAL_INFO = {
     meaning: "While reading the claim documents, the system spotted a detail that contradicts the rest.",
     why: "The concern comes straight from the claimant's own documents, not from guesswork." },
   ml_fraud_probability: { label: "The system's own fraud estimate",
-    meaning: "On its own, the fraud-detection model — trained on thousands of past claims — rated this claim as risky.",
+    meaning: "On its own, the fraud-detection model trained on thousands of past claims rated this claim as risky.",
     why: "It's a data-driven second opinion that has learned what fraud tends to look like." },
 };
 
@@ -139,7 +139,7 @@ export default function ReportSection({ initialClaimId, moved, onClearMoved }) {
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState("");
 
-  // A claim just handed over from the submit flow — show its live deep report
+  // A claim just handed over from the submit flow show its live deep report
   // (with case handling) instead of the stored-claim browser.
   if (moved) return <MovedInvestigation moved={moved} onBrowse={onClearMoved} />;
 
@@ -176,7 +176,7 @@ function StoredClaimReport({
       <SectionHeader
         eyebrow="Investigate"
         title="Investigation report"
-        subtitle="A plain-English report on any claim — what was found, why, and what to do next."
+        subtitle="A plain-English report on any claim what was found, why, and what to do next."
         actions={
           <select className="field w-auto" value={selected ?? ""} onChange={(e) => setSelected(Number(e.target.value))}>
             {claims.map((c) => (
@@ -205,7 +205,7 @@ function Report({ detail }) {
     (topTwo.length ? `The two biggest reasons are “${topTwo.join("” and “")}”. ` : "") +
     (detail.prob != null ? `The system's fraud-detection model also rated it ${Math.round(detail.prob * 100)}% likely to be fraud. ` : "") +
     `Recommended next step: ${(ACTION_LABEL[detail.recommended_action] || "human review").toLowerCase()}. ` +
-    `This report only flags and explains — a person always makes the final decision.`;
+    `This report only flags and explains a person always makes the final decision.`;
 
   // Claim-specific context the AI assistant answers against.
   const chatContext = [
@@ -219,7 +219,7 @@ function Report({ detail }) {
 
   return (
     <div className="space-y-4">
-      {/* Report header — case summary, always visible */}
+      {/* Report header case summary, always visible */}
       <div className="rounded-xl border border-line bg-surface">
         <div className="flex items-center justify-between border-b border-line px-5 py-2.5">
           <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
@@ -248,13 +248,13 @@ function Report({ detail }) {
         </div>
       </div>
 
-      {/* Go-deeper sections — professional report pattern */}
+      {/* Go-deeper sections professional report pattern */}
       <SectionLabel n="1" text="Risk assessment" />
       <Disclosure title="Why this claim was rated the way it was" subtitle="What pushed the concern up, and by how much"
                   icon={Gauge} defaultOpen>
         <p className="mb-4 text-sm leading-relaxed text-ink-soft">
           Every claim is put through dozens of automatic checks and compared against thousands of past claims.
-          Each concern below added to the overall rating. The bar shows how big a part each one played —
+          Each concern below added to the overall rating. The bar shows how big a part each one played
           the same claim always produces the same result.
         </p>
         <div className="space-y-4">
@@ -330,13 +330,13 @@ function Report({ detail }) {
           <>
             <p className="mb-3 text-sm leading-relaxed text-ink-soft">
               These older claims tell a very similar story to this one. A close match to a claim that was already
-              proven to be fraud is itself a warning sign — fraud rings tend to re-use the same script.
+              proven to be fraud is itself a warning sign fraud rings tend to re-use the same script.
             </p>
             <div className="overflow-hidden rounded-lg border border-line">
               {detail.similar_claims.map((m, i) => (
                 <div key={i} className={`flex items-center gap-3 px-4 py-2.5 text-sm ${i ? "border-t border-line" : ""}`}>
                   <span className="tnum font-mono font-medium text-ink">#{m.claim_id}</span>
-                  <span className="text-ink-soft">{m.fraud_type || "—"}</span>
+                  <span className="text-ink-soft">{m.fraud_type || " "}</span>
                   {m.is_fraud && (
                     <span className="pill" style={{ color: "#DC2626", background: "#DC262614", border: "1px solid #DC262633" }}>
                       confirmed fraud
@@ -358,7 +358,7 @@ function Report({ detail }) {
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-sm leading-relaxed text-ink-soft">
             {ACTION_WHY[detail.recommended_action] ||
-              "A person should review this claim. The system only ranks and explains — it never approves or rejects a claim by itself."}
+              "A person should review this claim. The system only ranks and explains it never approves or rejects a claim by itself."}
           </p>
         </div>
       </Disclosure>
@@ -367,9 +367,9 @@ function Report({ detail }) {
       <Disclosure title="The claim on file" subtitle="The basic facts this report is based on" icon={ClipboardList}>
         <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
           <Row k="Claim number" v={`#${detail.id}`} />
-          <Row k="Location" v={detail.location || "—"} />
-          <Row k="Amount claimed" v={detail.amount != null ? `PKR ${Number(detail.amount).toLocaleString()}` : "—"} />
-          <Row k="Type on record" v={detail.fraud_type || "—"} />
+          <Row k="Location" v={detail.location || " "} />
+          <Row k="Amount claimed" v={detail.amount != null ? `PKR ${Number(detail.amount).toLocaleString()}` : " "} />
+          <Row k="Type on record" v={detail.fraud_type || " "} />
         </dl>
         {detail.description && (
           <p className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-ink-soft">{detail.description}</p>
@@ -386,7 +386,7 @@ function Report({ detail }) {
 }
 
 // A claim handed over from the submit flow. Renders the same professional,
-// numbered deep-report layout — driven by the live investigation result — plus
+// numbered deep-report layout driven by the live investigation result plus
 // case handling. The case is opened as "investigating" automatically.
 function MovedInvestigation({ moved, onBrowse }) {
   const { result, jobId } = moved;
@@ -407,7 +407,7 @@ function MovedInvestigation({ moved, onBrowse }) {
     `Recommended next step: ${ACTION_LABEL[report.recommended_action] || "human review"}.`,
     flags.length ? `Key findings: ${flags.map((f) => f.summary).join("; ")}.` : "",
     report.timeline_summary ? `Summary: ${report.timeline_summary}` : "",
-    amount ? `Amount — claimed: ${amount.claimed_amount ?? "n/a"}, fair estimate: ${amount.fair_estimate ?? "n/a"}, verdict: ${amount.verdict ?? "n/a"}.` : "",
+    amount ? `Amount claimed: ${amount.claimed_amount ?? "n/a"}, fair estimate: ${amount.fair_estimate ?? "n/a"}, verdict: ${amount.verdict ?? "n/a"}.` : "",
     coverage ? `Policy coverage decision: ${coverage.decision}.` : "",
   ].filter(Boolean).join("\n");
 
@@ -416,14 +416,14 @@ function MovedInvestigation({ moved, onBrowse }) {
     `It has been rated ${meta.label} concern (${Math.round(report.risk_score || 0)} out of 100). ` +
     (flags.length ? `The biggest concern is “${flags[0].summary}”. ` : "") +
     `Recommended next step: ${(ACTION_LABEL[report.recommended_action] || "human review").toLowerCase()}. ` +
-    `This report only flags and explains — a person always makes the final decision.`;
+    `This report only flags and explains a person always makes the final decision.`;
 
   return (
     <div>
       <SectionHeader
         eyebrow="Investigate"
         title="Investigation report"
-        subtitle="A claim moved here from the submit flow — full analysis and case handling."
+        subtitle="A claim moved here from the submit flow full analysis and case handling."
         actions={
           <>
             <button className="btn-primary" onClick={() => setPreview(true)}>
@@ -442,10 +442,10 @@ function MovedInvestigation({ moved, onBrowse }) {
         {/* Moved-in confirmation */}
         <div className="flex items-start gap-2.5 rounded-xl border border-good/30 bg-good-soft px-4 py-3 text-sm text-good">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>Moved to the investigator desk. A case has been opened with status <strong>investigating</strong> — set the assignee and add notes below.</span>
+          <span>Moved to the investigator desk. A case has been opened with status <strong>investigating</strong> set the assignee and add notes below.</span>
         </div>
 
-        {/* Report header — case summary */}
+        {/* Report header case summary */}
         <div className="rounded-xl border border-line bg-surface">
           <div className="flex items-center justify-between border-b border-line px-5 py-2.5">
             <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
@@ -475,20 +475,20 @@ function MovedInvestigation({ moved, onBrowse }) {
           </div>
         </div>
 
-        {/* Report body — same numbered, sectioned format as the stored claim report */}
+        {/* Report body same numbered, sectioned format as the stored claim report */}
         <SectionLabel n="1" text="Risk assessment" />
         <Disclosure title="Why this claim was rated the way it was" subtitle="What pushed the concern up, and by how much"
                     icon={Gauge} defaultOpen>
           <p className="mb-2 text-sm leading-relaxed text-ink-soft">
             This claim was assessed in layers. Fixed rules and cross-checks run first and always return the same
-            result for the same claim — duplicate-photo detection, a comparison against thousands of past claims,
+            result for the same claim duplicate-photo detection, a comparison against thousands of past claims,
             and a machine-learning model trained on real fraud data. An AI assistant then reads the claim
             documents and writes up what it found. The overall concern score of{" "}
             <strong className="text-ink">{Math.round(report.risk_score || 0)}/100</strong> combines every one of these signals.
           </p>
           <p className="mb-4 text-sm leading-relaxed text-muted">
             {flags.length} concern{flags.length === 1 ? "" : "s"} contributed to this rating
-            {flags[0] ? <> — the most significant being “{flags[0].summary}”</> : ""}. The bar beside each one
+            {flags[0] ? <> the most significant being “{flags[0].summary}”</> : ""}. The bar beside each one
             shows how confident the system is in that finding; a fuller bar means stronger evidence behind it.
           </p>
           {flags.length === 0 ? (
@@ -527,7 +527,7 @@ function MovedInvestigation({ moved, onBrowse }) {
                     icon={ScanSearch} badge={<CountBadge n={flags.length} tone={color} />}>
           <p className="mb-3 text-sm leading-relaxed text-muted">
             Every concern raised during the assessment is set out below together with the evidence behind it.
-            The label on each shows how strongly the underlying signal supports the concern — treat the strong
+            The label on each shows how strongly the underlying signal supports the concern treat the strong
             indicators as the priority for verification, and corroborate each one with independent evidence
             before any settlement is agreed.
           </p>
@@ -627,7 +627,7 @@ function MovedInvestigation({ moved, onBrowse }) {
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <p className="text-sm leading-relaxed text-ink-soft">
                 {ACTION_WHY[report.recommended_action] ||
-                  "A person should review this claim. The system only ranks and explains — it never approves or rejects a claim by itself."}
+                  "A person should review this claim. The system only ranks and explains it never approves or rejects a claim by itself."}
               </p>
             </div>
             <div className="border-t border-line pt-3">
@@ -637,7 +637,7 @@ function MovedInvestigation({ moved, onBrowse }) {
               </ol>
             </div>
             <p className="border-t border-line pt-3 text-sm leading-relaxed text-muted">
-              The system only ranks and explains — it never approves or rejects a claim on its own. A person
+              The system only ranks and explains it never approves or rejects a claim on its own. A person
               makes the final decision and remains accountable for it.
             </p>
           </div>
@@ -646,11 +646,11 @@ function MovedInvestigation({ moved, onBrowse }) {
         <SectionLabel n="6" text="Claim record" />
         <Disclosure title="The claim on file" subtitle="The basic facts this report is based on" icon={ClipboardList}>
           <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-            <Row k="Claimant" v={overview.claimant && overview.claimant !== "-" ? overview.claimant : "—"} />
-            <Row k="Vehicle" v={overview.vehicle && overview.vehicle !== "-" ? overview.vehicle : "—"} />
-            <Row k="Incident date" v={overview.incident_date && overview.incident_date !== "-" ? overview.incident_date : "—"} />
-            <Row k="Location" v={overview.location && overview.location !== "-" ? overview.location : "—"} />
-            <Row k="Amount claimed" v={overview.claimed_amount != null ? fmtMoney(overview.claimed_amount, amount?.currency || "PKR") : "—"} />
+            <Row k="Claimant" v={overview.claimant && overview.claimant !== "-" ? overview.claimant : " "} />
+            <Row k="Vehicle" v={overview.vehicle && overview.vehicle !== "-" ? overview.vehicle : " "} />
+            <Row k="Incident date" v={overview.incident_date && overview.incident_date !== "-" ? overview.incident_date : " "} />
+            <Row k="Location" v={overview.location && overview.location !== "-" ? overview.location : " "} />
+            <Row k="Amount claimed" v={overview.claimed_amount != null ? fmtMoney(overview.claimed_amount, amount?.currency || "PKR") : " "} />
             <Row k="Documents missing" v={`${(documents?.missing || []).length}`} />
           </dl>
           {(report.timeline_summary || overview.summary) && (
@@ -667,7 +667,7 @@ function MovedInvestigation({ moved, onBrowse }) {
           </p>
         </Disclosure>
 
-        {/* Verification checklist — investigator-desk only */}
+        {/* Verification checklist investigator-desk only */}
         <div className="flex items-center gap-2.5 pt-2">
           <ListChecks className="h-4 w-4 text-muted" />
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Verification checklist</span>
@@ -675,7 +675,7 @@ function MovedInvestigation({ moved, onBrowse }) {
         </div>
         <InvestigatorChecklist result={result} />
 
-        {/* Parties & contacts — investigator-desk only */}
+        {/* Parties & contacts investigator-desk only */}
         {((result?.overview?.parties || []).some((p) => p.full_name && p.full_name !== "-")
           || (result?.overview?.claimant && result.overview.claimant !== "-")) && (
           <>
@@ -688,7 +688,7 @@ function MovedInvestigation({ moved, onBrowse }) {
           </>
         )}
 
-        {/* Case handling — opened as "investigating" automatically */}
+        {/* Case handling opened as "investigating" automatically */}
         <div className="flex items-center gap-2.5 pt-2">
           <ClipboardList className="h-4 w-4 text-muted" />
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Case handling</span>
@@ -696,7 +696,7 @@ function MovedInvestigation({ moved, onBrowse }) {
         </div>
         <CaseManagement claimRef={claimRef} autoStatus="investigating" />
 
-        {/* AI assistant — ask anything about this claim */}
+        {/* AI assistant ask anything about this claim */}
         <div className="flex items-center gap-2.5 pt-2">
           <Sparkles className="h-4 w-4 text-muted" />
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">AI assistant</span>
@@ -829,7 +829,7 @@ function CaseManagement({ claimRef, autoStatus }) {
         This claim has been logged as an open investigation. Use this panel to drive the case to a
         conclusion: move the status forward as you progress, assign it to the investigator who owns it, and
         record every action you take as a dated note. Those notes form the audit trail behind the final
-        decision, so keep them specific — who you spoke to, what you checked, and what you found.
+        decision, so keep them specific who you spoke to, what you checked, and what you found.
       </p>
       <div className="grid gap-3 sm:grid-cols-[180px_1fr_auto] sm:items-end">
         <label className="text-sm">

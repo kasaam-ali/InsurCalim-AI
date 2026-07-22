@@ -3,7 +3,7 @@
 Built on Starlette (already a dependency via Streamlit) rather than FastAPI, so
 it adds no new packages and cannot clash with the pinned Starlette version.
 
-Endpoints (all require the shared demo token — Bearer header or ``?token=``):
+Endpoints (all require the shared demo token Bearer header or ``?token=``):
   GET  /api/health                       liveness probe (no auth)
   GET  /api/policies                     uploaded policies for the coverage picker
   POST /api/investigate                  start a job (multipart: files, text, doc_ids)

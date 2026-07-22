@@ -1,12 +1,12 @@
-# InsurCalim AI — Project Rules
+# InsurCalim AI Project Rules
 
-## Coding language convention (STRICT — always apply)
+## Coding language convention (STRICT always apply)
 
 All code MUST be written in **English only**. This applies every time any file in this
 repository is created or edited. There are no exceptions.
 
 - **Identifiers in English:** variable names, function names, class names, module/file names,
-  constants, database columns/tables, and config keys — all English.
+  constants, database columns/tables, and config keys all English.
 - **String literals in English:** log messages, error messages, CLI output, and prompts that
   live in code files are written in English.
 - **Comments in English:** every code comment and docstring is written in English.

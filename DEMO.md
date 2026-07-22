@@ -1,17 +1,17 @@
-# InsurCalim AI — Live Demo Guide
+# InsurCalim AI Live Demo Guide
 
 A step-by-step walkthrough to demonstrate that the system works end to end.
 Each step lists the command, what to expect, and **which capability it proves**.
 
 Run the commands from the project root (`InsurCalim AI/`) in a terminal
-(PowerShell on Windows). Lines starting with `#` are comments — do not type them.
+(PowerShell on Windows). Lines starting with `#` are comments do not type them.
 
 ---
 
 ## What this project is
 
 A multi-agent AI platform that investigates **auto-insurance claims**. A claim
-goes in; a ranked, explainable **investigator report** comes out — risk score,
+goes in; a ranked, explainable **investigator report** comes out risk score,
 timeline, flagged inconsistencies, source citations, and a recommended action
 (human-in-the-loop; it never auto-denies).
 
@@ -43,7 +43,7 @@ docker compose -f infra/docker-compose.yml up -d db
 
 ---
 
-## Step 1 — The database is live (PostgreSQL)
+## Step 1 The database is live (PostgreSQL)
 
 ```powershell
 docker compose -f infra/docker-compose.yml ps
@@ -59,7 +59,7 @@ listed: `policies`, `claims`, `parties`, `vehicles`, `photo_hashes`, and
 
 ---
 
-## Step 2 — Synthetic claim data with ground-truth labels
+## Step 2 Synthetic claim data with ground-truth labels
 
 ```powershell
 docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT id, is_fraud, fraud_type, claimed_amount FROM claims ORDER BY id;"
@@ -72,7 +72,7 @@ docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT id, is_fraud,
 
 ---
 
-## Step 3 — Generate new synthetic claims (Claude)
+## Step 3 Generate new synthetic claims (Claude)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.data.generate --n 2 --fraud-ratio 0.5
@@ -89,7 +89,7 @@ deliberately injects known fraud patterns, each with a ground-truth label.
 
 ---
 
-## Step 4 — The full investigation pipeline (headline #1)
+## Step 4 The full investigation pipeline (headline #1)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.main --claim 1
@@ -100,14 +100,14 @@ deliberately injects known fraud patterns, each with a ground-truth label.
 `recommended_action`.
 
 **Proves the core of the project:** one claim flows through four agents wired in
-a LangGraph state graph — `intake -> timeline -> fraud -> report` — combining
+a LangGraph state graph `intake -> timeline -> fraud -> report` combining
 LLM reasoning, deterministic rules, similar-past-claim retrieval (RAG), and the
 ML fraud score into a single explainable report. The result is also written back
 to the claim record in PostgreSQL.
 
 ---
 
-## Step 5 — Load a real-world dataset (30,000 real claims)
+## Step 5 Load a real-world dataset (30,000 real claims)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.data.load_real
@@ -117,13 +117,13 @@ docker exec infra-db-1 psql -U insurclaim -d insurclaim -c "SELECT is_fraud, COU
 **Expect:** `Loaded 30000 real claims ...`, then a count showing ~26,560 legit
 and ~3,440 fraud (a realistic ~11% fraud rate).
 
-**Proves:** the project is not limited to synthetic data — it downloads a real,
+**Proves:** the project is not limited to synthetic data it downloads a real,
 public, labeled 30,000-row car-insurance fraud dataset (Kaggle) into PostgreSQL
 for training and evaluation.
 
 ---
 
-## Step 6 — Measured performance on real data (headline #2)
+## Step 6 Measured performance on real data (headline #2)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.ml.train_tabular
@@ -142,22 +142,22 @@ Operating point at threshold 0.25:
        fraud       0.26      0.67      0.38       688
 ```
 
-**Proves:** a real, defensible result on realistic data — a class-balanced
+**Proves:** a real, defensible result on realistic data a class-balanced
 Random Forest with a ROC-AUC of ~0.74 that catches ~67% of fraud at a
 recall-favoring decision threshold. It also tells a genuine ML story: fraud is
 rare (~11%), so the default 0.5 cutoff misses most of it; lowering the threshold
 trades precision for recall. Flagged claims go to a human investigator, never an
-automatic denial — so higher recall is the right call here.
+automatic denial so higher recall is the right call here.
 
 ---
 
-## Step 7 — Score an individual real claim with the model
+## Step 7 Score an individual real claim with the model
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.main --real-claim 1
 ```
 
-**Expect:** a JSON report for that real claim — `fraud_probability`, `risk_score`,
+**Expect:** a JSON report for that real claim `fraud_probability`, `risk_score`,
 `recommended_action`, a few key facts, and the `ground_truth_is_fraud` label so
 you can see whether the model was right. Claim 1 (a fraud) scores ~0.99 and is
 routed to an investigator.
@@ -168,7 +168,7 @@ Step 6 is the honest overall measure; this shows the model in action on one case
 
 ---
 
-## Step 8 — Fine-tune DistilBERT on narratives (optional)
+## Step 8 Fine-tune DistilBERT on narratives (optional)
 
 ```powershell
 .venv\Scripts\python.exe -m insurclaim.ml.train --source narrative
@@ -178,14 +178,14 @@ Step 6 is the honest overall measure; this shows the model in action on one case
 to `models/fraud_classifier/`. After this, Step 4 reports a numeric
 `fraud_probability` for narrative claims instead of `null`.
 
-**Proves:** the fine-tuning deliverable — a transformer specialised on free-text
+**Proves:** the fine-tuning deliverable a transformer specialised on free-text
 claim narratives, complementing the tabular model from Step 6.
 
 > Needs enough labeled narrative claims to be useful; generate more with Step 3.
 
 ---
 
-## Step 9 — Clean, professional history
+## Step 9 Clean, professional history
 
 ```powershell
 git log --oneline

@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// "Precision console" system — neutral zinc surfaces, one blue accent, hairline
+// "Precision console" system neutral zinc surfaces, one blue accent, hairline
 // structure. All colours are CSS variables (space-separated RGB) so a single
 // [data-theme] switch re-themes the app and Tailwind opacity modifiers work.
 export default {

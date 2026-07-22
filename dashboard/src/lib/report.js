@@ -1,6 +1,6 @@
 // Deterministic report helpers ported from the Streamlit app (frontend/app.py):
 // risk banding, two-line truncation, and the plain-English summary. No LLM calls
-// — everything is derived from fields already in the report, so it is instant.
+// everything is derived from fields already in the report, so it is instant.
 
 export function riskMeta(score) {
   const s = Number(score) || 0;
@@ -49,7 +49,7 @@ export function plainSummary(report, amount) {
     parts.push(`One thing stands out: ${lower(flags[0].summary)}.`);
   } else if (flags.length > 1) {
     parts.push(
-      `${flags.length} things stand out — starting with ${lower(flags[0].summary)}.`
+      `${flags.length} things stand out starting with ${lower(flags[0].summary)}.`
     );
   } else {
     parts.push("No specific red flags surfaced from the documents and media.");
@@ -66,7 +66,7 @@ export function plainSummary(report, amount) {
     }
   }
 
-  parts.push("Nothing is auto-decided — a human adjuster makes the final call.");
+  parts.push("Nothing is auto-decided a human adjuster makes the final call.");
   return parts.join(" ");
 }
 
@@ -76,7 +76,7 @@ function lower(s) {
 }
 
 export function fmtMoney(value, currency = "PKR") {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return " ";
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
   return `${currency} ${n.toLocaleString("en-PK")}`;

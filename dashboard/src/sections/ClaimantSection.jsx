@@ -15,7 +15,7 @@ export default function ClaimantSection({ result, onGoSubmit }) {
         <Card className="text-center">
           <UserSquare className="mx-auto h-10 w-10 text-muted" />
           <p className="mt-3 text-sm text-muted">
-            Submit a claim first — the consolidated claimant overview will appear here.
+            Submit a claim first the consolidated claimant overview will appear here.
           </p>
           <button className="btn-primary mx-auto mt-4" onClick={onGoSubmit}>Go to Submit a claim</button>
         </Card>
@@ -34,9 +34,9 @@ export default function ClaimantSection({ result, onGoSubmit }) {
                      subtitle="Consolidated overview of this claimant and their claim." />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Incident date" value={ov.incident_date || "—"} />
-        <StatCard label="Location" value={ov.location || "—"} />
-        <StatCard label="Vehicle" value={ov.vehicle || "—"} />
+        <StatCard label="Incident date" value={ov.incident_date || " "} />
+        <StatCard label="Location" value={ov.location || " "} />
+        <StatCard label="Vehicle" value={ov.vehicle || " "} />
         <StatCard label="Demanded amount" value={fmtMoney(ov.claimed_amount, ccy)} tone="#D97706" />
       </div>
 
@@ -55,7 +55,7 @@ export default function ClaimantSection({ result, onGoSubmit }) {
               <ul className="space-y-1 text-sm">
                 {ov.parties.map((p, i) => (
                   <li key={i}><span className="font-medium">{p.full_name}</span>
-                    <span className="text-muted"> — {p.role}</span></li>
+                    <span className="text-muted"> {p.role}</span></li>
                 ))}
               </ul>
             </Card>
@@ -74,7 +74,7 @@ export default function ClaimantSection({ result, onGoSubmit }) {
               )}
               {(docs.incomplete || []).map((inc, i) => (
                 <p key={i} className="mt-1 text-sm text-warn">
-                  ⚠ Incomplete: {typeof inc === "object" ? `${inc.document || ""} — ${inc.issue || ""}` : inc}
+                  ⚠ Incomplete: {typeof inc === "object" ? `${inc.document || ""} ${inc.issue || ""}` : inc}
                 </p>
               ))}
             </Card>

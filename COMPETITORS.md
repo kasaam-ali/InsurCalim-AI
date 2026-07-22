@@ -24,23 +24,23 @@ each, and where we can differentiate. Used to prioritize the roadmap.
   structured claim. *We are adding document/photo upload + extraction.*
 - **Lemonade** → frictionless claim submission UX. *We are adding an upload/submit
   flow; a conversational intake is a future option.*
-- **Yunke** → policy administration. *Out of scope — we are an investigation layer,
+- **Yunke** → policy administration. *Out of scope we are an investigation layer,
   not a full policy-admin core.*
 
 ## Where we already lead / can differentiate
 
-1. **Explainable, multi-layer investigation in one report** — deterministic rules
+1. **Explainable, multi-layer investigation in one report** deterministic rules
    + fine-tuned ML + similar-past-claim RAG + LLM narrative reasoning + timeline
    physics + coverage, each with an evidence pointer. Competitors specialize
    (Tractable = vision, Shift = fraud, Cytora = intake); we unify them.
-2. **Fraud-ring detection from narrative similarity** — link organized fraud by
+2. **Fraud-ring detection from narrative similarity** link organized fraud by
    modus operandi, not just shared identifiers.
-3. **Timeline physics / impossible-timeline detection** — a differentiator few
+3. **Timeline physics / impossible-timeline detection** a differentiator few
    general fraud tools advertise.
-4. **Open & self-hostable, bring-your-own-model** — a multi-provider LLM layer
+4. **Open & self-hostable, bring-your-own-model** a multi-provider LLM layer
    (Claude / Gemini / Groq / OpenRouter) means an insurer can run it in their own
    environment for data privacy, versus closed SaaS.
-5. **Human-in-the-loop by design** — ranks and recommends, never auto-denies;
+5. **Human-in-the-loop by design** ranks and recommends, never auto-denies;
    audit-defensible exports.
 
 ## Feature roadmap (borrow + differentiate)
@@ -48,7 +48,7 @@ each, and where we can differentiate. Used to prioritize the roadmap.
 **Building now**
 - [ ] Company policy upload + **coverage check** (is the claim within policy?).
 - [ ] Claim **document/photo upload** → extract → run pipeline → report.
-- [ ] **Vision damage analysis** — describe damage from a photo, flag
+- [ ] **Vision damage analysis** describe damage from a photo, flag
       photo-vs-narrative inconsistencies.
 
 **Next**
@@ -62,5 +62,5 @@ each, and where we can differentiate. Used to prioritize the roadmap.
 
 > InsurCalim AI is an **open, explainable claim-investigation layer** that reads a
 > claim's documents and photos, checks it against the insurer's own policy, and
-> returns a ranked, evidence-cited fraud report — combining rules, a fine-tuned
+> returns a ranked, evidence-cited fraud report combining rules, a fine-tuned
 > model, similar-claim retrieval, and LLM reasoning, with a human always in the loop.

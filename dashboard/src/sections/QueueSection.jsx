@@ -72,7 +72,7 @@ export default function QueueSection({ onOpenClaim }) {
                   <td className="px-4 py-3"><RiskPill score={c.risk} band={c.band} /></td>
                   <td className="px-4 py-3 text-ink-soft">{c.fraud_type}</td>
                   <td className="hidden max-w-[240px] truncate px-4 py-3 text-muted md:table-cell">
-                    {c.location || "—"}
+                    {c.location || " "}
                   </td>
                   <td className="px-4 py-3">
                     {c.signals > 0 ? (
