@@ -13,6 +13,7 @@ import ReportSection from "./sections/ReportSection.jsx";
 import ClaimantSection from "./sections/ClaimantSection.jsx";
 import PolicySection from "./sections/PolicySection.jsx";
 import ModelSection from "./sections/ModelSection.jsx";
+import GuideSection from "./sections/GuideSection.jsx";
 
 export default function App() {
   const [token] = useState(() => captureToken());
@@ -23,8 +24,8 @@ export default function App() {
   const [movedClaim, setMovedClaim] = useState(null); // live submit result handed to the investigator desk
 
   // Keep-alive: a section is mounted on first visit and then kept mounted (just
-  // hidden) so in-progress work — uploaded files, a running investigation, a
-  // rendered report, case notes — survives navigating away and back.
+  // hidden) so in-progress work uploaded files, a running investigation, a
+  // rendered report, case notes survives navigating away and back.
   const visited = useRef(new Set([section]));
   visited.current.add(section);
 
@@ -88,6 +89,7 @@ function renderSection(id, ctx) {
     case "claimant": return <ClaimantSection result={lastResult} onGoSubmit={() => setSection("submit")} />;
     case "policy": return <PolicySection />;
     case "model": return <ModelSection />;
+    case "guide": return <GuideSection onNavigate={navigate} />;
     default: return null;
   }
 }

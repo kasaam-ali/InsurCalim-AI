@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Inbox, TrendingUp, Network, FilePlus2, FileSearch,
   IdCard, ShieldCheck, Cpu, LogOut, PanelLeft, ChevronsUpDown, Search,
-  Bell, MessageSquare, Plus, ChevronRight, Check, Menu, X, ShieldAlert,
+  Bell, MessageSquare, Plus, ChevronRight, Check, Menu, X, ShieldAlert, BookOpen,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle.jsx";
 
@@ -30,6 +30,7 @@ export const NAV_GROUPS = [
     items: [
       { id: "policy", label: "Policies & coverage", Icon: ShieldCheck },
       { id: "model", label: "Model health", Icon: Cpu },
+      { id: "guide", label: "How it works", Icon: BookOpen },
     ],
   },
 ];
@@ -112,7 +113,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
           ))}
         </nav>
 
-        {/* Footer — system status + user */}
+        {/* Footer system status + user */}
         <div className="border-t border-sidebar-border p-2.5">
           {!collapsed && (
             <div className="mb-2 flex items-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-sidebar-muted">
