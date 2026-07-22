@@ -31,6 +31,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Personal learning notes (not part of the project)
+/LEARNING_PLAN.md
+
 # Test / tooling artifacts
 .playwright-mcp/
 dash-*.png
