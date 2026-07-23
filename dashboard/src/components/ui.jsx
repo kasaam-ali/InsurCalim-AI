@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Loader2, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import Counter from "./Counter.jsx";
@@ -62,13 +63,38 @@ export function MetricCard({
   label, value, prefix = "", suffix = "", delta, lowerIsBetter = false, compare, spark = [],
   icon: Icon, tone = "#3B82F6", delay = 0,
 }) {
+  // A long name, location or vehicle gets cut off with an ellipsis. Measure it
+  // and, only when it really is cut off, offer the full text on hover.
+  const valueRef = useRef(null);
+  const compareRef = useRef(null);
+  const [clipped, setClipped] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const isCut = (el) => !!el && el.scrollWidth > el.clientWidth + 1;
+      setClipped(isCut(valueRef.current) || isCut(compareRef.current));
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [value, compare]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="panel group p-4 transition-shadow hover:shadow-md"
+      className="panel group relative p-4 transition-shadow hover:shadow-md"
     >
+      {clipped && (
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-max max-w-[280px] -translate-x-1/2 group-hover:block">
+          <div className="rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium leading-snug text-surface shadow-pop">
+            <div className="break-words">{value}</div>
+            {compare && <div className="mt-0.5 break-words opacity-70">{compare}</div>}
+          </div>
+          <div className="mx-auto h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-ink" />
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{label}</span>
         {Icon && (
@@ -79,7 +105,7 @@ export function MetricCard({
       </div>
 
       <div className="mt-2.5 flex items-end justify-between gap-2 overflow-hidden">
-        <div className="tnum min-w-0 truncate text-[26px] font-semibold leading-none text-ink">
+        <div ref={valueRef} className="tnum min-w-0 truncate text-[26px] font-semibold leading-none text-ink">
           {typeof value === "number" ? <Counter value={value} prefix={prefix} suffix={suffix} /> : value}
         </div>
         {spark && spark.length > 1 && (
@@ -91,7 +117,7 @@ export function MetricCard({
 
       <div className="mt-2.5 flex items-center gap-2 text-xs">
         {delta !== undefined && <Delta delta={delta} lowerIsBetter={lowerIsBetter} />}
-        {compare && <span className="truncate text-muted">{compare}</span>}
+        {compare && <span ref={compareRef} className="truncate text-muted">{compare}</span>}
       </div>
     </motion.div>
   );
