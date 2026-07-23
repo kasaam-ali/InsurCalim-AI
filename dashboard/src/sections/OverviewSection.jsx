@@ -85,7 +85,7 @@ export default function OverviewSection({ onOpenClaim, onNavigate }) {
   if (!stats || !an) return <Loading label="Scoring the portfolio…" />;
 
   const total = Math.max(stats.total, 1);
-  const s = an.series || { months: [], claims: [], high: [], fraud: [], money: [] };
+  const s = an.series || { months: [], claims: [], high: [], fraud: [], money: [], risk: [] };
   const fraudRate = Math.round((stats.fraud / total) * 100);
   const rocAuc = Number(model?.metrics?.[0]?.value || 0.74);
   const activeMetric = TREND_METRICS.find((m) => m.key === metric);
@@ -93,10 +93,10 @@ export default function OverviewSection({ onOpenClaim, onNavigate }) {
 
   const kpis = [
     { label: "Total claims", value: stats.total, spark: s.claims, delta: deltaPct(s.claims), icon: FileStack, tone: "#3B82F6", compare: "vs prior quarter" },
-    { label: "High-risk", value: stats.high, spark: s.high, delta: deltaPct(s.high), icon: ShieldAlert, tone: "#EF4444", compare: `${Math.round((stats.high / total) * 100)}% of book` },
-    { label: "Exposure at risk", value: `₨${fmtCompact(stats.money_at_risk)}`, spark: s.money, delta: deltaPct(s.money), icon: Coins, tone: "#22C55E", compare: `₨${Number(stats.money_at_risk).toLocaleString()}` },
-    { label: "Fraud base rate", value: fraudRate, suffix: "%", spark: s.fraud, delta: deltaPct(s.fraud), icon: TrendingUp, tone: "#F59E0B", compare: "confirmed / total" },
-    { label: "Avg risk score", value: Math.round(stats.avg_score), spark: s.high, delta: 0, icon: Gauge, tone: "#0EA5E9", compare: "portfolio mean" },
+    { label: "High-risk", value: stats.high, spark: s.high, delta: deltaPct(s.high), lowerIsBetter: true, icon: ShieldAlert, tone: "#EF4444", compare: `${Math.round((stats.high / total) * 100)}% of book` },
+    { label: "Exposure at risk", value: `₨${fmtCompact(stats.money_at_risk)}`, spark: s.money, delta: deltaPct(s.money), lowerIsBetter: true, icon: Coins, tone: "#22C55E", compare: `₨${Number(stats.money_at_risk).toLocaleString()}` },
+    { label: "Fraud base rate", value: fraudRate, suffix: "%", spark: s.fraud, delta: deltaPct(s.fraud), lowerIsBetter: true, icon: TrendingUp, tone: "#F59E0B", compare: "confirmed / total" },
+    { label: "Avg risk score", value: Math.round(stats.avg_score), spark: s.risk, delta: deltaPct(s.risk), lowerIsBetter: true, icon: Gauge, tone: "#0EA5E9", compare: "portfolio mean" },
   ];
 
   const bands = [

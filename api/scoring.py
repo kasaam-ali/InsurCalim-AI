@@ -199,11 +199,13 @@ def _monthly_series(scored: list[dict[str, Any]]) -> dict[str, Any]:
     high = {m: 0 for m in months}
     fraud = {m: 0 for m in months}
     money = {m: 0.0 for m in months}
+    risk_total = {m: 0.0 for m in months}
     for s in scored:
         if not s.get("incident_date"):
             continue
         m = str(s["incident_date"])[:7]
         claims[m] += 1
+        risk_total[m] += float(s["risk"] or 0)
         if s["band"] == "HIGH":
             high[m] += 1
             money[m] += float(s["amount"] or 0)
@@ -215,6 +217,8 @@ def _monthly_series(scored: list[dict[str, Any]]) -> dict[str, Any]:
         "high": [high[m] for m in months],
         "fraud": [fraud[m] for m in months],
         "money": [round(money[m]) for m in months],
+        # Mean risk score per month, so the Avg-risk KPI has its own real trend.
+        "risk": [round(risk_total[m] / claims[m], 1) if claims[m] else 0 for m in months],
     }
 
 

@@ -95,6 +95,13 @@ def run_investigation(
     if not claim_text:
         raise ValueError("Provide at least one document, photo, video, or some text.")
 
+    # When nothing was uploaded the whole claim rests on the pasted text, so make
+    # sure it actually describes a claim before scoring it.
+    if not doc_tuples and not media_infos:
+        ok, reason = intake_docs.looks_like_claim(text)
+        if not ok:
+            raise ValueError(reason)
+
     # User-facing notices, re-shown when the stored result is re-rendered.
     notices: list[dict[str, str]] = [
         {"level": "success",

@@ -29,7 +29,11 @@ export default function SubmitView({ policies = [], onSubmit }) {
   const togglePolicy = (id) =>
     setDocIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  const canSubmit = files.length > 0 || text.trim().length > 0;
+  // With no files the pasted text is the whole claim, so a stray word like "hi"
+  // must not reach the pipeline. The server applies the authoritative check.
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const textTooThin = files.length === 0 && text.trim().length > 0 && words < 8;
+  const canSubmit = (files.length > 0 || text.trim().length > 0) && !textTooThin;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -83,6 +87,12 @@ export default function SubmitView({ policies = [], onSubmit }) {
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4}
                   placeholder="e.g. 2019 Toyota Corolla rear-ended in Lahore; boot lid and rear bumper damaged. Claimant demands PKR 300,000."
                   className="field mt-2" />
+        {textTooThin && (
+          <p className="mt-2 text-xs text-warn">
+            Please describe the claim properly: the vehicle, what happened, the damage and the
+            amount being claimed. A few words are not enough to investigate.
+          </p>
+        )}
 
         <div className="mt-5">
           <div className="flex items-center gap-2 text-sm font-medium">

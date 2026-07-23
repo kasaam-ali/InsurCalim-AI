@@ -42,7 +42,9 @@ export default function ClaimChat({ context }) {
         </span>
         <div>
           <div className="text-sm font-semibold text-ink">Ask about this claim</div>
-          <div className="text-xs text-muted">Not sure about something? Ask a question and get a plain-English answer.</div>
+          <div className="text-xs text-muted">
+            Answers come only from this claim's file. Anything outside this claim is not answered.
+          </div>
         </div>
       </div>
 

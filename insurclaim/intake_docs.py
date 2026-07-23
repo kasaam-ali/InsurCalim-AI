@@ -350,6 +350,70 @@ def detect_synthetic_media(
     }
 
 
+# Words that show a piece of text is really describing a motor-insurance claim.
+# Grouped by topic so we can require evidence from more than one topic instead of
+# accepting a single lucky keyword.
+CLAIM_TOPICS: dict[str, tuple[str, ...]] = {
+    "vehicle": (
+        "car", "vehicle", "motorcycle", "motorbike", "bike", "truck", "van", "bus",
+        "bumper", "bonnet", "hood", "boot", "trunk", "windscreen", "windshield",
+        "headlight", "taillight", "tyre", "tire", "fender", "mirror", "engine",
+        "number plate", "registration", "toyota", "honda", "suzuki", "hyundai", "kia",
+    ),
+    "incident": (
+        "accident", "collision", "crash", "crashed", "collided", "rear-ended",
+        "rear ended", "hit", "incident", "theft", "stolen", "robbed", "fire",
+        "flood", "rollover", "skidded", "overturned", "fir", "police report",
+    ),
+    "damage": (
+        "damage", "damaged", "dent", "dented", "scratch", "scratched", "broken",
+        "cracked", "smashed", "repair", "write-off", "total loss", "injury",
+        "injured", "hospital", "workshop",
+    ),
+    "money": (
+        "pkr", "rs.", "rupee", "rupees", "amount", "cost", "estimate", "invoice",
+        "bill", "quotation", "demand", "payout", "settlement", "claiming",
+    ),
+    "policy": (
+        "policy", "insurance", "insurer", "coverage", "covered", "premium",
+        "deductible", "claim", "claimant", "adjuster", "surveyor",
+    ),
+}
+
+# Enough words that the text can plausibly describe an incident at all.
+MIN_CLAIM_WORDS = 8
+# How many different topics above must appear before we treat the text as a claim.
+MIN_CLAIM_TOPICS = 2
+
+
+def looks_like_claim(text: str) -> tuple[bool, str]:
+    """Check that pasted text is actually a claim narrative, not filler.
+
+    Returns ``(True, "")`` when the text is worth investigating, otherwise
+    ``(False, reason)`` with a plain-English reason to show the user. This stops
+    a stray "hi" from being run through the whole pipeline and given a risk
+    score, which would be a meaningless number.
+    """
+    cleaned = " ".join((text or "").split())
+    if not cleaned:
+        return False, "Please describe the claim, or upload the claim documents."
+
+    words = cleaned.split(" ")
+    lowered = cleaned.lower()
+    hits = [topic for topic, terms in CLAIM_TOPICS.items() if any(t in lowered for t in terms)]
+
+    if len(words) < MIN_CLAIM_WORDS or len(hits) < MIN_CLAIM_TOPICS:
+        return False, (
+            "This does not look like a claim yet, so there is nothing to investigate. "
+            "Describe what happened in a sentence or two: the vehicle, the incident, "
+            "the damage, and the amount being claimed. For example: "
+            "\"2019 Toyota Corolla rear-ended in Lahore on 3 March; rear bumper and boot "
+            "lid damaged. Claimant demands PKR 300,000.\" "
+            "You can also upload the claim documents or damage photos instead."
+        )
+    return True, ""
+
+
 def build_claim_text(documents: list[tuple[str, bytes]], media: list[dict]) -> str:
     """Combine extracted document text and photo/video notes into one narrative."""
     parts = [extract_text(name, data) for name, data in documents]

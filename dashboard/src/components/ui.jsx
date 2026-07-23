@@ -59,7 +59,7 @@ export function Card({ className = "", children }) {
 // Enterprise KPI tile: icon, label, big mono value, trend delta, mini sparkline,
 // and a comparison line. Subtle hover lift.
 export function MetricCard({
-  label, value, prefix = "", suffix = "", delta, compare, spark = [],
+  label, value, prefix = "", suffix = "", delta, lowerIsBetter = false, compare, spark = [],
   icon: Icon, tone = "#3B82F6", delay = 0,
 }) {
   return (
@@ -90,7 +90,7 @@ export function MetricCard({
       </div>
 
       <div className="mt-2.5 flex items-center gap-2 text-xs">
-        {delta !== undefined && <Delta delta={delta} />}
+        {delta !== undefined && <Delta delta={delta} lowerIsBetter={lowerIsBetter} />}
         {compare && <span className="truncate text-muted">{compare}</span>}
       </div>
     </motion.div>
@@ -102,12 +102,16 @@ export function StatCard({ label, value, sub, prefix = "", suffix = "", tone = "
   return <MetricCard label={label} value={value} prefix={prefix} suffix={suffix} tone={tone} icon={icon} compare={sub} />;
 }
 
-export function Delta({ delta }) {
+// The arrow always points the way the number moved. The colour says whether that
+// move is good news, which is not always "up": falling exposure or a falling
+// fraud rate are wins, so those callers pass lowerIsBetter.
+export function Delta({ delta, lowerIsBetter = false }) {
   const d = Number(delta) || 0;
   if (!d) return <span className="inline-flex items-center gap-0.5 text-muted"><Minus className="h-3 w-3" /> 0%</span>;
   const up = d > 0;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
-  const hex = up ? "#22C55E" : "#EF4444";
+  const good = lowerIsBetter ? !up : up;
+  const hex = good ? "#22C55E" : "#EF4444";
   return (
     <span className="inline-flex items-center gap-0.5 font-semibold" style={{ color: hex }}>
       <Icon className="h-3.5 w-3.5" /> {Math.abs(d)}%
