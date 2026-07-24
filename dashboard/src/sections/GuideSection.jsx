@@ -6,7 +6,8 @@ import {
   Cpu, Eye, Layers, MessageSquare, FlaskConical, Rocket, ListChecks,
   Play, PlayCircle, X,
 } from "lucide-react";
-import { SectionHeader, Panel, Card, RiskPill } from "../components/ui.jsx";
+import { SectionHeader, Card, RiskPill } from "../components/ui.jsx";
+import Disclosure from "../components/Disclosure.jsx";
 import { BAND_COLORS } from "../lib/chartTheme.js";
 
 // Demo video shown in the popup. Paste your link here (YouTube, Vimeo, or a
@@ -138,7 +139,7 @@ export default function GuideSection({ onNavigate }) {
       <DemoModal open={showDemo} onClose={() => setShowDemo(false)} />
 
       {/* 1. Use it in 5 steps ---------------------------------------------- */}
-      <Panel title="Use it in 5 simple steps" subtitle="From a new claim to a decision" icon={Rocket}>
+      <Disclosure title="Use it in 5 simple steps" subtitle="From a new claim to a decision" icon={Rocket} defaultOpen>
         <ol className="space-y-3">
           {STEPS.map((s) => (
             <li key={s.n} className="flex items-start gap-3.5 rounded-lg border border-line bg-surface-2 p-3.5">
@@ -163,10 +164,10 @@ export default function GuideSection({ onNavigate }) {
             <LayoutDashboard className="h-4 w-4" /> Go to Command center
           </button>
         </div>
-      </Panel>
+      </Disclosure>
 
       {/* 2. What each part is for ------------------------------------------ */}
-      <Panel className="mt-4" title="What each part is for" subtitle="Click any row to open that screen" icon={ListChecks}>
+      <Disclosure className="mt-3" title="What each part is for" subtitle="Click any row to open that screen" icon={ListChecks}>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {SECTIONS.map((s) => (
             <button
@@ -187,10 +188,10 @@ export default function GuideSection({ onNavigate }) {
             </button>
           ))}
         </div>
-      </Panel>
+      </Disclosure>
 
       {/* 3. What the risk score means -------------------------------------- */}
-      <Panel className="mt-4" title="What the risk score means" subtitle="Every claim gets a number from 0 to 100" icon={TrendingUp}>
+      <Disclosure className="mt-3" title="What the risk score means" subtitle="Every claim gets a number from 0 to 100" icon={TrendingUp}>
         <div className="flex h-2.5 overflow-hidden rounded-full">
           <div style={{ width: "30%", background: BAND_COLORS.LOW }} />
           <div style={{ width: "30%", background: BAND_COLORS.MEDIUM }} />
@@ -210,10 +211,10 @@ export default function GuideSection({ onNavigate }) {
           ))}
         </div>
         <p className="mt-3 text-xs text-muted">Simple rule: the higher the number, the more you should look closely.</p>
-      </Panel>
+      </Disclosure>
 
       {/* 4. Good to know --------------------------------------------------- */}
-      <Panel className="mt-4" title="Good to know" subtitle="A few friendly things that make it easier to trust" icon={MessageSquare}>
+      <Disclosure className="mt-3" title="Good to know" subtitle="A few friendly things that make it easier to trust" icon={MessageSquare}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {TIPS.map((t) => (
             <div key={t.h} className="rounded-lg border border-line bg-surface-2 p-3.5">
@@ -225,7 +226,7 @@ export default function GuideSection({ onNavigate }) {
             </div>
           ))}
         </div>
-      </Panel>
+      </Disclosure>
 
       {/* 5. Try it --------------------------------------------------------- */}
       <Card className="mt-4">

@@ -5,10 +5,10 @@ import { ChevronDown } from "lucide-react";
 // A professional, button-style collapsible section: an icon tile, a title +
 // subtitle, an optional badge, and a chevron. Hovering highlights it; clicking
 // reveals the detail with a smooth height animation. Shared by the report views.
-export default function Disclosure({ title, subtitle, icon: Icon, badge, defaultOpen = false, children }) {
+export default function Disclosure({ title, subtitle, icon: Icon, badge, defaultOpen = false, className = "", children }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-surface transition hover:border-primary/40">
+    <div className={`overflow-hidden rounded-xl border border-line bg-surface transition hover:border-primary/40 ${className}`}>
       <button onClick={() => setOpen((o) => !o)}
               className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-surface-2">
         {Icon && (
