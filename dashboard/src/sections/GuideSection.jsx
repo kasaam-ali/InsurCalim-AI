@@ -10,9 +10,12 @@ import { SectionHeader, Card, RiskPill } from "../components/ui.jsx";
 import Disclosure from "../components/Disclosure.jsx";
 import { BAND_COLORS } from "../lib/chartTheme.js";
 
-// Demo video shown in the popup. Paste your link here (YouTube, Vimeo, or a
-// direct .mp4 URL). Leave it empty to show a friendly placeholder instead.
-const DEMO_VIDEO_URL = "";
+// The two walkthrough videos shown in the popup. Each is a YouTube, Vimeo, or a
+// direct .mp4 URL. Leave a url empty to show a friendly placeholder instead.
+const VIDEOS = {
+  demo: { title: "InsurCalim AI product demo", url: "https://youtu.be/P9qCfmYFBWI" },
+  guide: { title: "InsurCalim AI walkthrough guide", url: "https://youtu.be/fde9UHCp9yU" },
+};
 
 // Normalise common share links into an embeddable player URL.
 function toEmbed(url) {
@@ -24,18 +27,20 @@ function toEmbed(url) {
   return url;
 }
 
-const IS_EMBED = /youtu\.?be|youtube\.com|vimeo\.com/.test(DEMO_VIDEO_URL);
+const isEmbed = (url) => /youtu\.?be|youtube\.com|vimeo\.com/.test(url);
 
-// A centered popup that plays the product demo video.
-function DemoModal({ open, onClose }) {
+// A centered popup that plays one of the walkthrough videos.
+function VideoModal({ video, onClose }) {
   useEffect(() => {
-    if (!open) return;
+    if (!video) return;
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [video, onClose]);
 
-  if (!open) return null;
+  if (!video) return null;
+
+  const { title, url } = video;
 
   // Rendered into document.body so the fixed overlay is relative to the viewport
   // (ancestors here use transforms, which would otherwise trap position: fixed).
@@ -45,23 +50,23 @@ function DemoModal({ open, onClose }) {
       <div className="w-full max-w-3xl overflow-hidden rounded-xl border border-line bg-surface shadow-pop animate-scale-in"
            onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h3 className="text-[13px] font-semibold text-ink">InsurCalim AI product demo</h3>
+          <h3 className="text-[13px] font-semibold text-ink">{title}</h3>
           <button onClick={onClose} className="icon-btn" title="Close"><X className="h-[18px] w-[18px]" /></button>
         </div>
         <div className="aspect-video w-full bg-black">
-          {DEMO_VIDEO_URL ? (
-            IS_EMBED ? (
-              <iframe src={toEmbed(DEMO_VIDEO_URL)} title="Product demo" className="h-full w-full"
+          {url ? (
+            isEmbed(url) ? (
+              <iframe src={toEmbed(url)} title={title} className="h-full w-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen />
             ) : (
-              <video src={DEMO_VIDEO_URL} controls className="h-full w-full" />
+              <video src={url} controls className="h-full w-full" />
             )
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-white/70">
               <PlayCircle className="h-10 w-10" />
-              <p className="text-sm font-medium text-white/90">Demo video link not added yet</p>
-              <p className="text-xs">Paste your video URL into DEMO_VIDEO_URL near the top of GuideSection.jsx (YouTube, Vimeo, or a direct .mp4 link).</p>
+              <p className="text-sm font-medium text-white/90">Video link not added yet</p>
+              <p className="text-xs">Paste the URL into the VIDEOS map near the top of GuideSection.jsx (YouTube, Vimeo, or a direct .mp4 link).</p>
             </div>
           )}
         </div>
@@ -121,7 +126,7 @@ function IconChip({ Icon, tone }) {
 }
 
 export default function GuideSection({ onNavigate }) {
-  const [showDemo, setShowDemo] = useState(false);
+  const [activeVideo, setActiveVideo] = useState(null);
 
   return (
     <div className="animate-fade-up">
@@ -130,13 +135,18 @@ export default function GuideSection({ onNavigate }) {
         title="How to use InsurCalim AI"
         subtitle="New here? Just follow the steps below. It is simpler than it looks, and the app never makes a decision for you."
         actions={
-          <button className="btn-primary" onClick={() => setShowDemo(true)}>
-            <Play className="h-4 w-4" /> Watch the demo
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="btn-ghost" onClick={() => setActiveVideo("guide")}>
+              <PlayCircle className="h-4 w-4" /> Watch the guide
+            </button>
+            <button className="btn-primary" onClick={() => setActiveVideo("demo")}>
+              <Play className="h-4 w-4" /> Watch the demo
+            </button>
+          </div>
         }
       />
 
-      <DemoModal open={showDemo} onClose={() => setShowDemo(false)} />
+      <VideoModal video={activeVideo ? VIDEOS[activeVideo] : null} onClose={() => setActiveVideo(null)} />
 
       {/* 1. Use it in 5 steps ---------------------------------------------- */}
       <Disclosure title="Use it in 5 simple steps" subtitle="From a new claim to a decision" icon={Rocket} defaultOpen>
@@ -239,7 +249,10 @@ export default function GuideSection({ onNavigate }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="btn-ghost" onClick={() => setShowDemo(true)}>
+            <button className="btn-ghost" onClick={() => setActiveVideo("guide")}>
+              <PlayCircle className="h-4 w-4" /> Watch the guide
+            </button>
+            <button className="btn-ghost" onClick={() => setActiveVideo("demo")}>
               <Play className="h-4 w-4" /> Watch the demo
             </button>
             <button className="btn-primary" onClick={() => onNavigate?.("submit")}>
