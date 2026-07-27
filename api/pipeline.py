@@ -61,11 +61,10 @@ def run_investigation(
     media_infos: list[dict[str, Any]] = []
     n_docs = n_img = n_vid = 0
 
-    on_step("read", "Reading the files you uploaded…")
+    on_step("read", "Reading all uploaded files…")
     for name, data in files:
         kind = intake_docs.classify_upload(name)
         if kind == "document":
-            on_step("read", f"Reading the text inside {name}…")
             doc_tuples.append((name, data))
             n_docs += 1
         elif kind == "image":
