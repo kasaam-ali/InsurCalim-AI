@@ -15,7 +15,7 @@ export default function Stats() {
           <span className="eyebrow"><span className="dot" /> Why it matters</span>
           <h2>Claims fraud is a multi-billion-dollar problem.</h2>
           <p>
-            Manual review can't keep pace, and AI-generated evidence is rising fast. InsurCalim AI
+            Manual review can't keep pace, and AI-generated evidence is rising fast. InsurClaim AI
             triages the queue so investigators spend their time where it counts.
           </p>
         </Reveal>

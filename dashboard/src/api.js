@@ -1,4 +1,4 @@
-// API client for the InsurCalim dashboard.
+// API client for the InsurClaim dashboard.
 //
 // The token is captured from the sign-in hand-off (?token=…) and reused as a
 // Bearer header for fetches and as a query param for the EventSource stream

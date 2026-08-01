@@ -57,7 +57,7 @@ export default function AiAssistant({ open, onClose, context = "" }) {
                 <Sparkles className="relative h-4 w-4 text-white" />
               </span>
               <div className="leading-tight">
-                <div className="text-sm font-semibold">InsurCalim Assistant</div>
+                <div className="text-sm font-semibold">InsurClaim Assistant</div>
                 <div className="text-[11px] text-muted">AI investigator analyst</div>
               </div>
               <button className="btn-subtle ml-auto" onClick={onClose} aria-label="Close assistant">
@@ -122,7 +122,7 @@ export default function AiAssistant({ open, onClose, context = "" }) {
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <div className="mt-2 text-center text-[10px] text-muted">Powered by InsurCalim AI</div>
+              <div className="mt-2 text-center text-[10px] text-muted">Powered by InsurClaim AI</div>
             </div>
           </motion.aside>
         </>

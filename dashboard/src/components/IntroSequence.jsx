@@ -3,10 +3,10 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // Cinematic sign-in intro, in two acts:
 //   1) a sleek sedan drives in from the right (auto-insurance context),
-//   2) it drives off as the "InsurCalim AI" wordmark + logo reveal,
+//   2) it drives off as the "InsurClaim AI" wordmark + logo reveal,
 // then the whole thing fades into the dashboard.
 const EASE = [0.16, 1, 0.3, 1];
-const WORD = "InsurCalim AI";
+const WORD = "InsurClaim AI";
 
 // Drop a real car at dashboard/public/video/car.mp4 (best) or dashboard/public/
 // img/car-hero.png|jpg to replace the vector fallback it is used automatically.
@@ -69,7 +69,7 @@ export default function IntroSequence({ onDone }) {
           <div className="pointer-events-none absolute inset-0"
                style={{ background: "linear-gradient(180deg, rgba(5,7,12,.28) 0%, transparent 18%, transparent 80%, rgba(5,7,12,.42) 100%)" }} />
           {/* When the brand takes over, blur + darken the clip and wash it in the
-              InsurCalim navy/blue so the wordmark reads on a deeper, branded backdrop. */}
+              InsurClaim navy/blue so the wordmark reads on a deeper, branded backdrop. */}
           <motion.div className="pointer-events-none absolute inset-0 backdrop-blur-[3px]"
                       initial={{ opacity: 0 }} animate={{ opacity: showBrand ? 1 : 0 }}
                       transition={{ duration: 0.8, ease: EASE }}

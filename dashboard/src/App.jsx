@@ -101,7 +101,7 @@ function Unauthorized() {
         <ShieldAlert className="mx-auto h-10 w-10 text-warn" />
         <h1 className="mt-4 text-xl font-bold">Sign in required</h1>
         <p className="mt-2 text-sm text-muted">
-          Open the dashboard from the InsurCalim sign-in page so it can hand off a secure session token.
+          Open the dashboard from the InsurClaim sign-in page so it can hand off a secure session token.
         </p>
         <a className="btn-primary mx-auto mt-6" href={LANDING_URL}>Go to sign-in</a>
       </div>

@@ -1,4 +1,4 @@
-# InsurCalim AI Python dependencies
+# InsurClaim AI Python dependencies
 # We install packages phase by phase, so this file grows as the project grows.
 # Heavy machine-learning packages (torch, transformers, ...) are commented out
 # below and will be enabled when we reach the fine-tuning phase (Phase 5).

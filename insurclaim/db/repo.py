@@ -1,4 +1,4 @@
-"""Database access layer (repository) for InsurCalim AI.
+"""Database access layer (repository) for InsurClaim AI.
 
 All PostgreSQL reads and writes live here so the rest of the code never writes
 raw SQL. Connection settings come from environment variables (see .env.example).

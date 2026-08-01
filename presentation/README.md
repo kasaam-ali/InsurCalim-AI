@@ -1,4 +1,4 @@
-# InsurCalim AI Presentation
+# InsurClaim AI Presentation
 
 A self-contained **reveal.js** slide deck for the project presentation. It runs **fully offline**
 in any modern browser reveal.js is vendored locally, so no internet is needed on the day.

@@ -1,4 +1,4 @@
-# InsurCalim AI Business Case & Investment Brief
+# InsurClaim AI Business Case & Investment Brief
 
 **An AI platform for investigating auto-insurance claims: explainable, human-in-the-loop, and built to attack a multi-hundred-billion-dollar fraud problem.**
 
@@ -13,7 +13,7 @@ pile of unstructured documents, photos, and videos that a human adjuster must re
 and price millions of times a year. Meanwhile, fraud drains **hundreds of billions of dollars
 annually** and is now being supercharged by AI-generated fake images and documents.
 
-**InsurCalim AI** is a working multi-agent platform that ingests a claim's documents, photos, and
+**InsurClaim AI** is a working multi-agent platform that ingests a claim's documents, photos, and
 videos and produces a **ranked, explainable investigator report** risk score, event timeline,
 flagged inconsistencies, coverage decision, a fair-cost (quantum) assessment, citations, and a
 recommended action. It is **human-in-the-loop by design: it flags and ranks, it never
@@ -45,7 +45,7 @@ manual.
   analyse unstructured files, and re-key data into legacy systems a bottleneck that limits
   growth and delays honest payouts. [3][4]
 
-**Why this matters for InsurCalim AI:** the platform is built precisely around these pain points
+**Why this matters for InsurClaim AI:** the platform is built precisely around these pain points
 multi-format document intake, multi-signal fraud detection (including **AI-generated media
 detection**), and an explainable score an investigator can defend.
 
@@ -74,12 +74,12 @@ The field is crowded with serious money and proven results, which validates the 
 | **AWS / EXL** | GenAI underwriting on Bedrock | **−80%** underwriting cost [10] |
 | **Lemonade** | AI-native claims ("AI Jim") | **~3-second** settlements [11] |
 
-InsurCalim AI applies the same patterns these leaders converged on document intelligence,
+InsurClaim AI applies the same patterns these leaders converged on document intelligence,
 explainability, and human-in-the-loop control in a single, coherent, portfolio-ready product.
 
 ---
 
-## 4. Our Solution InsurCalim AI
+## 4. Our Solution InsurClaim AI
 
 A multi-agent system that turns a raw claim into a defensible investigator report.
 
@@ -294,7 +294,7 @@ into a revenue-ready product in a market growing at ~32–35% per year.
    https://www.iii.org/fact-statistic/facts-and-statistics-insurance-fraud
 3. EY *How a Nordic insurance company automated claims processing.*
    https://www.ey.com/en_dk/insights/financial-services/emeia/how-a-nordic-insurance-company-automated-claims-processing
-4. InsurCalim AI companion research survey, `docs/research/ai-in-insurance-claims.md`.
+4. InsurClaim AI companion research survey, `docs/research/ai-in-insurance-claims.md`.
 5. Fortune Business Insights *AI in Insurance Market Size, Share.*
    https://www.fortunebusinessinsights.com/ai-in-insurance-market-114760
 6. *AI in Insurance Claims Processing Market* (GlobeNewswire) and Mordor Intelligence market
@@ -317,6 +317,6 @@ into a revenue-ready product in a market growing at ~32–35% per year.
 
 ---
 
-*InsurCalim AI is a portfolio project built on synthetic and public data only no real customer
+*InsurClaim AI is a portfolio project built on synthetic and public data only no real customer
 information. All market and pricing figures are attributed to the public sources cited above.
 Decision support for a human investigator, not an automated decision.*

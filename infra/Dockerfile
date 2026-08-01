@@ -1,4 +1,4 @@
-# Container image for the InsurCalim AI application.
+# Container image for the InsurClaim AI application.
 FROM python:3.13-slim
 
 # Keep Python output unbuffered and skip .pyc files - nicer for containers.

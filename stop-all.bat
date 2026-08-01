@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================================
-REM  InsurCalim AI - stop all services
+REM  InsurClaim AI - stop all services
 REM  Stops the database container and the API / dashboard / landing dev servers.
 REM  (Docker Desktop itself is left running - close it from the tray if needed.)
 REM ============================================================================

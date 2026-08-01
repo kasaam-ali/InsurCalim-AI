@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔎 InsurCalim AI
+# 🔎 InsurClaim AI
 
 ### Multi-agent AI platform for investigating auto-insurance claims
 

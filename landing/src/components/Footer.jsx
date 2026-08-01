@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="wrap footer-inner">
         <div>
           <div className="brand" style={{ marginBottom: 8 }}>
-            <span className="logo">🔎</span> InsurCalim AI
+            <span className="logo">🔎</span> InsurClaim AI
           </div>
           <div>Decision support for a human investigator flags &amp; ranks, never auto-denies.</div>
         </div>

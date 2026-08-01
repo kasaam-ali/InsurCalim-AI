@@ -1,4 +1,4 @@
-"""Command-line entry point for InsurCalim AI.
+"""Command-line entry point for InsurClaim AI.
 
 Runs the full agent pipeline on a single claim and prints the resulting report.
 

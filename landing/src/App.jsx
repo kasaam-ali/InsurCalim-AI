@@ -41,7 +41,7 @@ export default function App() {
       <nav className="nav">
         <div className="wrap nav-inner">
           <div className="brand">
-            <span className="logo">🔎</span> InsurCalim AI
+            <span className="logo">🔎</span> InsurClaim AI
           </div>
           <div className="nav-links">
             <a href="#why">Why</a>

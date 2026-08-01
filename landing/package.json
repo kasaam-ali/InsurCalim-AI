@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Cinematic React landing page and sign-in gate for the InsurCalim AI dashboard.",
+  "description": "Cinematic React landing page and sign-in gate for the InsurClaim AI dashboard.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

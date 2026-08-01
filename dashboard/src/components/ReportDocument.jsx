@@ -95,7 +95,7 @@ export default function ReportDocument({ result, onClose }) {
           <div className="flex items-start justify-between">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                InsurCalim AI · Fraud Operations
+                InsurClaim AI · Fraud Operations
               </div>
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900">Investigation Report</h1>
             </div>
@@ -257,7 +257,7 @@ export default function ReportDocument({ result, onClose }) {
         </Section>
 
         <footer className="mt-8 border-t border-neutral-300 pt-4 text-[11px] text-neutral-400">
-          End of report · {ref} · Generated {today} · InsurCalim AI · Synthetic demonstration data.
+          End of report · {ref} · Generated {today} · InsurClaim AI · Synthetic demonstration data.
         </footer>
       </article>
     </div>

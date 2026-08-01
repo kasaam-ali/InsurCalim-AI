@@ -1,12 +1,12 @@
 # AI in Insurance Claims: Big-Tech Case Studies, Challenges, and Solutions
 
-**A survey of how leading consultancies, cloud platforms, and insurtechs apply artificial intelligence to insurance claims and the design lessons for InsurCalim AI.**
+**A survey of how leading consultancies, cloud platforms, and insurtechs apply artificial intelligence to insurance claims and the design lessons for InsurClaim AI.**
 
 ---
 
 ## Abstract
 
-Insurance is one of the largest and fastest-moving arenas for applied artificial intelligence. Claims handling in particular high in volume, rich in unstructured documents, exposed to fraud, and sensitive to customer waiting time has become the prime target for automation across the industry. This paper surveys concrete, publicly documented deployments from three groups of players: global consultancies (EY, PwC, McKinsey), cloud platforms (Amazon Web Services and its partner ecosystem), and insurtechs and specialist vendors (Lemonade, Shift Technology, Ping An, Tractable). For each we describe the business problem, the AI solution and how it works, the challenge that had to be overcome, and the measurable results reported. We then distil the challenges common to every deployment unstructured intake, the "black-box" trust problem, regulatory defensibility, over-automation risk, and fraud and the solutions the industry has converged on: intelligent document processing, explainable AI, audit trails and citations, and human-in-the-loop control. Finally we map these lessons onto **InsurCalim AI**, a multi-agent, explainable, human-in-the-loop claims-investigation system, showing that its design mirrors the patterns the market leaders have independently arrived at.
+Insurance is one of the largest and fastest-moving arenas for applied artificial intelligence. Claims handling in particular high in volume, rich in unstructured documents, exposed to fraud, and sensitive to customer waiting time has become the prime target for automation across the industry. This paper surveys concrete, publicly documented deployments from three groups of players: global consultancies (EY, PwC, McKinsey), cloud platforms (Amazon Web Services and its partner ecosystem), and insurtechs and specialist vendors (Lemonade, Shift Technology, Ping An, Tractable). For each we describe the business problem, the AI solution and how it works, the challenge that had to be overcome, and the measurable results reported. We then distil the challenges common to every deployment unstructured intake, the "black-box" trust problem, regulatory defensibility, over-automation risk, and fraud and the solutions the industry has converged on: intelligent document processing, explainable AI, audit trails and citations, and human-in-the-loop control. Finally we map these lessons onto **InsurClaim AI**, a multi-agent, explainable, human-in-the-loop claims-investigation system, showing that its design mirrors the patterns the market leaders have independently arrived at.
 
 ---
 
@@ -109,11 +109,11 @@ Two themes dominate. First, **explainability is not optional** in insurance: bec
 
 ---
 
-## 5. Synthesis: How InsurCalim AI Applies These Lessons
+## 5. Synthesis: How InsurClaim AI Applies These Lessons
 
-**InsurCalim AI** is a multi-agent auto-claims investigation system: it ingests a claim's documents, photos, and videos and produces a ranked, explainable investigator report risk score, event timeline, flagged inconsistencies, coverage and amount assessment, citations, and a recommended action with a human always making the final call. Its design maps directly onto the industry patterns above.
+**InsurClaim AI** is a multi-agent auto-claims investigation system: it ingests a claim's documents, photos, and videos and produces a ranked, explainable investigator report risk score, event timeline, flagged inconsistencies, coverage and amount assessment, citations, and a recommended action with a human always making the final call. Its design maps directly onto the industry patterns above.
 
-| Industry lesson | Where it came from | How InsurCalim AI implements it |
+| Industry lesson | Where it came from | How InsurClaim AI implements it |
 | --- | --- | --- |
 | Turn unstructured files into structured data | EY [1], AWS [6] | Multi-format intake (documents, DOCX, images, video, scanned-PDF OCR) that extracts structured claim data |
 | Explainable AI, not black-box scores | PwC [2], EY [1] | An explainable fraud/risk score with per-signal reasons and evidence, plus a written narrative |
@@ -122,13 +122,13 @@ Two themes dominate. First, **explainability is not optional** in insurance: bec
 | Multi-signal fraud fusion | Shift [5] | Combines narrative red flags, document-level fraud, image/AI-generated-media detection, and similar-known-fraud retrieval |
 | Cost/quantum discipline | Industry damage-estimation work [2] | A claim-amount (quantum) assessment judging whether the demanded amount is justified, and if not, the fair estimate |
 
-In short, InsurCalim AI is not an outlier: it embodies the same design principles document intelligence, explainability, auditability, human-in-the-loop control, and multi-signal fraud analysis that EY, PwC, McKinsey, AWS's ecosystem, and the leading insurtechs have independently converged on.
+In short, InsurClaim AI is not an outlier: it embodies the same design principles document intelligence, explainability, auditability, human-in-the-loop control, and multi-signal fraud analysis that EY, PwC, McKinsey, AWS's ecosystem, and the leading insurtechs have independently converged on.
 
 ---
 
 ## 6. Conclusion
 
-AI in insurance claims has moved from pilot to production, and the evidence is concrete: 70% automated document extraction (EY), 29% estimation efficiency (PwC), £60M annual savings and a seven-fold NPS gain (Aviva/McKinsey), $30M+ in prevented fraud (Shift), 80% lower underwriting cost (EXL on AWS), and three-second settlements (Lemonade). Just as striking is the convergence in *how* these results were achieved every serious deployment pairs automation with **explainability, auditability, and a human in the loop**, because insurance decisions must be trusted, defended, and, when necessary, overruled by a person. A claims-investigation system built today should therefore be judged not only on speed and accuracy but on whether it can *explain itself* and *defer to human judgement*. InsurCalim AI is designed on exactly those principles.
+AI in insurance claims has moved from pilot to production, and the evidence is concrete: 70% automated document extraction (EY), 29% estimation efficiency (PwC), £60M annual savings and a seven-fold NPS gain (Aviva/McKinsey), $30M+ in prevented fraud (Shift), 80% lower underwriting cost (EXL on AWS), and three-second settlements (Lemonade). Just as striking is the convergence in *how* these results were achieved every serious deployment pairs automation with **explainability, auditability, and a human in the loop**, because insurance decisions must be trusted, defended, and, when necessary, overruled by a person. A claims-investigation system built today should therefore be judged not only on speed and accuracy but on whether it can *explain itself* and *defer to human judgement*. InsurClaim AI is designed on exactly those principles.
 
 ---
 
@@ -146,4 +146,4 @@ AI in insurance claims has moved from pilot to production, and the evidence is c
 
 ---
 
-*Prepared as a research survey for the InsurCalim AI project. All figures are drawn from the publicly available sources cited above; company names and results are attributed to their respective publishers.*
+*Prepared as a research survey for the InsurClaim AI project. All figures are drawn from the publicly available sources cited above; company names and results are attributed to their respective publishers.*

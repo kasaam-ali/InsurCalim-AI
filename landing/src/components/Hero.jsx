@@ -36,7 +36,7 @@ export default function Hero() {
           </h1>
 
           <p className="lede rise" style={{ animationDelay: "0.28s" }}>
-            InsurCalim AI reads the documents, photos and video, reconstructs the timeline,
+            InsurClaim AI reads the documents, photos and video, reconstructs the timeline,
             flags inconsistencies and prices the damage then hands a ranked, cited report to
             a human. It flags and recommends; it never auto-denies.
           </p>

@@ -1,4 +1,4 @@
-# InsurCalim AI Frontend / Dashboard Plan
+# InsurClaim AI Frontend / Dashboard Plan
 
 A web dashboard for a **claims investigator** to review AI-analyzed auto-insurance
 claims. It surfaces the pipeline's output risk score, flags, timeline, similar

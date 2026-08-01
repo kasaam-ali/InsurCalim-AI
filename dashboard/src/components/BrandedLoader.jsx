@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
 
 // Sequenced sign-in intro:
-//   1) the wordmark "InsurCalim AI" reveals letter-by-letter,
+//   1) the wordmark "InsurClaim AI" reveals letter-by-letter,
 //   2) the magnifier logo strokes itself in above it (with a soft glow),
 //   3) the whole thing fades away into the dashboard.
 // Restrained, premium dark navy backdrop with a subtle radial glow.
-const WORD = "InsurCalim AI";
+const WORD = "InsurClaim AI";
 const EASE = [0.16, 1, 0.3, 1];
 
 export default function BrandedLoader() {

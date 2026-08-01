@@ -1,4 +1,4 @@
-"""HTTP API layer for the InsurCalim AI React dashboard.
+"""HTTP API layer for the InsurClaim AI React dashboard.
 
 A thin Starlette wrapper around the existing Python pipeline. It does not
 reimplement any investigation logic: it orchestrates the same calls the

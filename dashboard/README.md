@@ -1,4 +1,4 @@
-# InsurCalim AI Investigator Dashboard (React)
+# InsurClaim AI Investigator Dashboard (React)
 
 A professional React + Tailwind dashboard for the flagship claim flow:
 **submit → live investigation → explainable report**. It talks to the Starlette

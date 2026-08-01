@@ -1,6 +1,6 @@
 # Competitive Analysis & Positioning
 
-How InsurCalim AI compares to leading insurance-AI vendors, what to borrow from
+How InsurClaim AI compares to leading insurance-AI vendors, what to borrow from
 each, and where we can differentiate. Used to prioritize the roadmap.
 
 ## The landscape
@@ -60,7 +60,7 @@ each, and where we can differentiate. Used to prioritize the roadmap.
 
 ## One-line pitch
 
-> InsurCalim AI is an **open, explainable claim-investigation layer** that reads a
+> InsurClaim AI is an **open, explainable claim-investigation layer** that reads a
 > claim's documents and photos, checks it against the insurer's own policy, and
 > returns a ranked, evidence-cited fraud report combining rules, a fine-tuned
 > model, similar-claim retrieval, and LLM reasoning, with a human always in the loop.

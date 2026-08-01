@@ -1,4 +1,4 @@
-# Local development stack for InsurCalim AI.
+# Local development stack for InsurClaim AI.
 # Run from the project root:  docker compose -f infra/docker-compose.yml up
 #
 # Services:

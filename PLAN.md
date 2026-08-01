@@ -1,10 +1,10 @@
-# InsurCalim AI v1 Build Plan (Portfolio Demo)
+# InsurClaim AI v1 Build Plan (Portfolio Demo)
 
 ## Context
 
 kasaam
  ek multi-agent AI platform bana raha hai jo insurance claims investigate karta hai
-("InsurCalim AI"). Original idea mein 6 alag agents, fine-tuning, Pinecone, aur "damage
+("InsurClaim AI"). Original idea mein 6 alag agents, fine-tuning, Pinecone, aur "damage
 physics from photos" tha. Research (2026 multi-agent + insurance fraud best practices)
 ke baad decide hua ke us design ka bahut hissa fuzool/over-engineered hai for a greenfield
 demo. Yeh plan usko ek **leaner, actually-buildable, wow-worthy** system mein reshape karta hai.

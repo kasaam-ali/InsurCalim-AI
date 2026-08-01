@@ -1,4 +1,4 @@
-"""Starlette HTTP API for the InsurCalim AI React dashboard.
+"""Starlette HTTP API for the InsurClaim AI React dashboard.
 
 Built on Starlette (already a dependency via Streamlit) rather than FastAPI, so
 it adds no new packages and cannot clash with the pinned Starlette version.
@@ -302,7 +302,7 @@ async def add_case_note(request: Request) -> Response:
 
 
 CHAT_SYSTEM = (
-    "You are the InsurCalim claim assistant. You are attached to ONE claim and you know "
+    "You are the InsurClaim claim assistant. You are attached to ONE claim and you know "
     "nothing else. You have no general knowledge, no internet, no other claims, no memory of "
     "earlier conversations. The CLAIM CONTEXT block in the message is your entire world.\n\n"
     "Rules, applied in this order:\n"

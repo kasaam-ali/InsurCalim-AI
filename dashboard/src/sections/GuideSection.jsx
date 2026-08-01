@@ -13,8 +13,8 @@ import { BAND_COLORS } from "../lib/chartTheme.js";
 // The two walkthrough videos shown in the popup. Each is a YouTube, Vimeo, or a
 // direct .mp4 URL. Leave a url empty to show a friendly placeholder instead.
 const VIDEOS = {
-  demo: { title: "InsurCalim AI product demo", url: "https://youtu.be/P9qCfmYFBWI" },
-  guide: { title: "InsurCalim AI walkthrough guide", url: "https://youtu.be/fde9UHCp9yU" },
+  demo: { title: "InsurClaim AI product demo", url: "https://youtu.be/P9qCfmYFBWI" },
+  guide: { title: "InsurClaim AI walkthrough guide", url: "https://youtu.be/fde9UHCp9yU" },
 };
 
 // Normalise common share links into an embeddable player URL.
@@ -132,7 +132,7 @@ export default function GuideSection({ onNavigate }) {
     <div className="animate-fade-up">
       <SectionHeader
         eyebrow="Getting started"
-        title="How to use InsurCalim AI"
+        title="How to use InsurClaim AI"
         subtitle="New here? Just follow the steps below. It is simpler than it looks, and the app never makes a decision for you."
         actions={
           <div className="flex items-center gap-2">

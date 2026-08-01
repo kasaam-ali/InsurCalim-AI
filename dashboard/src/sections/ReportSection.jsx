@@ -760,7 +760,7 @@ function CountBadge({ n, tone }) {
 
 function exportSummary(detail) {
   const lines = [
-    "InsurCalim AI - investigation report",
+    "InsurClaim AI - investigation report",
     `Claim #${detail.id}  |  concern: ${Math.round(detail.risk)}/100 (${riskMeta(detail.risk).label})  |  next step: ${ACTION_LABEL[detail.recommended_action] || "review"}`,
     `System fraud likelihood: ${detail.prob != null ? Math.round(detail.prob * 100) + "%" : "n/a"}`,
     "",

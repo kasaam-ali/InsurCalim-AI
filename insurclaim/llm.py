@@ -1,4 +1,4 @@
-"""Thin multi-provider LLM client for InsurCalim AI.
+"""Thin multi-provider LLM client for InsurClaim AI.
 
 Every model call in the project goes through call_llm() so the rest of the code
 never talks to a provider SDK directly. The wrapper tries providers in order

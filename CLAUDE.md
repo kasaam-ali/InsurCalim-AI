@@ -1,4 +1,4 @@
-# InsurCalim AI Project Rules
+# InsurClaim AI Project Rules
 
 ## Coding language convention (STRICT always apply)
 

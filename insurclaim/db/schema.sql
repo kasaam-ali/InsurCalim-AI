@@ -1,4 +1,4 @@
--- InsurCalim AI - PostgreSQL schema
+-- InsurClaim AI - PostgreSQL schema
 -- Relational store for auto insurance claims and everything attached to a claim.
 -- One claim has many parties, vehicles, and photos, so those live in separate
 -- tables that reference the claim. Indexes on national_id / vin / phash make the

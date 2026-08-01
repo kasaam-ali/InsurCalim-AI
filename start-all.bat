@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================================
-REM  InsurCalim AI - one-click launcher
+REM  InsurClaim AI - one-click launcher
 REM  Starts everything needed for the demo:
 REM    1) Docker Desktop (engine for the database)
 REM    2) PostgreSQL database (docker compose)
@@ -18,7 +18,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ============================================================
-echo   InsurCalim AI - starting all services
+echo   InsurClaim AI - starting all services
 echo ============================================================
 echo.
 
@@ -70,22 +70,22 @@ echo.
 
 REM --- 3) API backend ---------------------------------------------------------
 echo [3/6] Starting the API backend in a new window...
-start "InsurCalim - API" cmd /k ".venv\Scripts\python.exe -m uvicorn api.main:app --port 8000"
+start "InsurClaim - API" cmd /k ".venv\Scripts\python.exe -m uvicorn api.main:app --port 8000"
 echo.
 
 REM --- 4) React investigator dashboard ----------------------------------------
 echo [4/6] Starting the React investigator dashboard in a new window...
-start "InsurCalim - Dashboard (React)" cmd /k "cd dashboard && npm run dev"
+start "InsurClaim - Dashboard (React)" cmd /k "cd dashboard && npm run dev"
 echo.
 
 REM --- 5) Streamlit dashboard (classic view) ---------------------------------
 echo [5/6] Starting the classic Streamlit dashboard in a new window...
-start "InsurCalim - Dashboard (Streamlit)" cmd /k ".venv\Scripts\streamlit.exe run frontend/app.py --server.port 8501"
+start "InsurClaim - Dashboard (Streamlit)" cmd /k ".venv\Scripts\streamlit.exe run frontend/app.py --server.port 8501"
 echo.
 
 REM --- 6) Landing page --------------------------------------------------------
 echo [6/6] Starting the landing page in a new window...
-start "InsurCalim - Landing" cmd /k "cd landing && npm run dev"
+start "InsurClaim - Landing" cmd /k "cd landing && npm run dev"
 echo.
 
 echo       Giving the servers a few seconds to boot...

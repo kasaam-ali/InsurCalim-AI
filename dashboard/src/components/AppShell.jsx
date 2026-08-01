@@ -183,7 +183,7 @@ function Workspace({ collapsed, onClose }) {
         {!collapsed && (
           <>
             <span className="min-w-0 flex-1 text-left leading-tight">
-              <span className="block truncate text-[13px] font-semibold text-sidebar-strong">InsurCalim AI</span>
+              <span className="block truncate text-[13px] font-semibold text-sidebar-strong">InsurClaim AI</span>
               <span className="block truncate text-[11px] text-sidebar-muted">Fraud Operations</span>
             </span>
             <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-sidebar-muted" />
@@ -204,7 +204,7 @@ function Workspace({ collapsed, onClose }) {
             <div className="flex items-center gap-2.5 rounded-md bg-surface-2 px-2 py-1.5">
               <span className="grid h-7 w-7 place-items-center rounded-md bg-ink text-bg"><ShieldAlert className="h-4 w-4" /></span>
               <div className="min-w-0 flex-1 leading-tight">
-                <div className="truncate text-[12px] font-semibold text-ink">InsurCalim AI</div>
+                <div className="truncate text-[12px] font-semibold text-ink">InsurClaim AI</div>
                 <div className="truncate text-[11px] text-muted">Fraud Operations · Synthetic demo</div>
               </div>
               <Check className="h-4 w-4 text-primary" />

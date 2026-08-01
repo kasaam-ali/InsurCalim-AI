@@ -1,4 +1,4 @@
-"""InsurCalim AI - investigator dashboard (Streamlit).
+"""InsurClaim AI - investigator dashboard (Streamlit).
 
 A modern, human-in-the-loop UI over the claim-investigation pipeline: portfolio
 overview, a risk-scored claims queue, an explainable investigation report with a
@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from insurclaim.db import repo  # noqa: E402
 
-st.set_page_config(page_title="InsurCalim AI", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="InsurClaim AI", page_icon="🔎", layout="wide")
 
 # --- Design tokens (validated data-viz palette) -----------------------------
 CRITICAL, WARNING, GOOD = "#d03b3b", "#e5820e", "#0f9d58"
@@ -325,7 +325,7 @@ def score_all() -> list[dict]:
 # --- Pages ------------------------------------------------------------------
 def page_overview(scored: list[dict]) -> None:
     st.markdown(
-        '<div class="hero"><h1>🔎 InsurCalim AI</h1>'
+        '<div class="hero"><h1>🔎 InsurClaim AI</h1>'
         "<p>AI-assisted auto-insurance claim investigation explainable, human-in-the-loop. "
         "The system flags and ranks; it never auto-denies.</p></div>",
         unsafe_allow_html=True,
@@ -544,7 +544,7 @@ def _render_investigation(s: dict, case_ref: str, *, moved: bool = False,
 
     # Audit-defensible export for the investigator.
     lines = [
-        "InsurCalim AI - investigation summary",
+        "InsurClaim AI - investigation summary",
         f"Claim {case_ref}  |  risk score: {s['risk']:.0f} ({label})  |  action: {action}",
         f"ML fraud probability: {(s['prob'] or 0) * 100:.0f}%",
         "",
@@ -1570,7 +1570,7 @@ def _check_auth() -> None:
         return
 
     st.markdown(
-        '<div class="hero"><h1>🔎 InsurCalim AI</h1>'
+        '<div class="hero"><h1>🔎 InsurClaim AI</h1>'
         "<p>AI-assisted auto-insurance claim investigation explainable, human-in-the-loop. "
         "The system flags and ranks; it never auto-denies. Sign in to open the investigator "
         "dashboard.</p></div>",
@@ -1606,7 +1606,7 @@ def _check_auth() -> None:
 
 def main() -> None:
     _check_auth()
-    st.sidebar.markdown("## 🔎 InsurCalim AI")
+    st.sidebar.markdown("## 🔎 InsurClaim AI")
     st.sidebar.caption("Fraud investigation dashboard")
     # Honour a one-shot programmatic navigation request (e.g. "Move to Investigation
     # Report"). Set before the radio is created so we don't modify a live widget key.

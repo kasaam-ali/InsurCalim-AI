@@ -1,4 +1,4 @@
-# InsurCalim AI Live Demo Guide
+# InsurClaim AI Live Demo Guide
 
 A step-by-step walkthrough to demonstrate that the system works end to end.
 Each step lists the command, what to expect, and **which capability it proves**.

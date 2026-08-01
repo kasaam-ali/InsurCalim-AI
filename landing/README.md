@@ -1,6 +1,6 @@
-# InsurCalim AI Landing page
+# InsurClaim AI Landing page
 
-A cinematic React (Vite) landing page and sign-in gate for the InsurCalim AI dashboard.
+A cinematic React (Vite) landing page and sign-in gate for the InsurClaim AI dashboard.
 On a successful sign-in it hands off to the Streamlit dashboard (port 8501) using a shared
 token, so the user is not asked to sign in a second time.
 

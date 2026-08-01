@@ -1,4 +1,4 @@
-# InsurCalim AI - Dashboard
+# InsurClaim AI - Dashboard
 
 A Streamlit investigator dashboard over the claim-investigation pipeline.
 See [`PLAN.md`](./PLAN.md) for the design.

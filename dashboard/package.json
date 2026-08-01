@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Professional React investigator dashboard for InsurCalim AI (submit → live investigation → explainable report).",
+  "description": "Professional React investigator dashboard for InsurClaim AI (submit → live investigation → explainable report).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
