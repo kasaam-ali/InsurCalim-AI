@@ -5,7 +5,7 @@ each, and where we can differentiate. Used to prioritize the roadmap.
 
 ## The landscape
 
-| Vendor | Focus | Signature strength |
+| Vendor | Focus | Signature Strenght |
 | --- | --- | --- |
 | **Shift Technology** | Fraud detection + claims decisioning | Fraud reason codes at FNOL, coverage & liability analysis, subrogation, cross-carrier network (IDN) |
 | **Tractable** | Computer vision for auto damage | Pixel-level damage assessment from photos with certainty scores; repair vs total-loss |
