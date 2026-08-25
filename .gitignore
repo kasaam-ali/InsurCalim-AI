@@ -34,6 +34,18 @@ Thumbs.db
 # Personal learning notes (not part of the project)
 /LEARNING_PLAN.md
 
+# Internal / working docs and AI-tooling config (kept locally, not shipped)
+/CLAUDE.md
+/PLAN.md
+/REVIEW_REPORT.md
+/NOTEBOOKLM_SOURCE.md
+/PITCH.html
+/car-intro.png
+.claude/
+
+# Investor pitch presentation (internal material)
+/presentation/
+
 # Test / tooling artifacts
 .playwright-mcp/
 dash-*.png
