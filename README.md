@@ -86,14 +86,15 @@ the human faster and better informed.
 
 ## 📸 A look at the product
 
-**React investigator dashboard**: command center, risk-scored queue, and a fully explainable
-investigation report.
+**Command center**: real-time posture across every scored claim, with KPIs, claim trends, the live
+risk distribution, model health, and the highest-risk queue.
 
-![Investigator dashboard](dashboard/public/img/dashboard-overview.png)
+![Command center](docs/screenshots/command-center.png)
 
-**Landing page**: the product story for a first-time visitor.
+**New investigation**: drop in a claimant's documents, photos, and dashcam video (or paste the claim
+text), pick the policy to check against, and run the full investigation.
 
-![Landing page](dashboard/public/img/landing.png)
+![New investigation](docs/screenshots/new-investigation.png)
 
 ---
 
