@@ -11,6 +11,10 @@ and a recommended action.
 
 <br/>
 
+[![Watch the demo](https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=P9qCfmYFBWI)
+
+<br/>
+
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![LangGraph](https://img.shields.io/badge/LangGraph-multi--agent-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude_API-multi--provider-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
@@ -35,6 +39,34 @@ and a recommended action.
 ![Portfolio](https://img.shields.io/badge/type-portfolio_project-lightgrey?style=flat-square)
 
 </div>
+
+---
+
+## 🎥 Demo
+
+A short end-to-end walkthrough: submit a claim, watch the agents investigate, and read the ranked
+report with the live-priced fair-cost check.
+
+[![Watch the InsurClaim AI demo](https://img.youtube.com/vi/P9qCfmYFBWI/hqdefault.jpg)](https://www.youtube.com/watch?v=P9qCfmYFBWI)
+
+> ▶️ **[Watch the full demo on YouTube](https://www.youtube.com/watch?v=P9qCfmYFBWI)**
+
+---
+
+## 📋 Overview
+
+InsurClaim AI is a multi-agent system that investigates an auto-insurance claim the way a senior
+investigator would, then hands a human adjuster a ranked, cited report to act on. A claim goes in as raw
+evidence; a structured decision-support report comes out in seconds.
+
+| | |
+|---|---|
+| **What it is** | A multi-agent AI platform that investigates auto-insurance claims end to end. |
+| **Input** | One claimant's claim file: documents, damage photos, and video. |
+| **Output** | A ranked, cited investigator report: risk score, event timeline, flagged inconsistencies, a live-priced fair-cost check, and a recommended action. |
+| **Who it is for** | Claims adjusters and special-investigation units. It is human-in-the-loop and never auto-denies. |
+| **Market focus** | Built for the Pakistani motor market first (pricing in PKR); the approach generalizes to any motor-insurance market. |
+| **How it works** | Four LangGraph agents (`intake -> timeline -> fraud -> report`) plus a dedicated fair-cost assessor, behind an async Starlette API with a React dashboard. |
 
 ---
 
@@ -201,6 +233,20 @@ streamlit run frontend/app.py --server.port 8501
 Configuration (API keys, database, model names) lives in **`.env`**: copy `.env.example` and fill in
 your own values. See **[`DEMO.md`](./DEMO.md)** for a full end-to-end walkthrough and
 **[`COMPETITORS.md`](./COMPETITORS.md)** for market positioning.
+
+---
+
+## 📖 Guide: using the app
+
+Once the stack is running, a typical investigation looks like this:
+
+1. **Open the landing page** and sign in with the demo credentials from `.env.example` (change them before any real deployment).
+2. **Start a new investigation:** upload one claimant's documents, damage photos, and video, and pick which policy the claim falls under.
+3. **Watch the agents work** in the live timeline as intake, timeline, fraud, and the fair-cost assessor run in turn.
+4. **Read the report:** the risk score and its band, each flagged inconsistency with its evidence, the fair-cost estimate against the demanded amount, and the recommended action.
+5. **Ask follow-ups and decide:** use the built-in chat to question the case, set status and assignee, and make the final call. The system never denies a claim on its own.
+
+For a full command-by-command walkthrough with expected outputs, see **[`DEMO.md`](./DEMO.md)**.
 
 ---
 
