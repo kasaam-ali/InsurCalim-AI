@@ -5,7 +5,8 @@
 ### Multi-agent AI platform for investigating auto-insurance claims
 
 Takes a claim (documents, photos, videos) and produces a **ranked, explainable investigator report**:
-risk score, event timeline, flagged inconsistencies, source citations, and a recommended action.
+risk score, event timeline, flagged inconsistencies, a **live-priced fair-cost check**, source citations,
+and a recommended action.
 **Human-in-the-loop by design: it flags and ranks, it never auto-denies.**
 
 <br/>
@@ -37,13 +38,28 @@ risk score, event timeline, flagged inconsistencies, source citations, and a rec
 
 ---
 
+## 🎯 The problem
+
+Insurers lose an estimated **10% of every claim dollar to fraud and inflated payouts**, while human
+investigators can only read a handful of files a day. The hard cases are not obvious lies; they are
+subtle inconsistencies buried across a police report, a repair invoice, a medical note, and a set of
+damage photos. Reading all of that for every claim, and knowing whether the amount being demanded is
+even fair, does not scale.
+
+**InsurClaim AI reads the entire claim file the way a senior investigator would**, in seconds, and
+hands the adjuster a ranked, cited report they can act on. It never denies a claim on its own; it makes
+the human faster and better informed.
+
+---
+
 ## 📸 A look at the product
 
-**React investigator dashboard** (`localhost:5174`): command center, risk-scored queue, and a fully explainable investigation report.
+**React investigator dashboard**: command center, risk-scored queue, and a fully explainable
+investigation report.
 
 ![Investigator dashboard](dashboard/public/img/dashboard-overview.png)
 
-**Landing page** (`localhost:5173`): the product story for a first-time visitor.
+**Landing page**: the product story for a first-time visitor.
 
 ![Landing page](dashboard/public/img/landing.png)
 
@@ -51,31 +67,73 @@ risk score, event timeline, flagged inconsistencies, source citations, and a rec
 
 ## ✨ Highlights
 
-- 🧠 **Four specialized agents** orchestrated with a **LangGraph** state machine (`intake -> timeline -> fraud -> report`).
+- 🧠 **Four specialized agents** orchestrated with a **LangGraph** state machine (`intake -> timeline -> fraud -> report`), plus a dedicated cost-assessment step.
+- 💰 **Live-priced fair-cost check** a quantum-analysis agent searches the **live web** for current market prices of the damaged parts (PakWheels, OLX Pakistan, local workshops, parts dealers), builds a fair repair-cost estimate in **PKR**, and judges whether the demanded amount is reasonable or inflated, with a source next to every line item. **This is a headline feature, detailed below.**
 - 🕵️ **Document-level fraud detection** reads the *whole* claim file and surfaces concrete inconsistencies (location/GPS mismatch, timeline gaps, physically-impossible damage, airbags-but-no-medical, repeat claims, inflated cost).
-- 🧾 **Explainable reason codes**: every risk score breaks down into weighted signals with an evidence pointer; nothing is a black box.
-- 📎 **Multi-format intake**: TXT, PDF, **DOCX**, images, and **video** (frame sampling). Scanned/image-only PDFs are read with a **vision-OCR fallback**.
-- 🧪 **AI-generated (deepfake) media detection**: metadata/EXIF/C2PA forensics plus a vision-model artifact check flag synthetic damage photos/videos.
-- 🛡️ **Policy-driven coverage gate**: pick which policy a claim falls under; the system checks coverage **and** whether every document that policy requires is present before fraud runs.
-- 🕸️ **Fraud-ring detection**: connected components over the RAG similarity graph reveal organized rings.
-- 💬 **AI chat + case management**: ask grounded follow-up questions per claim, set status/assignee, and keep an audit trail of notes.
-- 🔁 **Resilient LLM layer**: a multi-provider fallback chain with key rotation; the pipeline degrades gracefully instead of crashing when quotas are exhausted.
+- 🧾 **Explainable reason codes** every risk score breaks down into weighted signals with an evidence pointer; nothing is a black box.
+- 📎 **Multi-format intake** TXT, PDF, **DOCX**, images, and **video** (frame sampling). Scanned or image-only PDFs are read with a **vision-OCR fallback**.
+- 🧪 **AI-generated (deepfake) media detection** metadata/EXIF/C2PA forensics plus a vision-model artifact check flag synthetic damage photos and videos.
+- 🛡️ **Policy-driven coverage gate** pick which policy a claim falls under; the system checks coverage **and** whether every document that policy requires is present before fraud runs.
+- 🕸️ **Fraud-ring detection** connected components over the RAG similarity graph reveal organized rings.
+- 💬 **AI chat + case management** ask grounded follow-up questions per claim, set status and assignee, and keep an audit trail of notes.
+- 🔁 **Resilient LLM layer** a multi-provider fallback chain with key rotation; the pipeline degrades gracefully instead of crashing when a provider quota is exhausted.
 
 ---
 
 ## 🏗️ Architecture: 4 agents, one shared state
 
-A shared `ClaimState` flows through the graph: **`intake -> timeline -> fraud -> report`**.
+A shared `ClaimState` flows through a LangGraph graph: **`intake -> timeline -> fraud -> report`**.
 
 | # | Agent | What it does |
 |---|-------|--------------|
-| 1 | **Intake & Extraction** | Documents / photos / videos into structured claim JSON (degrades to raw text if the LLM is unavailable). |
+| 1 | **Intake & Extraction** | Documents, photos, and videos into structured claim JSON (degrades to raw text if the LLM is unavailable). |
 | 2 | **Timeline / Causal Reasoning** | Orders events A, B, C; flags inconsistencies and gaps; runs a light deterministic physics-sanity check. |
 | 3 | **Fraud & Anomaly** | Hybrid of 6 layers: deterministic rules, duplicate-photo hashing, fine-tuned ML score, similar-past-claim RAG, **full-document narrative red-flag analysis**, and LLM synthesis. |
 | 4 | **Adjudication / Report** | Synthesizes a ranked, cited report with confidence scores and a recommended action (`route_to_investigator`, `request_more_info`, `fast_track_approve`). |
 
-The agents run behind an async **Starlette** API. Two front ends consume it: a modern **React** investigator
-dashboard (primary) and a classic **Streamlit** dashboard (still included).
+Alongside the graph, the pipeline runs a dedicated **Amount / Quantum assessor** (below) so the final
+report answers not just *"is this fraud?"* but also *"is the money being asked for fair?"*. The whole
+pipeline runs behind an async **Starlette** API. Two front ends consume it: a modern **React**
+investigator dashboard (primary) and a classic **Streamlit** dashboard (still included).
+
+---
+
+## 💰 Fair-cost assessment with live market prices
+
+Most fraud tools only answer *is this claim fake?*. A huge share of real leakage is **honest claims
+with inflated numbers**, so InsurClaim AI also answers *is the amount fair?*.
+
+The **Amount / Quantum assessor** (`insurclaim/amount.py`) works like a claims cost analyst:
+
+1. **Reads the claim** to identify the vehicle (make, model, year) and every damaged part or required repair.
+2. **Searches the live web** for the current market price of each part and the typical labour rate, grounded in real listings from **PakWheels, OLX Pakistan, local workshops, and parts dealers** (via a Google-Search-grounded model).
+3. **Builds a fair-cost estimate in PKR** as a low-to-high range, with a **line-item breakdown** where every item carries the **source it was priced from**. Prices found in another currency are converted to PKR.
+4. **Respects the policy** sum-insured limit, sub-limits, and deductible when a policy is attached.
+5. **Delivers a verdict** on the demanded amount: `reasonable`, `overstated`, `understated`, or `insufficient_info`, with a short rationale.
+
+If live search or the model is unavailable, it falls back to a knowledge-only estimate and clearly
+marks the result as a model estimate rather than a market-grounded one, so the adjuster always knows
+how much to trust the number.
+
+> Example: on a demo claim demanding roughly **PKR 850,000**, the assessor priced the described damage
+> at a fair **~PKR 85,000** using live part prices and flagged the demand as **overstated**, with the
+> source next to each priced line.
+
+---
+
+## 🕵️ How fraud is detected: 6 hybrid layers
+
+The Fraud & Anomaly agent does not rely on a single model. It combines six independent signals, and
+**every flag it raises is explainable** (a finding, its evidence, and a suggested action):
+
+| Layer | Signal |
+|-------|--------|
+| **Deterministic rules** | Hard checks: policy active on the incident date, amount vs sum-insured, reporting delay, missing FIR, repeat claimant or repeat VIN velocity. |
+| **Duplicate-photo hashing** | Perceptual hashes catch damage photos reused across claims. |
+| **Fine-tuned ML score** | A DistilBERT narrative classifier and a tabular Random Forest trained on real data. |
+| **Similar-past-claim RAG** | Chroma vector search surfaces near-duplicate prior claims and organized rings. |
+| **Narrative red-flag analysis** | An LLM reads the full document set for internal contradictions and impossible details. |
+| **LLM synthesis** | A final reasoning pass weighs every signal into a single explainable risk score. |
 
 ---
 
@@ -84,7 +142,7 @@ dashboard (primary) and a classic **Streamlit** dashboard (still included).
 | Layer | Technology |
 |-------|-----------|
 | **Orchestration** | LangGraph, LangChain-core |
-| **LLMs** | Multi-provider wrapper with fallback + key rotation: **Z.AI (GLM), OpenRouter, Gemini, Claude, Groq**; Gemini/OpenRouter for vision |
+| **LLMs** | Multi-provider wrapper with fallback + key rotation: **Z.AI (GLM), OpenRouter, Gemini, Claude, Groq**; Gemini/OpenRouter for vision; Gemini Google-Search grounding for live pricing |
 | **API** | Starlette (async), served with Uvicorn |
 | **Web dashboard** | **React + Vite**, Tailwind CSS, Recharts, Framer Motion, lucide-react |
 | **Classic dashboard** | Streamlit with custom CSS (also included) |
@@ -98,8 +156,8 @@ dashboard (primary) and a classic **Streamlit** dashboard (still included).
 
 ## 📊 Data
 
-- **Synthetic claims**: an LLM generator produces realistic narratives with injected fraud patterns and ground-truth labels (used by the LLM agents and narrative fine-tuning).
-- **Real dataset**: a public **30,000-row** car-insurance fraud dataset, downloaded on demand and loaded into PostgreSQL to train and evaluate the tabular classifier
+- **Synthetic claims** an LLM generator produces realistic narratives with injected fraud patterns and ground-truth labels (used by the LLM agents and narrative fine-tuning).
+- **Real dataset** a public **30,000-row** car-insurance fraud dataset, downloaded on demand and loaded into PostgreSQL to train and evaluate the tabular classifier
   (**ROC-AUC around 0.74**, roughly **67%** fraud recall at a recall-favoring threshold).
 
 > No real personal data is used. The real dataset is a public, anonymized research dataset.
@@ -114,8 +172,9 @@ dashboard (primary) and a classic **Streamlit** dashboard (still included).
 start-all.bat
 ```
 
-This boots Docker, the PostgreSQL database, the Starlette API, the React dashboard,
-the Streamlit dashboard, and the React landing page, then opens the landing page in your browser.
+This boots Docker, the PostgreSQL database, the Starlette API, the React dashboard, the Streamlit
+dashboard, and the React landing page, then opens the landing page in your browser. Each service runs
+in its own window; the terminals print the local address to open.
 
 ### Option B: manual
 
@@ -130,17 +189,17 @@ python -m insurclaim.ml.train_tabular
 # 3. Run the full pipeline on one claim from the CLI
 python -m insurclaim.main --claim 1
 
-# 4. Start the API and the web front ends
-python -m uvicorn api.main:app --port 8000     # API        -> http://localhost:8000
-cd dashboard && npm install && npm run dev      # Dashboard  -> http://localhost:5174
-cd landing   && npm install && npm run dev      # Landing    -> http://localhost:5173
+# 4. Start the API and the web front ends (each prints its local URL)
+python -m uvicorn api.main:app --port 8000     # API backend
+cd dashboard && npm install && npm run dev      # React investigator dashboard
+cd landing   && npm install && npm run dev      # React landing page
 
 # (optional) the classic Streamlit dashboard
-streamlit run frontend/app.py --server.port 8501   # -> http://localhost:8501
+streamlit run frontend/app.py --server.port 8501
 ```
 
-Configuration (API keys, database, model names) lives in **`.env`**: copy `.env.example` and fill it in.
-See **[`DEMO.md`](./DEMO.md)** for a full end-to-end walkthrough and
+Configuration (API keys, database, model names) lives in **`.env`**: copy `.env.example` and fill in
+your own values. See **[`DEMO.md`](./DEMO.md)** for a full end-to-end walkthrough and
 **[`COMPETITORS.md`](./COMPETITORS.md)** for market positioning.
 
 ---
@@ -148,7 +207,7 @@ See **[`DEMO.md`](./DEMO.md)** for a full end-to-end walkthrough and
 ## 🗂️ Project layout
 
 ```
-insurclaim/     Core Python package: agents, LangGraph pipeline, LLM wrapper, ML, DB, RAG
+insurclaim/     Core Python package: agents, LangGraph pipeline, amount assessor, LLM wrapper, ML, DB, RAG
 api/            Starlette async API that runs the pipeline and serves the dashboard
 dashboard/      React + Vite investigator dashboard (primary UI)
 landing/        React + Vite landing page
